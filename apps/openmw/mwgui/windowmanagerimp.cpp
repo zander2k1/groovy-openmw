@@ -975,15 +975,21 @@ namespace MWGui
         size_t activeIndex = 0;
         if (winCount > 1)
         {
-            // Find next/previous visible window
             activeIndex = mActiveControllerWindows[mode];
             int delta = next ? 1 : -1;
-
-            for (size_t i = 0; i < winCount; ++i)
+            if (Settings::gui().mSingularContainerTradeWindow && (mode == GM_Container || mode == GM_Barter))
             {
                 activeIndex = wrap(activeIndex, winCount, delta);
-                if (mGuiModeStates[mode].mWindows[activeIndex]->isVisible())
-                    break;
+            }
+            else
+            {
+                // Find next/previous visible window
+                for (size_t i = 0; i < winCount; ++i)
+                {
+                    activeIndex = wrap(activeIndex, winCount, delta);
+                    if (mGuiModeStates[mode].mWindows[activeIndex]->isVisible())
+                        break;
+                }
             }
         }
 
@@ -1007,6 +1013,20 @@ namespace MWGui
         }
         if (winCount > 0)
             mGuiModeStates[mode].mWindows[mActiveControllerWindows[mode]]->setActiveControllerWindow(true);
+
+        if (mode == GM_Container || mode == GM_Barter)
+        {
+            if (Settings::gui().mSingularContainerTradeWindow)
+            {
+                for (size_t i = 0; i < winCount; i++)
+                    mGuiModeStates[mode].mWindows[i]->setVisible(i == mActiveControllerWindows[mode]);
+            }
+            else
+            {
+                for (size_t i = 0; i < winCount; i++)
+                    mGuiModeStates[mode].mWindows[i]->setVisible(true);
+            }
+        }
     }
 
     void WindowManager::setActiveControllerWindow(GuiMode mode, size_t activeIndex)

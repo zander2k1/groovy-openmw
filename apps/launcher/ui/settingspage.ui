@@ -1478,6 +1478,19 @@
               </widget>
              </item>
              <item row="2" column="0">
+              <widget class="QCheckBox" name="singularContainerTradeWindowCheckBox">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, only the focused container or trade window is visible.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Enable Singular Window in the Container/Trade UI</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
               <widget class="QCheckBox" name="controllerMenuHighlightCheckBox">
                <property name="enabled">
                 <bool>false</bool>

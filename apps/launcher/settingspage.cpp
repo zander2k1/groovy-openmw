@@ -306,6 +306,7 @@ bool Launcher::SettingsPage::loadSettings()
         connect(controllerMenusCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotControllerMenusToggled);
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
+        loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
@@ -502,6 +503,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*stretchBackgroundCheckBox, Settings::gui().mStretchMenuBackground);
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
+        saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
@@ -564,6 +566,7 @@ void Launcher::SettingsPage::slotAnimSourcesToggled(bool checked)
 void Launcher::SettingsPage::slotControllerMenusToggled(bool checked)
 {
     controllerMenuTooltipsCheckBox->setEnabled(checked);
+    singularContainerTradeWindowCheckBox->setEnabled(checked);
     controllerMenuHighlightCheckBox->setEnabled(checked);
 }
 
