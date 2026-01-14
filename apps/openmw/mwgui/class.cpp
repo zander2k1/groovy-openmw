@@ -587,6 +587,7 @@ namespace MWGui
             mControllerButtons.mLStick = "#{Interface:Mouse}";
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
+            mControllerButtons.mMenu = "#{Interface:Keyboard}";
         }
 
         // Set default skills, attributes
@@ -1178,6 +1179,7 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
 
         mControllerButtons.mA = "#{Interface:OK}";
+        mControllerButtons.mMenu = "#{Interface:Keyboard}";
     }
 
     DescriptionDialog::~DescriptionDialog() {}

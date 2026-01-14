@@ -58,6 +58,8 @@ namespace MWGui
         SortFilterItemModel* getSortFilterModel();
         TradeItemModel* getTradeModel();
         ItemModel* getModel();
+        MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
+        void clearFilter();
 
         void updateItemView();
 

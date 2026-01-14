@@ -256,6 +256,15 @@ namespace MWInput
 
         if (Settings::gui().mControllerMenus)
         {
+            if (arg.button == SDL_CONTROLLER_BUTTON_BACK)
+            {
+                if (winMgr->toggleVirtualKeyboard())
+                    return true;
+            }
+            // Block Start while the virtual keyboard is open.
+            if (arg.button == SDL_CONTROLLER_BUTTON_START && winMgr->isVirtualKeyboardVisible())
+                return true;
+
             // Update cursor state.
             bool treatAsMouse = winMgr->getCursorVisible();
             winMgr->setCursorActive(false);

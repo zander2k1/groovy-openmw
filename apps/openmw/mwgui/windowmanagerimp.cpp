@@ -14,6 +14,7 @@
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_PointerManager.h>
 #include <MyGUI_UString.h>
+#include <MyGUI_Widget.h>
 
 // For BT_NO_PROFILE
 #include <LinearMath/btQuickprof.h>
@@ -79,6 +80,7 @@
 #include "backgroundimage.hpp"
 #include "bookpage.hpp"
 #include "bookwindow.hpp"
+#include "class.hpp"
 #include "companionwindow.hpp"
 #include "confirmationdialog.hpp"
 #include "console.hpp"
@@ -118,16 +120,50 @@
 #include "spellview.hpp"
 #include "spellwindow.hpp"
 #include "statswindow.hpp"
+#include "textinput.hpp"
 #include "tradewindow.hpp"
 #include "trainingwindow.hpp"
 #include "travelwindow.hpp"
 #include "videowidget.hpp"
+#include "virtualkeyboard.hpp"
 #include "waitdialog.hpp"
 
 namespace MWGui
 {
     namespace
     {
+        bool isChildOf(MyGUI::Widget* widget, MyGUI::Widget* parent)
+        {
+            for (MyGUI::Widget* current = widget; current; current = current->getParent())
+            {
+                if (current == parent)
+                    return true;
+            }
+            return false;
+        }
+
+        // Pick the edit box that should receive virtual keyboard input.
+        MyGUI::EditBox* resolveKeyboardEdit(WindowBase* window)
+        {
+            if (auto* dialog = dynamic_cast<AlchemyWindow*>(window))
+                return dialog->getNameEdit();
+            if (auto* dialog = dynamic_cast<EnchantingDialog*>(window))
+                return dialog->getNameEdit();
+            if (auto* dialog = dynamic_cast<TextInputDialog*>(window))
+                return dialog->getEditBox();
+            if (auto* dialog = dynamic_cast<CreateClassDialog*>(window))
+                return dialog->getEditName();
+            if (auto* dialog = dynamic_cast<DescriptionDialog*>(window))
+                return dialog->getTextEdit();
+            if (auto* dialog = dynamic_cast<InventoryWindow*>(window))
+                return dialog->getFilterEdit();
+            if (auto* dialog = dynamic_cast<SpellWindow*>(window))
+                return dialog->getFilterEdit();
+            if (auto* dialog = dynamic_cast<TradeWindow*>(window))
+                return dialog->getFilterEdit();
+            return nullptr;
+        }
+
         Settings::SettingValue<bool>* findHiddenSetting(GuiWindow window)
         {
             switch (window)
@@ -181,6 +217,7 @@ namespace MWGui
         , mHitFader(nullptr)
         , mScreenFader(nullptr)
         , mDebugWindow(nullptr)
+        , mVirtualKeyboard(nullptr)
         , mPostProcessorHud(nullptr)
         , mJailScreen(nullptr)
         , mContainerWindow(nullptr)
@@ -520,6 +557,10 @@ namespace MWGui
         auto inventoryTabsOverlay = std::make_unique<InventoryTabsOverlay>();
         mInventoryTabsOverlay = inventoryTabsOverlay.get();
         mWindows.push_back(std::move(inventoryTabsOverlay));
+
+        auto virtualKeyboard = std::make_unique<VirtualKeyboard>();
+        mVirtualKeyboard = virtualKeyboard.get();
+        mWindows.push_back(std::move(virtualKeyboard));
 
         mControllerTooltipEnabled = Settings::gui().mControllerTooltips;
         mActiveControllerWindows[GM_Inventory] = 1; // Start on Inventory page
@@ -891,6 +932,9 @@ namespace MWGui
 
     WindowBase* WindowManager::getActiveControllerWindow()
     {
+        if (mVirtualKeyboard && mVirtualKeyboard->isVisible())
+            return mVirtualKeyboard;
+
         if (!mCurrentModals.empty())
             return mCurrentModals.back();
 
@@ -978,11 +1022,27 @@ namespace MWGui
 
         reapplyActiveControllerWindow();
 
+        const bool keyboardVisible = mVirtualKeyboard && mVirtualKeyboard->isVisible();
         MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(
-            mGuiModeStates[mode].mWindows[activeIndex]->isGamepadCursorAllowed());
+            keyboardVisible ? false : mGuiModeStates[mode].mWindows[activeIndex]->isGamepadCursorAllowed());
 
         updateControllerButtonsOverlay();
         setCursorActive(false);
+
+        if (keyboardVisible)
+        {
+            // Keep the keyboard target in sync with the active tab.
+            WindowBase* activeWindow = mGuiModeStates[mode].mWindows[activeIndex];
+            if (MyGUI::EditBox* edit = resolveKeyboardEdit(activeWindow))
+            {
+                mVirtualKeyboard->setTargetEdit(edit);
+                setKeyFocusWidget(edit);
+            }
+            else
+            {
+                mVirtualKeyboard->clearTargetEdit();
+            }
+        }
 
         if (winCount > 1)
             playSound(ESM::RefId::stringRefId("Menu Size"));
@@ -2689,12 +2749,134 @@ namespace MWGui
 
         // setButtons will handle setting visibility based on if any buttons are defined.
         mControllerButtonsOverlay->setButtons(topWin->getControllerButtons());
-        if (getMode() == GM_Inventory)
+        if (mVirtualKeyboard && mVirtualKeyboard->isVisible())
+        {
+            mInventoryTabsOverlay->setVisible(false);
+        }
+        else if (getMode() == GM_Inventory)
         {
             mInventoryTabsOverlay->setVisible(true);
             mInventoryTabsOverlay->setTab(mActiveControllerWindows[GM_Inventory]);
         }
         else
             mInventoryTabsOverlay->setVisible(false);
+    }
+
+    bool WindowManager::toggleVirtualKeyboard()
+    {
+        if (!Settings::gui().mControllerMenus || !isGuiMode() || isConsoleMode() || !mVirtualKeyboard)
+            return false;
+
+        if (mVirtualKeyboard->isVisible())
+        {
+            for (WindowBase* hidden : mVirtualKeyboardHiddenWindows)
+                hidden->setVisibleNoStateChange(true);
+            mVirtualKeyboard->setVisible(false);
+            mVirtualKeyboard->clearTargetEdit();
+            mVirtualKeyboardHiddenWindows.clear();
+            if (WindowBase* active = getActiveControllerWindow())
+                MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(
+                    active->isGamepadCursorAllowed());
+            updateControllerButtonsOverlay();
+            return true;
+        }
+
+        WindowBase* topWin = getActiveControllerWindow();
+        if (!topWin)
+            return false;
+
+        const bool supportsKeyboard = dynamic_cast<AlchemyWindow*>(topWin) != nullptr
+            || dynamic_cast<EnchantingDialog*>(topWin) != nullptr || dynamic_cast<TextInputDialog*>(topWin) != nullptr
+            || dynamic_cast<CreateClassDialog*>(topWin) != nullptr || dynamic_cast<DescriptionDialog*>(topWin) != nullptr
+            || dynamic_cast<InventoryWindow*>(topWin) != nullptr || dynamic_cast<SpellWindow*>(topWin) != nullptr
+            || dynamic_cast<TradeWindow*>(topWin) != nullptr;
+        if (!supportsKeyboard)
+            return false;
+
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        MyGUI::EditBox* edit = focus ? focus->castType<MyGUI::EditBox>(false) : nullptr;
+        if (edit)
+        {
+            if (getMode() == GM_Barter)
+            {
+                const bool inTrade = mTradeWindow && isChildOf(edit, mTradeWindow->mMainWidget);
+                const bool inInventory = mInventoryWindow && isChildOf(edit, mInventoryWindow->mMainWidget);
+                if (!inTrade && !inInventory)
+                    edit = nullptr;
+            }
+            else if (!isChildOf(edit, topWin->mMainWidget))
+            {
+                edit = nullptr;
+            }
+        }
+        if (getMode() == GM_Barter)
+        {
+            // Ignore stale focus from the other barter pane.
+            if (!focus || !isChildOf(focus, topWin->mMainWidget))
+                edit = nullptr;
+
+            if (!edit)
+            {
+                if (auto* window = dynamic_cast<TradeWindow*>(topWin))
+                    edit = window->getFilterEdit();
+                else if (auto* window = dynamic_cast<InventoryWindow*>(topWin))
+                    edit = window->getFilterEdit();
+            }
+        }
+        if (!edit)
+        {
+            if (auto* window = dynamic_cast<AlchemyWindow*>(topWin))
+                edit = window->getNameEdit();
+            else if (auto* window = dynamic_cast<EnchantingDialog*>(topWin))
+                edit = window->getNameEdit();
+            else if (auto* window = dynamic_cast<TextInputDialog*>(topWin))
+                edit = window->getEditBox();
+            else if (auto* window = dynamic_cast<CreateClassDialog*>(topWin))
+                edit = window->getEditName();
+            else if (auto* window = dynamic_cast<DescriptionDialog*>(topWin))
+                edit = window->getTextEdit();
+            else if (auto* window = dynamic_cast<InventoryWindow*>(topWin))
+                edit = window->getFilterEdit();
+            else if (auto* window = dynamic_cast<SpellWindow*>(topWin))
+                edit = window->getFilterEdit();
+            else if (auto* window = dynamic_cast<TradeWindow*>(topWin))
+                edit = window->getFilterEdit();
+        }
+        if (!edit)
+            return false;
+
+
+        // Hide underlying windows while the keyboard is open.
+        auto addHiddenWindow = [this](WindowBase* window) {
+            if (window && window->isVisible())
+            {
+                window->setVisibleNoStateChange(false);
+                mVirtualKeyboardHiddenWindows.push_back(window);
+            }
+        };
+        addHiddenWindow(topWin);
+        if (getMode() == GM_Barter)
+        {
+            addHiddenWindow(mTradeWindow);
+            addHiddenWindow(mInventoryWindow);
+        }
+        if (dynamic_cast<DescriptionDialog*>(topWin) != nullptr)
+        {
+            if (mCharGen)
+                addHiddenWindow(mCharGen->getCreateClassDialog());
+        }
+        mVirtualKeyboard->setTargetEdit(edit);
+        setKeyFocusWidget(edit);
+        mVirtualKeyboard->setVisible(true);
+        setCursorActive(false);
+        MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);
+
+        updateControllerButtonsOverlay();
+        return true;
+    }
+
+    bool WindowManager::isVirtualKeyboardVisible() const
+    {
+        return mVirtualKeyboard && mVirtualKeyboard->isVisible();
     }
 }

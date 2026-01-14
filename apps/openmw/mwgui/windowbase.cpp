@@ -85,6 +85,12 @@ void WindowBase::setVisible(bool visible)
         onClose();
 }
 
+void WindowBase::setVisibleNoStateChange(bool visible)
+{
+    visible = visible && !mDisabledByLua;
+    mMainWidget->setVisible(visible);
+}
+
 bool WindowBase::isVisible() const
 {
     return mMainWidget->getVisible();

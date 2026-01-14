@@ -193,6 +193,7 @@ namespace MWGui
             mControllerButtons.mX = "#{Interface:Offer}";
             mControllerButtons.mR3 = "#{Interface:Info}";
             mControllerButtons.mL2 = "#{Interface:Inventory}";
+            mControllerButtons.mMenu = "#{Interface:Keyboard}";
         }
     }
 
@@ -255,6 +256,17 @@ namespace MWGui
     {
         mSortModel->setNameFilter(sender->getCaption());
         mItemView->update();
+    }
+
+    void TradeWindow::clearFilter()
+    {
+        if (!mFilterEdit->getCaption().empty())
+        {
+            mFilterEdit->setCaption({});
+            if (mSortModel)
+                mSortModel->setNameFilter({});
+            mItemView->update();
+        }
     }
 
     void TradeWindow::onFilterChanged(MyGUI::Widget* sender)
@@ -693,6 +705,11 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
+            if (!mFilterEdit->getCaption().empty())
+            {
+                clearFilter();
+                return true;
+            }
             onCancelButtonClicked(mCancelButton);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)

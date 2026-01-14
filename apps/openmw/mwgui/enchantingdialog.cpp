@@ -65,6 +65,7 @@ namespace MWGui
         mControllerButtons.mY = "#{OMWEngine:EnchantType}";
         mControllerButtons.mL1 = "#{Interface:Item}";
         mControllerButtons.mR1 = "#{Interface:Soul}";
+        mControllerButtons.mMenu = "#{Interface:Keyboard}";
     }
 
     void EnchantingDialog::onOpen()
@@ -394,7 +395,14 @@ namespace MWGui
     bool EnchantingDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
+        {
+            if (!mName->getCaption().empty())
+            {
+                mName->setCaption({});
+                return true;
+            }
             onCancelButtonClicked(mCancelButton);
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)
             onBuyButtonClicked(mBuyButton);
         else if (arg.button == SDL_CONTROLLER_BUTTON_Y)

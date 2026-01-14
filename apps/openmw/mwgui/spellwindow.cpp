@@ -65,6 +65,7 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mR3 = "#{Interface:Info}";
+            mControllerButtons.mMenu = "#{Interface:Keyboard}";
         }
     }
 
@@ -207,6 +208,15 @@ namespace MWGui
         mSpellView->setModel(new SpellModel(MWMechanics::getPlayer(), sender->getCaption()));
     }
 
+    void SpellWindow::clearFilter()
+    {
+        if (!mFilterEdit->getCaption().empty())
+        {
+            mFilterEdit->setCaption({});
+            mSpellView->setModel(new SpellModel(MWMechanics::getPlayer()));
+        }
+    }
+
     void SpellWindow::onDeleteClicked(MyGUI::Widget* widget)
     {
         SpellModel::ModelIndex selected = mSpellView->getModel()->getSelectedIndex();
@@ -305,7 +315,14 @@ namespace MWGui
     bool SpellWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
+        {
+            if (!mFilterEdit->getCaption().empty())
+            {
+                clearFilter();
+                return true;
+            }
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+        }
         else
             mSpellView->onControllerButton(arg.button);
 
@@ -332,6 +349,8 @@ namespace MWGui
                 active && Settings::gui().mControllerTooltips);
         }
 
+        if (active)
+            clearFilter();
         mSpellView->setActiveControllerWindow(active);
 
         WindowBase::setActiveControllerWindow(active);

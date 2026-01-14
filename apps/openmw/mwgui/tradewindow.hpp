@@ -40,6 +40,8 @@ namespace MWGui
         void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
 
         void updateItemView();
+        MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
+        void clearFilter();
 
         void itemAdded(const MWWorld::ConstPtr& item, int count) override;
         void itemRemoved(const MWWorld::ConstPtr& item, int count) override;

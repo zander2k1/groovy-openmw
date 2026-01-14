@@ -99,6 +99,7 @@ namespace MWGui
             mControllerButtons.mX = "#{Interface:Create}";
             mControllerButtons.mY = "#{Interface:MagicEffects}";
             mControllerButtons.mR3 = "#{Interface:Info}";
+            mControllerButtons.mMenu = "#{Interface:Keyboard}";
         }
 
         center();
@@ -588,6 +589,11 @@ namespace MWGui
 
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
+            if (!mNameEdit->getCaption().empty())
+            {
+                mNameEdit->setCaption({});
+                return true;
+            }
             // Remove active ingredients or close the window, starting with right-most slot.
             for (size_t i = mIngredients.size(); i > 0; --i)
             {
