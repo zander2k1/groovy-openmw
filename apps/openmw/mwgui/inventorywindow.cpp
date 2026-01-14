@@ -152,6 +152,7 @@ namespace MWGui
                 SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
 
             mControllerButtons.mR3 = "#{Interface:Info}";
+            mControllerButtons.mMenu = "#{Interface:Keyboard}";
         }
 
         adjustPanes();
@@ -202,6 +203,17 @@ namespace MWGui
         updateEncumbranceBar();
         mItemView->update();
         notifyContentChanged();
+    }
+
+    void InventoryWindow::clearFilter()
+    {
+        if (!mFilterEdit->getCaption().empty())
+        {
+            mFilterEdit->setCaption({});
+            if (mSortModel)
+                mSortModel->setNameFilter({});
+            mItemView->update();
+        }
     }
 
     void InventoryWindow::clear()
@@ -1001,6 +1013,11 @@ namespace MWGui
 
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
+            if (!mFilterEdit->getCaption().empty())
+            {
+                clearFilter();
+                return true;
+            }
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -1105,6 +1122,8 @@ namespace MWGui
         getWidget(image, "BtnR1Image");
         image->setVisible(active);
 
+        if (active && winMgr->getMode() != MWGui::GM_Barter)
+            clearFilter();
         mItemView->setActiveControllerWindow(active);
         WindowBase::setActiveControllerWindow(active);
     }

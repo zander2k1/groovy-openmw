@@ -17,6 +17,8 @@ namespace MWGui
         SpellWindow(DragAndDrop* drag);
 
         void updateSpells();
+        MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
+        void clearFilter();
 
         void onFrame(float dt) override;
 

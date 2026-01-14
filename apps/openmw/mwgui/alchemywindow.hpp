@@ -32,6 +32,7 @@ namespace MWGui
         void onResChange(int, int) override { center(); }
 
         std::string_view getWindowIdForLua() const override { return "Alchemy"; }
+        MyGUI::EditBox* getNameEdit() const { return mNameEdit; }
 
     private:
         static const float sCountChangeInitialPause; // in seconds

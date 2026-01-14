@@ -270,6 +270,7 @@ namespace MWGui
 
         std::string getTextInput() const { return mTextEdit->getCaption(); }
         void setTextInput(const std::string& text) { mTextEdit->setCaption(text); }
+        MyGUI::EditBox* getTextEdit() const { return mTextEdit; }
 
         /** Event : Dialog finished, OK button clicked.\n
             signature : void method()\n
@@ -298,6 +299,7 @@ namespace MWGui
         std::vector<ESM::RefId> getFavoriteAttributes() const;
         std::vector<ESM::RefId> getMajorSkills() const;
         std::vector<ESM::RefId> getMinorSkills() const;
+        MyGUI::EditBox* getEditName() const { return mEditName; }
 
         void setNextButtonShow(bool shown);
 

@@ -151,6 +151,11 @@ namespace MWGui
             mReviewDialog->onFrame(duration);
     }
 
+    CreateClassDialog* CharacterCreation::getCreateClassDialog() const
+    {
+        return mCreateClassDialog.get();
+    }
+
     void CharacterCreation::spawnDialog(const GuiMode id)
     {
         try

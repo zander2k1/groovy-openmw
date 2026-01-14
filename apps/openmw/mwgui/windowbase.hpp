@@ -60,6 +60,8 @@ namespace MWGui
         virtual bool exit() { return true; }
         /// Sets the visibility of the window
         void setVisible(bool visible) override;
+        /// Sets the visibility without triggering onOpen/onClose
+        void setVisibleNoStateChange(bool visible);
         /// Returns the visibility state of the window
         bool isVisible() const;
 

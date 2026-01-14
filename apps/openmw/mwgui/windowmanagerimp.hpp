@@ -112,6 +112,7 @@ namespace MWGui
     class CompanionWindow;
     class VideoWidget;
     class WindowModal;
+    class VirtualKeyboard;
     class ScreenFader;
     class DebugWindow;
     class PostProcessorHud;
@@ -401,6 +402,8 @@ namespace MWGui
         void setControllerTooltipEnabled(bool enabled) override;
         void restoreControllerTooltips() override;
         void updateControllerButtonsOverlay() override;
+        bool toggleVirtualKeyboard() override;
+        bool isVirtualKeyboardVisible() const override;
 
         // Used in Lua bindings
         const std::vector<GuiMode>& getGuiModeStack() const override { return mGuiModes; }
@@ -468,6 +471,8 @@ namespace MWGui
         ScreenFader* mHitFader;
         ScreenFader* mScreenFader;
         DebugWindow* mDebugWindow;
+        VirtualKeyboard* mVirtualKeyboard;
+        std::vector<WindowBase*> mVirtualKeyboardHiddenWindows;
         PostProcessorHud* mPostProcessorHud;
         JailScreen* mJailScreen;
         ContainerWindow* mContainerWindow;

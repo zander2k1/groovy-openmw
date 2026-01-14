@@ -18,6 +18,7 @@ namespace MWGui
         void onOpen() override;
 
         bool exit() override { return false; }
+        MyGUI::EditBox* getEditBox() const { return mTextEdit; }
 
         /** Event : Dialog finished, OK button clicked.\n
             signature : void method()\n

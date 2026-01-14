@@ -226,6 +226,7 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_text.skin.xml
     mygui/openmw_tooltips.layout
     mygui/openmw_trade_window.layout
+    mygui/openmw_virtual_keyboard.layout
     mygui/openmw_spell_buying_window.layout
     mygui/openmw_windows.skin.xml
     mygui/openmw_quickkeys_menu.layout
