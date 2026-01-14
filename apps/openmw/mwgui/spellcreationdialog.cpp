@@ -578,7 +578,8 @@ namespace MWGui
     // ------------------------------------------------------------------------------------------------
 
     SpellCreationDialog::SpellCreationDialog()
-        : WindowBase("openmw_spellcreation_dialog.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_spellcreation_dialog.layout" : "openmw_spellcreation_dialog.layout")
         , EffectEditorBase(EffectEditorBase::Spellmaking)
     {
         getWidget(mNameEdit, "NameEdit");

@@ -259,6 +259,36 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_jail_screen.layout
     mygui/OpenMWResourcePlugin.xml
     mygui/skins.xml
+    mygui/openmw_controller_alchemy_window.layout
+    mygui/openmw_controller_book.layout
+    mygui/openmw_controller_chargen_birth.layout
+    mygui/openmw_controller_chargen_class.layout
+    mygui/openmw_controller_chargen_class_description.layout
+    mygui/openmw_controller_chargen_race.layout
+    mygui/openmw_controller_chargen_select_attribute.layout
+    mygui/openmw_controller_chargen_select_skill.layout
+    mygui/openmw_controller_chargen_select_specialization.layout
+    mygui/openmw_controller_companion_window.layout
+    mygui/openmw_controller_container_window.layout
+    mygui/openmw_controller_enchanting_dialog.layout
+    mygui/openmw_controller_journal.layout
+    mygui/openmw_controller_levelup_dialog.layout
+    mygui/openmw_controller_map_window.layout
+    mygui/openmw_controller_merchantrepair.layout
+    mygui/openmw_controller_persuasion_dialog.layout
+    mygui/openmw_controller_recharge_dialog.layout
+    mygui/openmw_controller_repair.layout
+    mygui/openmw_controller_savegame_dialog.layout
+    mygui/openmw_controller_scroll.layout
+    mygui/openmw_controller_spell_buying_window.layout
+    mygui/openmw_controller_spellcreation_dialog.layout
+    mygui/openmw_controller_text_input.layout
+    mygui/openmw_controller_trade_window.layout
+    mygui/openmw_controller_trainingwindow.layout
+    mygui/openmw_controller_travel_window.layout
+    mygui/openmw_controller_wait_dialog.layout
+    mygui/openmw_controllerbuttons.layout
+    mygui/openmw_controller_count_window.layout
 )
 
 foreach (f ${BUILTIN_DATA_FILES})

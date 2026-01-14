@@ -992,6 +992,7 @@ std::unique_ptr<MWGui::JournalWindow> MWGui::JournalWindow::create(
 }
 
 MWGui::JournalWindow::JournalWindow()
-    : BookWindowBase("openmw_journal.layout")
+    : BookWindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_journal.layout" : "openmw_journal.layout")
 {
 }

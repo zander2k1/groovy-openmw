@@ -25,7 +25,8 @@
 namespace MWGui
 {
     SpellBuyingWindow::SpellBuyingWindow()
-        : WindowBase("openmw_spell_buying_window.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_spell_buying_window.layout" : "openmw_spell_buying_window.layout")
         , mCurrentY(0)
         , mControllerFocus(0)
     {

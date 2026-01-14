@@ -35,7 +35,8 @@ namespace MWGui
 {
 
     ContainerWindow::ContainerWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer)
-        : WindowBase("openmw_container_window.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_container_window.layout" : "openmw_container_window.layout")
         , mDragAndDrop(&dragAndDrop)
         , mItemTransfer(&itemTransfer)
         , mSortModel(nullptr)

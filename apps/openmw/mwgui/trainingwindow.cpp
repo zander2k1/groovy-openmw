@@ -26,7 +26,8 @@ namespace MWGui
 {
 
     TrainingWindow::TrainingWindow()
-        : WindowBase("openmw_trainingwindow.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_trainingwindow.layout" : "openmw_trainingwindow.layout")
     {
         getWidget(mTrainingOptions, "TrainingOptions");
         getWidget(mCancelButton, "OkButton");

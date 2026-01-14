@@ -51,7 +51,8 @@ namespace MWGui
     // ---------------------------------------------------------------------------------------------------------
 
     WaitDialog::WaitDialog()
-        : WindowBase("openmw_wait_dialog.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_wait_dialog.layout" : "openmw_wait_dialog.layout")
         , mSleeping(false)
         , mHours(1)
         , mManualHours(1)
