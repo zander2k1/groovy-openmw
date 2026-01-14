@@ -90,6 +90,15 @@ namespace MWGui
         mRaceList->setScrollVisible(true);
         mRaceList->eventListSelectAccept += MyGUI::newDelegate(this, &RaceDialog::onAccept);
         mRaceList->eventListChangePosition += MyGUI::newDelegate(this, &RaceDialog::onSelectRace);
+        mRaceList->eventListChangeScroll += MyGUI::newDelegate(this, &RaceDialog::onListScroll);
+
+        if (MyGUI::Widget* client = mRaceList->getClientWidget())
+        {
+            mControllerHighlight = client->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setVisible(false);
+        }
 
         setText("SkillsT",
             MWBase::Environment::get().getWindowManager()->getGameSettingString("sBonusSkillTitle", "Skill Bonus"));
@@ -119,6 +128,7 @@ namespace MWGui
         updateRaces();
         updateSkills();
         updateSpellPowers();
+        updateControllerListHighlight(mRaceList, mControllerHighlight);
     }
 
     void RaceDialog::setNextButtonShow(bool shown)
@@ -189,6 +199,7 @@ namespace MWGui
         onHeadRotate(mHeadRotate, initialPos);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mRaceList);
+        updateControllerListHighlight(mRaceList, mControllerHighlight);
     }
 
     void RaceDialog::setRaceId(const ESM::RefId& raceId)
@@ -297,11 +308,17 @@ namespace MWGui
     void RaceDialog::onSelectRace(MyGUI::ListBox* sender, size_t index)
     {
         if (index == MyGUI::ITEM_NONE)
+        {
+            updateControllerListHighlight(sender, mControllerHighlight);
             return;
+        }
 
         ESM::RefId& raceId = *mRaceList->getItemDataAt<ESM::RefId>(index);
         if (mCurrentRaceId == raceId)
+        {
+            updateControllerListHighlight(sender, mControllerHighlight);
             return;
+        }
 
         mCurrentRaceId = raceId;
 
@@ -310,6 +327,12 @@ namespace MWGui
         updatePreview();
         updateSkills();
         updateSpellPowers();
+        updateControllerListHighlight(sender, mControllerHighlight);
+    }
+
+    void RaceDialog::onListScroll(MyGUI::ListBox* sender, size_t /*position*/)
+    {
+        updateControllerListHighlight(sender, mControllerHighlight);
     }
 
     void RaceDialog::onAccept(MyGUI::ListBox* sender, size_t index)
@@ -400,6 +423,8 @@ namespace MWGui
                 mRaceList->setIndexSelected(index);
             ++index;
         }
+
+        updateControllerListHighlight(mRaceList, mControllerHighlight);
     }
 
     void RaceDialog::updateSkills()

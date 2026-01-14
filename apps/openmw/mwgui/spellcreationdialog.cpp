@@ -822,6 +822,11 @@ namespace MWGui
             mButtonMapping[i] = effectId;
             ++i;
         }
+        if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
+            mAvailableEffectsList->setProperty("ControllerHighlightSkin", "ControllerHighlight");
+        else
+            mAvailableEffectsList->setProperty("ControllerHighlightSkin", "");
+
         mAvailableEffectsList->adjustSize();
         mAvailableEffectsList->scrollToTop();
 
@@ -852,6 +857,8 @@ namespace MWGui
                 MWBase::WindowManager& winMgr = *MWBase::Environment::get().getWindowManager();
                 winMgr.setCursorVisible(!winMgr.getControllerTooltipVisible());
                 mAvailableButtons[0]->setStateSelected(true);
+                if (Settings::gui().mControllerHighlightSelections)
+                    mAvailableEffectsList->setItemHighlightVisible(0, true);
                 if (winMgr.getControllerTooltipVisible())
                     MWBase::Environment::get().getInputManager()->warpMouseToWidget(mAvailableButtons[0]);
             }
@@ -1074,9 +1081,15 @@ namespace MWGui
             else if (!mRightColumn && !mAvailableButtons.empty())
             {
                 if (mAvailableFocus < mAvailableButtons.size())
+                {
                     mAvailableButtons[mAvailableFocus]->setStateSelected(false);
+                    if (Settings::gui().mControllerHighlightSelections)
+                        mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
+                }
                 mAvailableFocus = wrap(mAvailableFocus, mAvailableButtons.size(), -1);
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
+                if (Settings::gui().mControllerHighlightSelections)
+                    mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
             }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
@@ -1091,9 +1104,15 @@ namespace MWGui
             else if (!mRightColumn && !mAvailableButtons.empty())
             {
                 if (mAvailableFocus < mAvailableButtons.size())
+                {
                     mAvailableButtons[mAvailableFocus]->setStateSelected(false);
+                    if (Settings::gui().mControllerHighlightSelections)
+                        mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
+                }
                 mAvailableFocus = wrap(mAvailableFocus, mAvailableButtons.size(), 1);
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
+                if (Settings::gui().mControllerHighlightSelections)
+                    mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
             }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT && mRightColumn)
@@ -1102,7 +1121,11 @@ namespace MWGui
             if (mEffectFocus < mEffectButtons.size())
                 mEffectButtons[mEffectFocus].first->setStateSelected(false);
             if (mAvailableFocus < mAvailableButtons.size())
+            {
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
+                if (Settings::gui().mControllerHighlightSelections)
+                    mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
+            }
 
             winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
         }
@@ -1110,7 +1133,11 @@ namespace MWGui
         {
             mRightColumn = true;
             if (mAvailableFocus < mAvailableButtons.size())
+            {
                 mAvailableButtons[mAvailableFocus]->setStateSelected(false);
+                if (Settings::gui().mControllerHighlightSelections)
+                    mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
+            }
             if (mEffectFocus < mEffectButtons.size())
                 mEffectButtons[mEffectFocus].first->setStateSelected(true);
 

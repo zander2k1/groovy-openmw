@@ -7,6 +7,7 @@
 #include <MyGUI_EditBox.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_ListBox.h>
 #include <MyGUI_UString.h>
 
 #include <components/esm3/loadappa.hpp>
@@ -574,6 +575,55 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
     }
 
+    MyGUI::ListBox* AlchemyWindow::getFilterListBox(MyGUI::Widget* focus) const
+    {
+        for (MyGUI::Widget* current = focus; current != nullptr; current = current->getParent())
+        {
+            if (auto* list = current->castType<MyGUI::ListBox>(false))
+                return list;
+            if (current == mFilterValue)
+                break;
+        }
+        return nullptr;
+    }
+
+    void AlchemyWindow::ensureFilterListHighlight(MyGUI::ListBox* list)
+    {
+        if (!list)
+            return;
+
+        if (mFilterList != list)
+        {
+            mFilterList = list;
+            if (mFilterListHighlight)
+            {
+                MyGUI::Gui::getInstance().destroyWidget(mFilterListHighlight);
+                mFilterListHighlight = nullptr;
+            }
+        }
+
+        if (!mFilterListHighlight)
+        {
+            if (MyGUI::Widget* client = list->getClientWidget())
+            {
+                mFilterListHighlight = client->createWidget<MyGUI::Widget>(
+                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                mFilterListHighlight->setNeedMouseFocus(false);
+                mFilterListHighlight->setDepth(1);
+                mFilterListHighlight->setVisible(false);
+            }
+        }
+    }
+
+    void AlchemyWindow::updateFilterListHighlight(MyGUI::ListBox* list)
+    {
+        if (!list)
+            return;
+
+        ensureFilterListHighlight(list);
+        updateControllerListHighlight(list, mFilterListHighlight);
+    }
+
     bool AlchemyWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
@@ -584,8 +634,12 @@ namespace MWGui
         {
             // When the filter list combo box is open, send all inputs to it.
             filterListButtonHandler(arg);
+            if (MyGUI::ListBox* list = getFilterListBox(focus))
+                updateFilterListHighlight(list);
             return true;
         }
+        else if (mFilterListHighlight)
+            mFilterListHighlight->setVisible(false);
 
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {

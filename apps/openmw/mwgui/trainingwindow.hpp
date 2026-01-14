@@ -50,12 +50,14 @@ namespace MWGui
         MyGUI::Button* mCancelButton;
         MyGUI::TextBox* mPlayerGold;
         std::vector<MyGUI::Button*> mTrainingButtons;
+        std::vector<MyGUI::Widget*> mTrainingHighlights;
 
         WaitDialogProgressBar mProgressBar;
         TimeAdvancer mTimeAdvancer;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 0;
+        bool useControllerSelectionHighlight() const;
     };
 
 }

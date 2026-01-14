@@ -135,6 +135,7 @@ namespace MWGui
     protected:
         void onSelectClass(MyGUI::ListBox* sender, size_t index);
         void onAccept(MyGUI::ListBox* sender, size_t index);
+        void onListScroll(MyGUI::ListBox* sender, size_t position);
 
         void onOkClicked(MyGUI::Widget* sender);
         void onBackClicked(MyGUI::Widget* sender);
@@ -148,6 +149,7 @@ namespace MWGui
         MyGUI::TextBox* mSpecializationName;
         MyGUI::Button* mBackButton;
         MyGUI::Button* mOkButton;
+        MyGUI::Widget* mControllerHighlight = nullptr;
         Widgets::MWAttributePtr mFavoriteAttribute[2];
         Widgets::MWSkillPtr mMajorSkill[5];
         Widgets::MWSkillPtr mMinorSkill[5];

@@ -41,6 +41,7 @@ namespace MWGui
         void onSlotActivated(MyGUI::ListBox* sender, size_t pos);
         // Slot clicked with mouse
         void onSlotMouseClick(MyGUI::ListBox* sender, size_t pos);
+        void onListScroll(MyGUI::ListBox* sender, size_t pos);
 
         void onDeleteSlotConfirmed();
         void onDeleteSlotCancel();
@@ -66,6 +67,7 @@ namespace MWGui
         MyGUI::Button* mDeleteButton;
         MyGUI::ListBox* mSaveList;
         MyGUI::EditBox* mSaveNameEdit;
+        MyGUI::Widget* mControllerHighlight = nullptr;
 
         const MWState::Character* mCurrentCharacter;
         const MWState::Slot* mCurrentSlot;

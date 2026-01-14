@@ -25,6 +25,7 @@ namespace Settings
         SettingValue<bool> mStretchMenuBackground{ mIndex, "GUI", "stretch menu background" };
         SettingValue<bool> mControllerMenus{ mIndex, "GUI", "controller menus" };
         SettingValue<bool> mControllerTooltips{ mIndex, "GUI", "controller tooltips" };
+        SettingValue<bool> mControllerHighlightSelections{ mIndex, "GUI", "controller highlight selections" };
         SettingValue<bool> mSubtitles{ mIndex, "GUI", "subtitles" };
         SettingValue<bool> mHitFader{ mIndex, "GUI", "hit fader" };
         SettingValue<bool> mWerewolfOverlay{ mIndex, "GUI", "werewolf overlay" };

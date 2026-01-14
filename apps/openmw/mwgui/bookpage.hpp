@@ -125,6 +125,7 @@ namespace MWGui
         static void registerMyGUIComponents();
 
         virtual void setFocusItem(BookTypesetter::Style* itemStyle) = 0;
+        virtual void setFocusByInteractiveId(TypesetBook::InteractiveId id) = 0;
     };
 }
 

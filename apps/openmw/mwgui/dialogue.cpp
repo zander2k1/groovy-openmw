@@ -606,6 +606,11 @@ namespace MWGui
         if (Settings::gui().mControllerMenus && mControllerFocus < mTopicsList->getItemCount())
             focusedTopic = mTopicsList->getItemNameAt(mControllerFocus);
 
+        if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
+            mTopicsList->setProperty("ControllerHighlightSkin", "ControllerHighlight");
+        else
+            mTopicsList->setProperty("ControllerHighlightSkin", "");
+
         mTopicsList->clear();
         for (auto& linkPair : mTopicLinks)
             mDeleteLater.push_back(std::move(linkPair.second));
@@ -699,6 +704,8 @@ namespace MWGui
         mChoices = MWBase::Environment::get().getDialogueManager()->getChoices();
         mChoiceStyles.clear();
         mControllerChoice = -1; // -1 so you must make a choice (and can't accidentally pick the first answer)
+        if (Settings::gui().mControllerMenus)
+            mHistory->setFocusItem(nullptr);
         for (std::pair<std::string, int>& choice : mChoices)
         {
             auto link = std::make_unique<Choice>(choice.second);
@@ -938,6 +945,7 @@ namespace MWGui
 
             MyGUI::Button* button = mTopicsList->getItemWidget(keyword);
             button->setStateSelected(focused);
+            setTopicHighlight(index, focused);
         }
 
         if (focused)
@@ -954,6 +962,14 @@ namespace MWGui
             }
             mTopicsList->setViewOffset(-offset);
         }
+    }
+
+    void DialogueWindow::setTopicHighlight(size_t index, bool visible)
+    {
+        if (!Settings::gui().mControllerMenus || !Settings::gui().mControllerHighlightSelections)
+            return;
+
+        mTopicsList->setItemHighlightVisible(index, visible);
     }
 
     bool DialogueWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)

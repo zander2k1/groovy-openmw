@@ -194,6 +194,7 @@ namespace MWGui
         void restock();
         void deleteLater();
         void redrawTopicsList();
+        void setTopicHighlight(size_t index, bool visible);
 
         bool mIsCompanion;
         std::list<std::string> mKeywords;

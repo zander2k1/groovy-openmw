@@ -60,9 +60,18 @@ namespace MWGui
         mSaveList->eventListChangePosition += MyGUI::newDelegate(this, &SaveGameDialog::onSlotSelected);
         mSaveList->eventListMouseItemActivate += MyGUI::newDelegate(this, &SaveGameDialog::onSlotMouseClick);
         mSaveList->eventListSelectAccept += MyGUI::newDelegate(this, &SaveGameDialog::onSlotActivated);
+        mSaveList->eventListChangeScroll += MyGUI::newDelegate(this, &SaveGameDialog::onListScroll);
         mSaveList->eventKeyButtonPressed += MyGUI::newDelegate(this, &SaveGameDialog::onKeyButtonPressed);
         mSaveNameEdit->eventEditSelectAccept += MyGUI::newDelegate(this, &SaveGameDialog::onEditSelectAccept);
         mSaveNameEdit->eventEditTextChange += MyGUI::newDelegate(this, &SaveGameDialog::onSaveNameChanged);
+
+        if (MyGUI::Widget* client = mSaveList->getClientWidget())
+        {
+            mControllerHighlight = client->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setVisible(false);
+        }
 
         // To avoid accidental deletions
         mDeleteButton->setNeedKeyFocus(false);
@@ -83,6 +92,11 @@ namespace MWGui
 
         if (pos != MyGUI::ITEM_NONE && MyGUI::InputManager::getInstance().isShiftPressed())
             confirmDeleteSave();
+    }
+
+    void SaveGameDialog::onListScroll(MyGUI::ListBox* sender, size_t /*pos*/)
+    {
+        updateControllerListHighlight(sender, mControllerHighlight);
     }
 
     void SaveGameDialog::confirmDeleteSave()
@@ -185,6 +199,7 @@ namespace MWGui
         mCurrentSlot = nullptr;
         mSaveList->removeAllItems();
         onSlotSelected(mSaveList, MyGUI::ITEM_NONE);
+        updateControllerListHighlight(mSaveList, mControllerHighlight);
 
         if (Settings::gui().mControllerMenus)
         {
@@ -377,7 +392,10 @@ namespace MWGui
     {
         mSaveList->removeAllItems();
         if (!mCurrentCharacter)
+        {
+            updateControllerListHighlight(mSaveList, mControllerHighlight);
             return;
+        }
         for (MWState::Character::SlotIterator it = mCurrentCharacter->begin(); it != mCurrentCharacter->end(); ++it)
         {
             mSaveList->addItem(it->mProfile.mDescription);
@@ -424,8 +442,11 @@ namespace MWGui
             mCellName->setCaption({});
             mInfoText->setCaption({});
             mScreenshot->setImageTexture({});
+            updateControllerListHighlight(sender, mControllerHighlight);
             return;
         }
+
+        updateControllerListHighlight(sender, mControllerHighlight);
 
         if (mSaving)
             mSaveNameEdit->setCaption(sender->getItemNameAt(pos));

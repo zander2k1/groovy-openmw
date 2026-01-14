@@ -112,6 +112,7 @@ namespace MWGui
         const int lineHeight = Settings::gui().mFontSize + 2;
 
         mTrainingButtons.clear();
+        mTrainingHighlights.clear();
         for (size_t i = 0; i < skills.size(); ++i)
         {
             const ESM::Skill* skill = skills[i].first;
@@ -119,6 +120,17 @@ namespace MWGui
                 pcStats.getSkill(skill->mId).getBase() * gmst.find("iTrainingMod")->mValue.getInteger());
             price = std::max(1, price);
             price = MWBase::Environment::get().getMechanicsManager()->getBarterOffer(mPtr, price, true);
+
+            MyGUI::Widget* highlight = nullptr;
+            if (price <= playerGold && useControllerSelectionHighlight())
+            {
+                highlight = mTrainingOptions->createWidget<MyGUI::Widget>("ControllerHighlight",
+                    MyGUI::IntCoord(4, static_cast<int>(3 + i * lineHeight), mTrainingOptions->getWidth() - 10,
+                        lineHeight),
+                    MyGUI::Align::Default);
+                highlight->setNeedMouseFocus(false);
+                highlight->setVisible(false);
+            }
 
             MyGUI::Button* button = mTrainingOptions->createWidget<MyGUI::Button>(price <= playerGold
                     ? "SandTextButton"
@@ -137,14 +149,22 @@ namespace MWGui
             ToolTips::createSkillToolTip(button, skill->mId);
 
             if (price <= playerGold)
+            {
                 mTrainingButtons.emplace_back(button);
+                if (highlight)
+                    mTrainingHighlights.emplace_back(highlight);
+            }
         }
 
         if (Settings::gui().mControllerMenus)
         {
             mControllerFocus = 0;
             if (mTrainingButtons.size() > 0)
+            {
                 mTrainingButtons[0]->setStateSelected(true);
+                if (useControllerSelectionHighlight() && !mTrainingHighlights.empty())
+                    mTrainingHighlights[0]->setVisible(true);
+            }
         }
 
         center();
@@ -263,8 +283,12 @@ namespace MWGui
                 return true;
 
             setControllerFocus(mTrainingButtons, mControllerFocus, false);
+            if (useControllerSelectionHighlight() && mControllerFocus < mTrainingHighlights.size())
+                mTrainingHighlights[mControllerFocus]->setVisible(false);
             mControllerFocus = wrap(mControllerFocus, mTrainingButtons.size(), -1);
             setControllerFocus(mTrainingButtons, mControllerFocus, true);
+            if (useControllerSelectionHighlight() && mControllerFocus < mTrainingHighlights.size())
+                mTrainingHighlights[mControllerFocus]->setVisible(true);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
@@ -272,10 +296,19 @@ namespace MWGui
                 return true;
 
             setControllerFocus(mTrainingButtons, mControllerFocus, false);
+            if (useControllerSelectionHighlight() && mControllerFocus < mTrainingHighlights.size())
+                mTrainingHighlights[mControllerFocus]->setVisible(false);
             mControllerFocus = wrap(mControllerFocus, mTrainingButtons.size(), 1);
             setControllerFocus(mTrainingButtons, mControllerFocus, true);
+            if (useControllerSelectionHighlight() && mControllerFocus < mTrainingHighlights.size())
+                mTrainingHighlights[mControllerFocus]->setVisible(true);
         }
 
         return true;
+    }
+
+    bool TrainingWindow::useControllerSelectionHighlight() const
+    {
+        return Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections;
     }
 }
