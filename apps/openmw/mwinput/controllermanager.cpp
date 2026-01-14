@@ -29,6 +29,7 @@ namespace
     constexpr float kLeftStickAxisMax = 32768.0f;
     constexpr float kLeftStickDpadDeadzone = 0.6f;
     constexpr int kLeftStickDpadNone = -1;
+    constexpr float kGuiTurboRepeatStartDelay = 1.f / 6.f;
 
     void applyRadialDeadzone(float xIn, float yIn, float deadzone, float& xOut, float& yOut)
     {
@@ -66,6 +67,12 @@ namespace
         return yAxis > 0.f ? SDL_CONTROLLER_BUTTON_DPAD_DOWN : SDL_CONTROLLER_BUTTON_DPAD_UP;
     }
 
+    bool isDpadButton(int button)
+    {
+        return button == SDL_CONTROLLER_BUTTON_DPAD_UP || button == SDL_CONTROLLER_BUTTON_DPAD_DOWN
+            || button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
+    }
+
     bool isCharGenMouseAllowed(MWGui::GuiMode mode)
     {
         return mode == MWGui::GM_ClassCreate;
@@ -81,6 +88,10 @@ namespace MWInput
         , mLeftStickX(0)
         , mLeftStickY(0)
         , mLeftStickDpadButton(kLeftStickDpadNone)
+        , mGuiNavHeldButton(kLeftStickDpadNone)
+        , mGuiNavHoldTime(0.f)
+        , mGuiNavRepeatTime(0.f)
+        , mGuiNavHeldFromAxis(false)
         , mGyroAvailable(false)
         , mGamepadGuiCursorEnabled(true)
         , mGuiCursorEnabled(true)
@@ -146,6 +157,35 @@ namespace MWInput
                 leftStickDpadActive = topWin->isVisible();
         }
 
+        if (mGuiNavHeldButton != kLeftStickDpadNone)
+        {
+            const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 5.f;
+            const bool repeatEnabled = repeatRate > 0.f;
+            if (!repeatEnabled)
+            {
+                mGuiNavHoldTime = 0.f;
+                mGuiNavRepeatTime = 0.f;
+            }
+            else if (winMgr->isGuiMode() && !winMgr->isSettingsWindowVisible())
+            {
+                mGuiNavHoldTime += dt;
+                if (mGuiNavHoldTime >= kGuiTurboRepeatStartDelay)
+                {
+                    const float interval = 1.f / repeatRate;
+                    mGuiNavRepeatTime += dt;
+                    while (mGuiNavRepeatTime >= interval)
+                    {
+                        mGuiNavRepeatTime -= interval;
+                        SDL_ControllerButtonEvent buttonEvent{};
+                        buttonEvent.type = SDL_CONTROLLERBUTTONDOWN;
+                        buttonEvent.state = SDL_PRESSED;
+                        buttonEvent.button = static_cast<Uint8>(mGuiNavHeldButton);
+                        gamepadToGuiControl(buttonEvent);
+                    }
+                }
+            }
+        }
+
         if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled) && !leftStickDpadActive)
         {
             float xAxis = mBindingsManager->getActionValue(A_MoveLeftRight) * 2.0f - 1.0f;
@@ -199,6 +239,13 @@ namespace MWInput
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
 
         mJoystickLastUsed = true;
+        if (isDpadButton(arg.button))
+        {
+            mGuiNavHeldButton = arg.button;
+            mGuiNavHeldFromAxis = false;
+            mGuiNavHoldTime = 0.f;
+            mGuiNavRepeatTime = 0.f;
+        }
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (gamepadToGuiControl(arg))
@@ -253,6 +300,12 @@ namespace MWInput
             return;
 
         mJoystickLastUsed = true;
+        if (isDpadButton(arg.button) && !mGuiNavHeldFromAxis && mGuiNavHeldButton == arg.button)
+        {
+            mGuiNavHeldButton = kLeftStickDpadNone;
+            mGuiNavHoldTime = 0.f;
+            mGuiNavRepeatTime = 0.f;
+        }
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (mGamepadGuiCursorEnabled && (!Settings::gui().mControllerMenus || mGamepadMousePressed))
@@ -467,12 +520,37 @@ namespace MWInput
                             buttonEvent.button = static_cast<Uint8>(nextButton);
                             gamepadToGuiControl(buttonEvent);
                         }
+                        if (nextButton != kLeftStickDpadNone)
+                        {
+                            mGuiNavHeldButton = nextButton;
+                            mGuiNavHeldFromAxis = true;
+                            mGuiNavHoldTime = 0.f;
+                            mGuiNavRepeatTime = 0.f;
+                        }
+                        else if (mGuiNavHeldFromAxis)
+                        {
+                            mGuiNavHeldButton = kLeftStickDpadNone;
+                            mGuiNavHoldTime = 0.f;
+                            mGuiNavRepeatTime = 0.f;
+                            mGuiNavHeldFromAxis = false;
+                        }
+                    }
+                    else if (nextButton != kLeftStickDpadNone && mGuiNavHeldFromAxis)
+                    {
+                        mGuiNavHeldButton = nextButton;
                     }
                     return true;
                 }
                 else if (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
                 {
                     mLeftStickDpadButton = kLeftStickDpadNone;
+                    if (mGuiNavHeldFromAxis)
+                    {
+                        mGuiNavHeldButton = kLeftStickDpadNone;
+                        mGuiNavHoldTime = 0.f;
+                        mGuiNavRepeatTime = 0.f;
+                        mGuiNavHeldFromAxis = false;
+                    }
                 }
 
                 // Deadzone check

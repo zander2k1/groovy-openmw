@@ -26,6 +26,8 @@ namespace Settings
         SettingValue<bool> mControllerMenus{ mIndex, "GUI", "controller menus" };
         SettingValue<bool> mControllerTooltips{ mIndex, "GUI", "controller tooltips" };
         SettingValue<bool> mControllerJoystickDpad{ mIndex, "GUI", "controller joystick dpad navigation" };
+        SettingValue<float> mControllerMenuTurboRepeat{ mIndex, "GUI", "controller menu turbo repeat",
+            makeClampSanitizerFloat(0.f, 2.f) };
         SettingValue<bool> mControllerHighlightSelections{ mIndex, "GUI", "controller highlight selections" };
         SettingValue<bool> mSingularContainerTradeWindow{ mIndex, "GUI", "singular container trade window" };
         SettingValue<bool> mSubtitles{ mIndex, "GUI", "subtitles" };

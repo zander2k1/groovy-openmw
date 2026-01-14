@@ -66,6 +66,10 @@ namespace MWInput
         int mLeftStickX;
         int mLeftStickY;
         int mLeftStickDpadButton;
+        int mGuiNavHeldButton;
+        float mGuiNavHoldTime;
+        float mGuiNavRepeatTime;
+        bool mGuiNavHeldFromAxis;
 
         bool mGyroAvailable;
         bool mGamepadGuiCursorEnabled;
