@@ -1503,6 +1503,19 @@
                </property>
               </widget>
              </item>
+             <item row="4" column="0">
+              <widget class="QCheckBox" name="controllerMenuJoystickDpadCheckBox">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, use the left stick to navigate like the D-Pad instead of enabling the mouse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Use Left Stick for D-Pad Navigation</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>

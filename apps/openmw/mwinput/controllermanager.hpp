@@ -63,6 +63,10 @@ namespace MWInput
         BindingsManager* mBindingsManager;
         MouseManager* mMouseManager;
 
+        int mLeftStickX;
+        int mLeftStickY;
+        int mLeftStickDpadButton;
+
         bool mGyroAvailable;
         bool mGamepadGuiCursorEnabled;
         bool mGuiCursorEnabled;

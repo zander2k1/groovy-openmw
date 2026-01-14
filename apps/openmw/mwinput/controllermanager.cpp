@@ -1,5 +1,7 @@
 #include "controllermanager.hpp"
 
+#include <cmath>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
 
@@ -22,12 +24,63 @@
 #include "bindingsmanager.hpp"
 #include "mousemanager.hpp"
 
+namespace
+{
+    constexpr float kLeftStickAxisMax = 32768.0f;
+    constexpr float kLeftStickDpadDeadzone = 0.6f;
+    constexpr int kLeftStickDpadNone = -1;
+
+    void applyRadialDeadzone(float xIn, float yIn, float deadzone, float& xOut, float& yOut)
+    {
+        if (deadzone <= 0.f)
+        {
+            xOut = xIn;
+            yOut = yIn;
+            return;
+        }
+
+        const float magnitude = std::sqrt(xIn * xIn + yIn * yIn);
+        if (magnitude <= deadzone)
+        {
+            xOut = 0.f;
+            yOut = 0.f;
+            return;
+        }
+
+        const float scaled = (magnitude - deadzone) / (1.f - deadzone);
+        xOut = (xIn / magnitude) * scaled;
+        yOut = (yIn / magnitude) * scaled;
+    }
+
+    int pickLeftStickDpadButton(int x, int y)
+    {
+        float xAxis = static_cast<float>(x) / kLeftStickAxisMax;
+        float yAxis = static_cast<float>(y) / kLeftStickAxisMax;
+        applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
+        if (xAxis == 0.f && yAxis == 0.f)
+            return kLeftStickDpadNone;
+
+        if (std::abs(xAxis) >= std::abs(yAxis))
+            return xAxis > 0.f ? SDL_CONTROLLER_BUTTON_DPAD_RIGHT : SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+
+        return yAxis > 0.f ? SDL_CONTROLLER_BUTTON_DPAD_DOWN : SDL_CONTROLLER_BUTTON_DPAD_UP;
+    }
+
+    bool isCharGenMouseAllowed(MWGui::GuiMode mode)
+    {
+        return mode == MWGui::GM_ClassCreate;
+    }
+}
+
 namespace MWInput
 {
     ControllerManager::ControllerManager(BindingsManager* bindingsManager, MouseManager* mouseManager,
         const std::filesystem::path& userControllerBindingsFile, const std::filesystem::path& controllerBindingsFile)
         : mBindingsManager(bindingsManager)
         , mMouseManager(mouseManager)
+        , mLeftStickX(0)
+        , mLeftStickY(0)
+        , mLeftStickDpadButton(kLeftStickDpadNone)
         , mGyroAvailable(false)
         , mGamepadGuiCursorEnabled(true)
         , mGuiCursorEnabled(true)
@@ -84,18 +137,32 @@ namespace MWInput
 
     void ControllerManager::update(float dt)
     {
-        if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled))
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        bool leftStickDpadActive = false;
+        if (Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad && winMgr->isGuiMode()
+            && !winMgr->isSettingsWindowVisible() && !isCharGenMouseAllowed(winMgr->getMode()))
+        {
+            if (MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow())
+                leftStickDpadActive = topWin->isVisible();
+        }
+
+        if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled) && !leftStickDpadActive)
         {
             float xAxis = mBindingsManager->getActionValue(A_MoveLeftRight) * 2.0f - 1.0f;
             float yAxis = mBindingsManager->getActionValue(A_MoveForwardBackward) * 2.0f - 1.0f;
             float zAxis = mBindingsManager->getActionValue(A_LookUpDown) * 2.0f - 1.0f;
+
+            if (winMgr->isGuiMode())
+            {
+                applyRadialDeadzone(xAxis, yAxis, 0.6f, xAxis, yAxis);
+            }
 
             xAxis *= (1.5f - mBindingsManager->getActionValue(A_Use));
             yAxis *= (1.5f - mBindingsManager->getActionValue(A_Use));
 
             // We keep track of our own mouse position, so that moving the mouse while in
             // game mode does not move the position of the GUI cursor
-            float uiScale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+            float uiScale = winMgr->getScalingFactor();
             const float gamepadCursorSpeed = Settings::input().mGamepadCursorSpeed;
             const float xMove = xAxis * dt * 1500.0f / uiScale * gamepadCursorSpeed;
             const float yMove = yAxis * dt * 1500.0f / uiScale * gamepadCursorSpeed;
@@ -105,11 +172,11 @@ namespace MWInput
             {
                 mMouseManager->injectMouseMove(xMove, yMove, mouseWheelMove);
                 mMouseManager->warpMouse();
-                MWBase::Environment::get().getWindowManager()->setCursorActive(true);
+                winMgr->setCursorActive(true);
             }
         }
 
-        if (!MWBase::Environment::get().getWindowManager()->isGuiMode()
+        if (!winMgr->isGuiMode()
             && MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_Running
             && MWBase::Environment::get().getInputManager()->getControlSwitch("playercontrols"))
         {
@@ -351,6 +418,11 @@ namespace MWInput
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
+        if (arg.axis == SDL_CONTROLLER_AXIS_LEFTX)
+            mLeftStickX = arg.value;
+        else if (arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
+            mLeftStickY = arg.value;
+
         if (Settings::gui().mControllerMenus)
         {
             // Left and right triggers toggle through open GUI windows.
@@ -374,6 +446,34 @@ namespace MWInput
                 mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
                 if (!mGamepadGuiCursorEnabled)
                     winMgr->setCursorActive(false);
+
+                if (Settings::gui().mControllerJoystickDpad && !winMgr->isSettingsWindowVisible()
+                    && !isCharGenMouseAllowed(winMgr->getMode())
+                    && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
+                {
+                    const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY);
+                    if (nextButton != mLeftStickDpadButton)
+                    {
+                        mLeftStickDpadButton = nextButton;
+                        if (nextButton != kLeftStickDpadNone)
+                        {
+                            mGamepadGuiCursorEnabled = false;
+                            winMgr->setCursorActive(false);
+                            winMgr->setCursorVisible(false);
+                            SDL_ControllerButtonEvent buttonEvent{};
+                            buttonEvent.type = SDL_CONTROLLERBUTTONDOWN;
+                            buttonEvent.state = SDL_PRESSED;
+                            buttonEvent.which = arg.which;
+                            buttonEvent.button = static_cast<Uint8>(nextButton);
+                            gamepadToGuiControl(buttonEvent);
+                        }
+                    }
+                    return true;
+                }
+                else if (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
+                {
+                    mLeftStickDpadButton = kLeftStickDpadNone;
+                }
 
                 // Deadzone check
                 if (std::abs(arg.value) < 2000)

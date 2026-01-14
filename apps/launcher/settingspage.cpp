@@ -306,6 +306,7 @@ bool Launcher::SettingsPage::loadSettings()
         connect(controllerMenusCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotControllerMenusToggled);
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
+        loadSettingBool(Settings::gui().mControllerJoystickDpad, *controllerMenuJoystickDpadCheckBox);
         loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
@@ -503,6 +504,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*stretchBackgroundCheckBox, Settings::gui().mStretchMenuBackground);
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
+        saveSettingBool(*controllerMenuJoystickDpadCheckBox, Settings::gui().mControllerJoystickDpad);
         saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
@@ -566,6 +568,7 @@ void Launcher::SettingsPage::slotAnimSourcesToggled(bool checked)
 void Launcher::SettingsPage::slotControllerMenusToggled(bool checked)
 {
     controllerMenuTooltipsCheckBox->setEnabled(checked);
+    controllerMenuJoystickDpadCheckBox->setEnabled(checked);
     singularContainerTradeWindowCheckBox->setEnabled(checked);
     controllerMenuHighlightCheckBox->setEnabled(checked);
 }

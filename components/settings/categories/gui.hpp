@@ -25,6 +25,7 @@ namespace Settings
         SettingValue<bool> mStretchMenuBackground{ mIndex, "GUI", "stretch menu background" };
         SettingValue<bool> mControllerMenus{ mIndex, "GUI", "controller menus" };
         SettingValue<bool> mControllerTooltips{ mIndex, "GUI", "controller tooltips" };
+        SettingValue<bool> mControllerJoystickDpad{ mIndex, "GUI", "controller joystick dpad navigation" };
         SettingValue<bool> mControllerHighlightSelections{ mIndex, "GUI", "controller highlight selections" };
         SettingValue<bool> mSingularContainerTradeWindow{ mIndex, "GUI", "singular container trade window" };
         SettingValue<bool> mSubtitles{ mIndex, "GUI", "subtitles" };
