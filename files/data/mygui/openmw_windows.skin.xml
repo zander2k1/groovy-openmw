@@ -17,8 +17,17 @@
     </Resource>
 
     <!-- Defines a non-transparent background -->
-     <Resource type="ResourceSkin" name="TransparentBG" size="8 8" texture="transparent">
+    <Resource type="ResourceSkin" name="TransparentBG" size="8 8" texture="transparent">
         <Property key="Colour" value="#{fontcolour=background}"/>
+    </Resource>
+
+    <!-- Controller focus highlight background -->
+    <Resource type="ResourceSkin" name="ControllerHighlight" size="8 8" texture="transparent">
+        <Property key="Colour" value="0.5 0.5 0.5"/>
+        <Property key="Alpha" value="0.35"/>
+        <BasisSkin type="MainSkin" offset="0 0 8 8" align="Stretch">
+            <State name="normal"/>
+        </BasisSkin>
     </Resource>
 
     <!-- Define the borders for pin button (up) -->

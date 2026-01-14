@@ -510,6 +510,8 @@ namespace
                 {
                     listItem->setTextColour(
                         mButtons.size() == selectedIndex ? MWGui::journalHeaderColour : MyGUI::Colour::Black);
+                    if (useControllerSelectionHighlight())
+                        list->setItemHighlightVisible(i, mButtons.size() == selectedIndex);
                     mButtons.push_back(listItem);
                 }
             }
@@ -535,6 +537,8 @@ namespace
 
             if (Settings::gui().mControllerMenus)
             {
+                list->setProperty("ControllerHighlightSkin",
+                    useControllerSelectionHighlight() ? "ControllerHighlight" : "");
                 setControllerFocusedQuest(0);
                 addControllerButtons(list, mSelectedQuest);
             }
@@ -610,6 +614,8 @@ namespace
 
             if (Settings::gui().mControllerMenus)
             {
+                list->setProperty("ControllerHighlightSkin",
+                    useControllerSelectionHighlight() ? "ControllerHighlight" : "");
                 addControllerButtons(list, mSelectedQuest);
                 setControllerFocusedQuest(std::min(mSelectedQuest, mButtons.size()));
             }
@@ -728,6 +734,14 @@ namespace
             size_t col = mSelectedIndex / mIndexRowCount;
             size_t row = mSelectedIndex % mIndexRowCount;
             mTopicIndexBook->setColour(col, row, 0, focused ? MWGui::journalHeaderColour : MyGUI::Colour::Black);
+
+            if (useControllerSelectionHighlight())
+            {
+                const auto id = focused ? getSelectedIndexChar() : 0;
+                getPage(LeftTopicIndex)->setFocusByInteractiveId(id);
+                getPage(CenterTopicIndex)->setFocusByInteractiveId(id);
+                getPage(RightTopicIndex)->setFocusByInteractiveId(id);
+            }
         }
 
         void moveSelectedIndex(int offset)
@@ -782,19 +796,10 @@ namespace
                     if (mSelectedQuest < list->getItemCount())
                         notifyTopicSelected(list->getItemNameAt(mSelectedQuest), 0);
                 }
-                else
-                {
-                    // Choose an index. Cyrillic capital A is a 0xd090 in UTF-8.
-                    // Words can not be started with characters 26 or 28.
-                    int russianOffset = 0xd090;
-                    if (mSelectedIndex >= 26)
-                        russianOffset++;
-                    if (mSelectedIndex >= 27)
-                        russianOffset++; // 27, not 28, because of skipping char 26
-                    bool isRussian = (mEncoding == ToUTF8::WINDOWS_1251);
-                    size_t ch = isRussian ? mSelectedIndex + russianOffset : mSelectedIndex + 'A';
-                    notifyIndexLinkClicked(static_cast<Utf8Stream::UnicodeChar>(ch));
-                }
+            else
+            {
+                notifyIndexLinkClicked(getSelectedIndexChar());
+            }
             }
             else if (arg.button == SDL_CONTROLLER_BUTTON_B) // B: Back
             {
@@ -934,11 +939,21 @@ namespace
             size_t listSize = mButtons.size();
             if (mSelectedQuest < listSize)
                 mButtons[mSelectedQuest]->setTextColour(MyGUI::Colour::Black);
+            if (useControllerSelectionHighlight())
+            {
+                Gui::MWList* list = getWidget<Gui::MWList>(mQuestMode ? QuestsList : TopicsList);
+                list->setItemHighlightVisible(mSelectedQuest, false);
+            }
 
             mSelectedQuest = index;
             if (mSelectedQuest < listSize)
             {
                 mButtons[mSelectedQuest]->setTextColour(MWGui::journalHeaderColour);
+                if (useControllerSelectionHighlight())
+                {
+                    Gui::MWList* list = getWidget<Gui::MWList>(mQuestMode ? QuestsList : TopicsList);
+                    list->setItemHighlightVisible(mSelectedQuest, true);
+                }
 
                 // Scroll the list to keep the active item in view
                 Gui::MWList* list = getWidget<Gui::MWList>(mQuestMode ? QuestsList : TopicsList);
@@ -947,6 +962,24 @@ namespace
                     offset += mButtons[i]->getHeight();
                 list->setViewOffset(-offset);
             }
+        }
+
+        Utf8Stream::UnicodeChar getSelectedIndexChar() const
+        {
+            // Cyrillic capital A is a 0xd090 in UTF-8. Words can not be started with characters 26 or 28.
+            int russianOffset = 0xd090;
+            if (mSelectedIndex >= 26)
+                russianOffset++;
+            if (mSelectedIndex >= 27)
+                russianOffset++; // 27, not 28, because of skipping char 26
+            bool isRussian = (mEncoding == ToUTF8::WINDOWS_1251);
+            size_t ch = isRussian ? mSelectedIndex + russianOffset : mSelectedIndex + 'A';
+            return static_cast<Utf8Stream::UnicodeChar>(ch);
+        }
+
+        bool useControllerSelectionHighlight() const
+        {
+            return Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections;
         }
     };
 }

@@ -10,12 +10,19 @@ namespace MWWorld
     class Ptr;
 }
 
+namespace MyGUI
+{
+    class ListBox;
+}
+
 namespace MWGui
 {
     class DragAndDrop;
 
     size_t wrap(size_t index, size_t max, int delta);
     void setControllerFocus(const std::vector<MyGUI::Button*>& buttons, size_t index, bool selected);
+    bool useControllerSelectionHighlight();
+    void updateControllerListHighlight(MyGUI::ListBox* list, MyGUI::Widget* highlight);
 
     struct ControllerButtons
     {

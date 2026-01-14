@@ -15,6 +15,11 @@
 
 #include "../mwmechanics/alchemy.hpp"
 
+namespace MyGUI
+{
+    class ListBox;
+}
+
 namespace MWGui
 {
     class ItemView;
@@ -61,6 +66,8 @@ namespace MWGui
         MyGUI::Button* mDecreaseButton;
         Gui::AutoSizedButton* mFilterType;
         MyGUI::ComboBox* mFilterValue;
+        MyGUI::ListBox* mFilterList = nullptr;
+        MyGUI::Widget* mFilterListHighlight = nullptr;
         MyGUI::EditBox* mNameEdit;
         Gui::NumericEditBox* mBrewCountEdit;
 
@@ -81,6 +88,9 @@ namespace MWGui
         void onFilterEdited(MyGUI::EditBox* sender);
         void switchFilterType(MyGUI::Widget* sender);
         void updateFilters();
+        MyGUI::ListBox* getFilterListBox(MyGUI::Widget* focus) const;
+        void ensureFilterListHighlight(MyGUI::ListBox* list);
+        void updateFilterListHighlight(MyGUI::ListBox* list);
 
         void addRepeatController(MyGUI::Widget* widget);
 

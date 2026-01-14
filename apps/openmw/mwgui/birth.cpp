@@ -49,6 +49,15 @@ namespace MWGui
         mBirthList->setScrollVisible(true);
         mBirthList->eventListSelectAccept += MyGUI::newDelegate(this, &BirthDialog::onAccept);
         mBirthList->eventListChangePosition += MyGUI::newDelegate(this, &BirthDialog::onSelectBirth);
+        mBirthList->eventListChangeScroll += MyGUI::newDelegate(this, &BirthDialog::onListScroll);
+
+        if (MyGUI::Widget* client = mBirthList->getClientWidget())
+        {
+            mControllerHighlight = client->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setVisible(false);
+        }
 
         getWidget(mBackButton, "BackButton");
         mBackButton->eventMouseButtonClick += MyGUI::newDelegate(this, &BirthDialog::onBackClicked);
@@ -103,6 +112,8 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+
+        updateControllerListHighlight(mBirthList, mControllerHighlight);
     }
 
     void BirthDialog::setBirthId(const ESM::RefId& birthId)
@@ -120,6 +131,7 @@ namespace MWGui
         }
 
         updateSpells();
+        updateControllerListHighlight(mBirthList, mControllerHighlight);
     }
 
     // widget controls
@@ -147,14 +159,26 @@ namespace MWGui
     void BirthDialog::onSelectBirth(MyGUI::ListBox* /*sender*/, size_t index)
     {
         if (index == MyGUI::ITEM_NONE)
+        {
+            updateControllerListHighlight(mBirthList, mControllerHighlight);
             return;
+        }
 
         const ESM::RefId& birthId = *mBirthList->getItemDataAt<ESM::RefId>(index);
         if (mCurrentBirthId == birthId)
+        {
+            updateControllerListHighlight(mBirthList, mControllerHighlight);
             return;
+        }
 
         mCurrentBirthId = birthId;
         updateSpells();
+        updateControllerListHighlight(mBirthList, mControllerHighlight);
+    }
+
+    void BirthDialog::onListScroll(MyGUI::ListBox* sender, size_t /*position*/)
+    {
+        updateControllerListHighlight(sender, mControllerHighlight);
     }
 
     // update widget content
@@ -190,6 +214,8 @@ namespace MWGui
 
             index++;
         }
+
+        updateControllerListHighlight(mBirthList, mControllerHighlight);
     }
 
     void BirthDialog::updateSpells()

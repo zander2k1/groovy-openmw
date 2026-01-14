@@ -138,6 +138,15 @@ namespace MWGui
         mClassList->setScrollVisible(true);
         mClassList->eventListSelectAccept += MyGUI::newDelegate(this, &PickClassDialog::onAccept);
         mClassList->eventListChangePosition += MyGUI::newDelegate(this, &PickClassDialog::onSelectClass);
+        mClassList->eventListChangeScroll += MyGUI::newDelegate(this, &PickClassDialog::onListScroll);
+
+        if (MyGUI::Widget* client = mClassList->getClientWidget())
+        {
+            mControllerHighlight = client->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setVisible(false);
+        }
 
         getWidget(mClassImage, "ClassImage");
 
@@ -194,6 +203,8 @@ namespace MWGui
 
         if (!classId.empty())
             setClassId(classId);
+
+        updateControllerListHighlight(mClassList, mControllerHighlight);
     }
 
     void PickClassDialog::setClassId(const ESM::RefId& classId)
@@ -211,6 +222,7 @@ namespace MWGui
         }
 
         updateStats();
+        updateControllerListHighlight(mClassList, mControllerHighlight);
     }
 
     // widget controls
@@ -238,14 +250,26 @@ namespace MWGui
     void PickClassDialog::onSelectClass(MyGUI::ListBox* sender, size_t index)
     {
         if (index == MyGUI::ITEM_NONE)
+        {
+            updateControllerListHighlight(sender, mControllerHighlight);
             return;
+        }
 
         const ESM::RefId& classId = *mClassList->getItemDataAt<ESM::RefId>(index);
         if (mCurrentClassId == classId)
+        {
+            updateControllerListHighlight(sender, mControllerHighlight);
             return;
+        }
 
         mCurrentClassId = classId;
         updateStats();
+        updateControllerListHighlight(mClassList, mControllerHighlight);
+    }
+
+    void PickClassDialog::onListScroll(MyGUI::ListBox* sender, size_t /*position*/)
+    {
+        updateControllerListHighlight(sender, mControllerHighlight);
     }
 
     // update widget content
@@ -286,6 +310,8 @@ namespace MWGui
             }
             ++index;
         }
+
+        updateControllerListHighlight(mClassList, mControllerHighlight);
     }
 
     void PickClassDialog::updateStats()

@@ -65,6 +65,15 @@ namespace MWGui
 
         const int lineHeight = Settings::gui().mFontSize + 2;
 
+        MyGUI::Widget* highlight = nullptr;
+        if (price <= playerGold && useControllerSelectionHighlight())
+        {
+            highlight = mSpellsView->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", 0, mCurrentY, 200, lineHeight, MyGUI::Align::Default);
+            highlight->setNeedMouseFocus(false);
+            highlight->setVisible(false);
+        }
+
         MyGUI::Button* toAdd = mSpellsView->createWidget<MyGUI::Button>(price <= playerGold
                 ? "SandTextButton"
                 : "SandTextButtonDisabled", // can't use setEnabled since that removes tooltip
@@ -82,7 +91,14 @@ namespace MWGui
         toAdd->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellBuyingWindow::onSpellButtonClick);
         mSpellsWidgetMap.insert(std::make_pair(toAdd, spell.mId));
         if (price <= playerGold)
+        {
             mSpellButtons.emplace_back(std::make_pair(toAdd, mSpellsWidgetMap.size()));
+            if (highlight)
+            {
+                highlight->setSize(mSpellsView->getWidth(), lineHeight);
+                mSpellHighlights.emplace_back(highlight);
+            }
+        }
     }
 
     void SpellBuyingWindow::clearSpells()
@@ -93,6 +109,7 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(mSpellsView->getChildAt(0));
         mSpellsWidgetMap.clear();
         mSpellButtons.clear();
+        mSpellHighlights.clear();
     }
 
     void SpellBuyingWindow::setPtr(const MWWorld::Ptr& actor)
@@ -149,6 +166,8 @@ namespace MWGui
             if (mSpellButtons.size() > 0)
             {
                 mSpellButtons[0].first->setStateSelected(true);
+                if (useControllerSelectionHighlight() && !mSpellHighlights.empty())
+                    mSpellHighlights[0]->setVisible(true);
 
                 MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
@@ -255,8 +274,12 @@ namespace MWGui
                 return true;
 
             mSpellButtons[mControllerFocus].first->setStateSelected(false);
+            if (useControllerSelectionHighlight() && mControllerFocus < mSpellHighlights.size())
+                mSpellHighlights[mControllerFocus]->setVisible(false);
             mControllerFocus = wrap(mControllerFocus, mSpellButtons.size(), -1);
             mSpellButtons[mControllerFocus].first->setStateSelected(true);
+            if (useControllerSelectionHighlight() && mControllerFocus < mSpellHighlights.size())
+                mSpellHighlights[mControllerFocus]->setVisible(true);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
@@ -266,8 +289,12 @@ namespace MWGui
                 return true;
 
             mSpellButtons[mControllerFocus].first->setStateSelected(false);
+            if (useControllerSelectionHighlight() && mControllerFocus < mSpellHighlights.size())
+                mSpellHighlights[mControllerFocus]->setVisible(false);
             mControllerFocus = wrap(mControllerFocus, mSpellButtons.size(), 1);
             mSpellButtons[mControllerFocus].first->setStateSelected(true);
+            if (useControllerSelectionHighlight() && mControllerFocus < mSpellHighlights.size())
+                mSpellHighlights[mControllerFocus]->setVisible(true);
         }
         else
             return true;
@@ -292,5 +319,10 @@ namespace MWGui
         }
 
         return true;
+    }
+
+    bool SpellBuyingWindow::useControllerSelectionHighlight() const
+    {
+        return Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections;
     }
 }

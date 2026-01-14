@@ -79,6 +79,7 @@ namespace MWGui
 
         void onSelectRace(MyGUI::ListBox* sender, size_t index);
         void onAccept(MyGUI::ListBox* sender, size_t index);
+        void onListScroll(MyGUI::ListBox* sender, size_t position);
 
         void onOkClicked(MyGUI::Widget* sender);
         void onBackClicked(MyGUI::Widget* sender);
@@ -100,6 +101,7 @@ namespace MWGui
 
         MyGUI::ImageBox* mPreviewImage;
         MyGUI::ListBox* mRaceList;
+        MyGUI::Widget* mControllerHighlight = nullptr;
         MyGUI::ScrollBar* mHeadRotate;
         MyGUI::Button* mBackButton;
         MyGUI::Button* mOkButton;

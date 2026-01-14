@@ -19,10 +19,11 @@
 namespace MWGui
 {
 
-    SpellView::LineInfo::LineInfo(
-        MyGUI::Widget* leftWidget, MyGUI::Widget* rightWidget, SpellModel::ModelIndex spellIndex)
+    SpellView::LineInfo::LineInfo(MyGUI::Widget* leftWidget, MyGUI::Widget* rightWidget, MyGUI::Widget* highlight,
+        SpellModel::ModelIndex spellIndex)
         : mLeftWidget(leftWidget)
         , mRightWidget(rightWidget)
+        , mHighlight(highlight)
         , mSpellIndex(spellIndex)
     {
     }
@@ -109,13 +110,21 @@ namespace MWGui
                 skin = spell.mActive ? "SpellTextEquippedController" : "SpellTextUnequippedController";
             const std::string captionSuffix = MWGui::ToolTips::getCountString(spell.mCount);
 
+            MyGUI::Widget* highlight = nullptr;
+            if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
+            {
+                highlight = mScrollView->createWidget<MyGUI::Widget>("ControllerHighlight",
+                    MyGUI::IntCoord(0, 0, 0, spellHeight), MyGUI::Align::Left | MyGUI::Align::Top);
+                highlight->setNeedMouseFocus(false);
+                highlight->setVisible(false);
+            }
+
             Gui::SharedStateButton* t = mScrollView->createWidget<Gui::SharedStateButton>(
                 skin, MyGUI::IntCoord(0, 0, 0, spellHeight), MyGUI::Align::Left | MyGUI::Align::Top);
             t->setNeedKeyFocus(true);
             t->setCaption(spell.mName + captionSuffix);
             t->setTextAlign(MyGUI::Align::Left);
             adjustSpellWidget(spell, i, t);
-            mButtons.emplace_back(t, i);
 
             if (!spell.mCostColumn.empty() && mShowCostColumn)
             {
@@ -130,10 +139,12 @@ namespace MWGui
                 group.push_back(costChance);
                 Gui::SharedStateButton::createButtonGroup(group);
 
-                mLines.emplace_back(t, costChance, i);
+                mLines.emplace_back(t, costChance, highlight, i);
             }
             else
-                mLines.emplace_back(t, static_cast<MyGUI::Widget*>(nullptr), i);
+                mLines.emplace_back(t, static_cast<MyGUI::Widget*>(nullptr), highlight, i);
+
+            mButtons.push_back({ t, i, mLines.size() - 1 });
 
             t->setStateSelected(spell.mSelected);
         }
@@ -210,6 +221,8 @@ namespace MWGui
         for (LineInfo& line : mLines)
         {
             int lineHeight = line.mLeftWidget->getHeight();
+            if (line.mHighlight)
+                line.mHighlight->setCoord(0, height, width, lineHeight);
             line.mLeftWidget->setCoord(4, height, width - 8, lineHeight);
             if (line.mRightWidget)
             {
@@ -242,7 +255,8 @@ namespace MWGui
             MyGUI::ImageBox* separator = mScrollView->createWidget<MyGUI::ImageBox>(
                 "MW_HLine", MyGUI::IntCoord(0, 0, mScrollView->getWidth(), 18), MyGUI::Align::Left | MyGUI::Align::Top);
             separator->setNeedMouseFocus(false);
-            mLines.emplace_back(separator, static_cast<MyGUI::Widget*>(nullptr), NoSpellIndex);
+            mLines.emplace_back(separator, static_cast<MyGUI::Widget*>(nullptr), static_cast<MyGUI::Widget*>(nullptr),
+                NoSpellIndex);
         }
 
         MyGUI::TextBox* groupWidget = mScrollView->createWidget<Gui::TextBox>("SandBrightText",
@@ -259,10 +273,11 @@ namespace MWGui
             groupWidget2->setTextAlign(MyGUI::Align::Right);
             groupWidget2->setNeedMouseFocus(false);
 
-            mLines.emplace_back(groupWidget, groupWidget2, NoSpellIndex);
+            mLines.emplace_back(groupWidget, groupWidget2, static_cast<MyGUI::Widget*>(nullptr), NoSpellIndex);
         }
         else
-            mLines.emplace_back(groupWidget, static_cast<MyGUI::Widget*>(nullptr), NoSpellIndex);
+            mLines.emplace_back(
+                groupWidget, static_cast<MyGUI::Widget*>(nullptr), static_cast<MyGUI::Widget*>(nullptr), NoSpellIndex);
 
         mGroupIndices.push_back(mButtons.size());
     }
@@ -331,6 +346,8 @@ namespace MWGui
         mControllerActiveWindow = active;
         if (active)
             update();
+        else
+            updateControllerFocus(mControllerFocus, mButtons.size());
     }
 
     void SpellView::onControllerButton(const unsigned char button)
@@ -347,7 +364,7 @@ namespace MWGui
                 // Select the focused item, if any.
                 if (mControllerFocus < mButtons.size())
                 {
-                    onSpellSelected(mButtons[mControllerFocus].first);
+                    onSpellSelected(mButtons[mControllerFocus].mButton);
                     MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                 }
                 break;
@@ -425,20 +442,26 @@ namespace MWGui
 
         if (prevFocus < mButtons.size())
         {
-            Gui::SharedStateButton* prev = mButtons[prevFocus].first;
+            Gui::SharedStateButton* prev = mButtons[prevFocus].mButton;
             if (prev)
                 prev->onMouseLostFocus(nullptr);
+            size_t prevLine = mButtons[prevFocus].mLineIndex;
+            if (prevLine < mLines.size() && mLines[prevLine].mHighlight)
+                mLines[prevLine].mHighlight->setVisible(false);
         }
 
         if (mControllerActiveWindow && newFocus < mButtons.size())
         {
-            Gui::SharedStateButton* focused = mButtons[newFocus].first;
+            Gui::SharedStateButton* focused = mButtons[newFocus].mButton;
             if (focused)
             {
                 focused->onMouseSetFocus(nullptr);
+                size_t newLine = mButtons[newFocus].mLineIndex;
+                if (newLine < mLines.size() && mLines[newLine].mHighlight)
+                    mLines[newLine].mHighlight->setVisible(true);
 
                 // Scroll the list to keep the active item in view
-                int line = mButtons[newFocus].second;
+                int line = mButtons[newFocus].mSpellIndex;
                 if (line <= 5)
                     mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
                 else

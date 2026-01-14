@@ -306,6 +306,7 @@ bool Launcher::SettingsPage::loadSettings()
         connect(controllerMenusCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotControllerMenusToggled);
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
+        loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         scalingSpinBox->setValue(Settings::gui().mScalingFactor);
@@ -501,6 +502,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*stretchBackgroundCheckBox, Settings::gui().mStretchMenuBackground);
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
+        saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
@@ -562,6 +564,7 @@ void Launcher::SettingsPage::slotAnimSourcesToggled(bool checked)
 void Launcher::SettingsPage::slotControllerMenusToggled(bool checked)
 {
     controllerMenuTooltipsCheckBox->setEnabled(checked);
+    controllerMenuHighlightCheckBox->setEnabled(checked);
 }
 
 void Launcher::SettingsPage::slotPostProcessToggled(bool checked)
