@@ -684,16 +684,53 @@ namespace MWInput
         if (mDragDrop && action != A_GameMenu && action != A_Inventory)
             return;
 
-        if (manager->joystickLastUsed() && manager->getControlSwitch("playercontrols"))
+        const bool joystickUsed = manager->joystickLastUsed() && manager->getControlSwitch("playercontrols");
+        if (joystickUsed)
         {
+            if (action == A_ToggleWeapon || action == A_ToggleSpell)
+            {
+                // Let chorded inputs win: toggle only on release if no chord fired.
+                if (previousValue <= 0.6f && currentValue > 0.6f)
+                {
+                    if (action == A_ToggleWeapon)
+                        mToggleWeaponChorded = false;
+                    else
+                        mToggleSpellChorded = false;
+                    return;
+                }
+                if (previousValue > 0.6f && currentValue <= 0.6f)
+                {
+                    const bool chorded = action == A_ToggleWeapon ? mToggleWeaponChorded : mToggleSpellChorded;
+                    if (action == A_ToggleWeapon)
+                        mToggleWeaponChorded = false;
+                    else
+                        mToggleSpellChorded = false;
+                    if (!chorded)
+                        manager->executeAction(action);
+                    return;
+                }
+            }
+
             if (action == A_Use && actionIsActive(A_ToggleWeapon))
+            {
                 action = A_CycleWeaponRight;
+                mToggleWeaponChorded = true;
+            }
             else if (action == A_Use && actionIsActive(A_ToggleSpell))
+            {
                 action = A_CycleSpellRight;
+                mToggleSpellChorded = true;
+            }
             else if (action == A_Jump && actionIsActive(A_ToggleWeapon))
+            {
                 action = A_CycleWeaponLeft;
+                mToggleWeaponChorded = true;
+            }
             else if (action == A_Jump && actionIsActive(A_ToggleSpell))
+            {
                 action = A_CycleSpellLeft;
+                mToggleSpellChorded = true;
+            }
         }
 
         if (previousValue <= 0.6 && currentValue > 0.6)

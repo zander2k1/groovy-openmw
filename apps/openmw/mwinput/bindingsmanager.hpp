@@ -76,6 +76,8 @@ namespace MWInput
         std::filesystem::path mUserFile;
 
         bool mDragDrop;
+        bool mToggleWeaponChorded = false;
+        bool mToggleSpellChorded = false;
     };
 }
 #endif
