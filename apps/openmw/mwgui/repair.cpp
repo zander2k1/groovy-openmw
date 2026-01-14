@@ -24,7 +24,8 @@ namespace MWGui
 {
 
     Repair::Repair()
-        : WindowBase("openmw_repair.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_repair.layout" : "openmw_repair.layout")
     {
         getWidget(mRepairBox, "RepairBox");
         getWidget(mToolBox, "ToolBox");

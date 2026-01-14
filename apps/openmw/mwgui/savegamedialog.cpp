@@ -38,7 +38,8 @@
 namespace MWGui
 {
     SaveGameDialog::SaveGameDialog()
-        : WindowModal("openmw_savegame_dialog.layout")
+        : WindowModal(
+              Settings::gui().mControllerMenus ? "openmw_controller_savegame_dialog.layout" : "openmw_savegame_dialog.layout")
         , mSaving(true)
         , mCurrentCharacter(nullptr)
         , mCurrentSlot(nullptr)

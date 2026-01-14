@@ -35,7 +35,8 @@ namespace
 namespace MWGui
 {
     LevelupDialog::LevelupDialog()
-        : WindowBase("openmw_levelup_dialog.layout")
+        : WindowBase(
+              Settings::gui().mControllerMenus ? "openmw_controller_levelup_dialog.layout" : "openmw_levelup_dialog.layout")
         , mCoinCount(sMaxCoins)
     {
         getWidget(mOkButton, "OkButton");
