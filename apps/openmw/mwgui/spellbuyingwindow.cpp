@@ -25,8 +25,8 @@
 namespace MWGui
 {
     SpellBuyingWindow::SpellBuyingWindow()
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_spell_buying_window.layout" : "openmw_spell_buying_window.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_spell_buying_window.layout"
+                                                      : "openmw_spell_buying_window.layout")
         , mCurrentY(0)
         , mControllerFocus(0)
     {
@@ -39,9 +39,10 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             mDisableGamepadCursor = true;
-            mControllerButtons.mA = "#{Interface:Buy}";
+            mControllerButtons = {};
+            mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Cancel}";
-            mControllerButtons.mR3 = "#{Interface:Info}";
+            mControllerButtons.mY = "#{Interface:Info}";
         }
     }
 
@@ -262,11 +263,6 @@ namespace MWGui
             onCancelButtonClicked(mCancelButton);
             return true;
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK)
-        {
-            // Toggle info tooltip
-            winMgr->setControllerTooltipEnabled(!winMgr->getControllerTooltipEnabled());
-        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             winMgr->restoreControllerTooltips();
@@ -325,5 +321,13 @@ namespace MWGui
     bool SpellBuyingWindow::useControllerSelectionHighlight() const
     {
         return Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections;
+    }
+
+    MyGUI::Widget* SpellBuyingWindow::getControllerFocusTooltipWidget() const
+    {
+        if (mSpellButtons.empty() || mControllerFocus >= mSpellButtons.size())
+            return nullptr;
+
+        return mSpellButtons[mControllerFocus].first;
     }
 }

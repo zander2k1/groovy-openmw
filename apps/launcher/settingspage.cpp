@@ -1,14 +1,21 @@
 #include "settingspage.hpp"
 
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <string>
 
 #include <QCompleter>
+#include <QDir>
+#include <QDirIterator>
 #include <QFileDialog>
+#include <QFileInfo>
+#include <QMap>
 #include <QString>
+#include <QTextStream>
 
 #include <components/config/gamesettings.hpp>
+#include <components/misc/utf8qtextstream.hpp>
 
 #include <components/settings/values.hpp>
 
@@ -79,6 +86,132 @@ namespace
         }
         return 0;
     }
+
+    QStringList buildKeyboardSearchDirs(const Config::GameSettings& gameSettings)
+    {
+        QStringList searchDirs;
+        for (const auto& dir : gameSettings.getDataDirs())
+            searchDirs.push_back(dir.value);
+        const QString dataLocal = gameSettings.getDataLocal();
+        if (!dataLocal.isEmpty())
+            searchDirs.push_back(dataLocal);
+        const QString resourcesVfs = gameSettings.getResourcesVfs();
+        if (!resourcesVfs.isEmpty())
+            searchDirs.push_back(resourcesVfs);
+        searchDirs.removeDuplicates();
+        return searchDirs;
+    }
+
+    QString readSimpleYamlValue(const QString& filePath, const QString& key)
+    {
+        QFile file(filePath);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return {};
+
+        QTextStream stream(&file);
+        Misc::ensureUtf8Encoding(stream);
+        const QString prefix = key + ":";
+        while (!stream.atEnd())
+        {
+            QString line = stream.readLine().trimmed();
+            if (line.isEmpty() || line.startsWith("#"))
+                continue;
+            if (!line.startsWith(prefix))
+                continue;
+            QString value = line.mid(prefix.size()).trimmed();
+            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith('\'') && value.endsWith('\'')))
+                value = value.mid(1, value.size() - 2);
+            return value;
+        }
+        return {};
+    }
+
+    struct KeyboardFileInfo
+    {
+        QString baseName;
+        QString defaultLang;
+        QString languageName;
+        QString filePath;
+    };
+
+    QList<KeyboardFileInfo> findKeyboardFiles(const QStringList& searchDirs)
+    {
+        QMap<QString, KeyboardFileInfo> filesByName;
+        for (const QString& dir : searchDirs)
+        {
+            QDir keyboardDir(QDir(dir).filePath("mygui/Keyboard"));
+            if (!keyboardDir.exists())
+                continue;
+            QDirIterator it(keyboardDir.absolutePath(), QStringList() << "*.yaml", QDir::Files);
+            while (it.hasNext())
+            {
+                it.next();
+                QFileInfo info(it.filePath());
+                const QString baseName = info.completeBaseName();
+                if (filesByName.contains(baseName))
+                    continue;
+                KeyboardFileInfo entry;
+                entry.baseName = baseName;
+                entry.filePath = info.filePath();
+                entry.defaultLang = readSimpleYamlValue(entry.filePath, QStringLiteral("defaultLang"));
+                entry.languageName = readSimpleYamlValue(entry.filePath, QStringLiteral("languageName"));
+                if (entry.languageName.isEmpty())
+                    entry.languageName = entry.baseName;
+                filesByName.insert(baseName, entry);
+            }
+        }
+        QList<KeyboardFileInfo> files = filesByName.values();
+        std::sort(files.begin(), files.end(), [](const KeyboardFileInfo& left, const KeyboardFileInfo& right) {
+            return QString::compare(left.baseName, right.baseName, Qt::CaseInsensitive) < 0;
+        });
+        return files;
+    }
+
+    QString normalizeLocaleName(QString value)
+    {
+        value.replace('-', '_');
+        return value.toLower();
+    }
+
+    QString selectKeyboardFileForLayouts(const QList<KeyboardFileInfo>& files, const QString& selectedBaseName)
+    {
+        if (!selectedBaseName.isEmpty())
+            return selectedBaseName;
+
+        QStringList preferredLocales;
+        const auto& locales = Settings::general().mPreferredLocales.get();
+        for (const std::string& locale : locales)
+            preferredLocales.push_back(QString::fromStdString(locale));
+        if (preferredLocales.isEmpty())
+            preferredLocales.push_back(QStringLiteral("en"));
+
+        for (const QString& locale : preferredLocales)
+        {
+            const QString normalized = normalizeLocaleName(locale);
+            const QString base = normalized.section('_', 0, 0);
+            for (const KeyboardFileInfo& file : files)
+            {
+                const QString fileLang = normalizeLocaleName(file.defaultLang);
+                if (!fileLang.isEmpty() && (fileLang == normalized || fileLang == base))
+                    return file.baseName;
+            }
+        }
+
+        if (!files.isEmpty())
+            return files.front().baseName;
+
+        return {};
+    }
+
+    QString findKeyboardPath(const QList<KeyboardFileInfo>& files, const QString& baseName)
+    {
+        for (const KeyboardFileInfo& file : files)
+        {
+            if (file.baseName == baseName)
+                return file.filePath;
+        }
+        return {};
+    }
 }
 
 Launcher::SettingsPage::SettingsPage(Config::GameSettings& gameSettings, QWidget* parent)
@@ -87,6 +220,9 @@ Launcher::SettingsPage::SettingsPage(Config::GameSettings& gameSettings, QWidget
 {
     setObjectName("SettingsPage");
     setupUi(this);
+
+    connect(virtualKeyboardLanguageComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+        &SettingsPage::slotVirtualKeyboardLanguageChanged);
 
     for (const std::string& name : Launcher::enumerateOpenALDevices())
     {
@@ -320,10 +456,21 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingFloat(Settings::gui().mControllerMenuTurboRepeat, *controllerMenuTurboSpinBox);
         loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
+        loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         scalingSpinBox->setValue(Settings::gui().mScalingFactor);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
+        populateVirtualKeyboardLanguageComboBox();
+        const QString languageSetting = QString::fromStdString(Settings::gui().mVirtualKeyboardLanguage);
+        int languageIndex = virtualKeyboardLanguageComboBox->findData(languageSetting);
+        if (languageIndex != -1)
+            virtualKeyboardLanguageComboBox->setCurrentIndex(languageIndex);
+        populateVirtualKeyboardLayoutComboBox(virtualKeyboardLanguageComboBox->currentData().toString());
+        const QString layoutSetting = QString::fromStdString(Settings::gui().mVirtualKeyboardLayout);
+        int layoutIndex = virtualKeyboardLayoutComboBox->findData(layoutSetting);
+        if (layoutIndex != -1)
+            virtualKeyboardLayoutComboBox->setCurrentIndex(layoutIndex);
     }
 
     // Bug fixes
@@ -519,10 +666,15 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingFloat(*controllerMenuTurboSpinBox, Settings::gui().mControllerMenuTurboRepeat);
         saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
+        saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
+        Settings::gui().mVirtualKeyboardLanguage.set(
+            virtualKeyboardLanguageComboBox->currentData().toString().toStdString());
+        Settings::gui().mVirtualKeyboardLayout.set(
+            virtualKeyboardLayoutComboBox->currentData().toString().toStdString());
     }
 
     // Bug fixes
@@ -610,4 +762,50 @@ void Launcher::SettingsPage::slotDistantLandToggled(bool checked)
 {
     activeGridObjectPagingCheckBox->setEnabled(checked);
     objectPagingMinSizeComboBox->setEnabled(checked);
+}
+
+void Launcher::SettingsPage::slotVirtualKeyboardLanguageChanged(int index)
+{
+    Q_UNUSED(index);
+
+    const QString languageCode = virtualKeyboardLanguageComboBox->currentData().toString();
+    const QString currentLayout = virtualKeyboardLayoutComboBox->currentData().toString();
+    populateVirtualKeyboardLayoutComboBox(languageCode);
+    int layoutIndex = virtualKeyboardLayoutComboBox->findData(currentLayout);
+    if (layoutIndex != -1)
+        virtualKeyboardLayoutComboBox->setCurrentIndex(layoutIndex);
+}
+
+void Launcher::SettingsPage::populateVirtualKeyboardLanguageComboBox()
+{
+    virtualKeyboardLanguageComboBox->clear();
+    virtualKeyboardLanguageComboBox->addItem(tr("Automatic"), "");
+
+    const QStringList searchDirs = buildKeyboardSearchDirs(mGameSettings);
+    const QList<KeyboardFileInfo> files = findKeyboardFiles(searchDirs);
+    for (const KeyboardFileInfo& file : files)
+        virtualKeyboardLanguageComboBox->addItem(file.languageName, file.baseName);
+}
+
+void Launcher::SettingsPage::populateVirtualKeyboardLayoutComboBox(const QString& languageCode)
+{
+    virtualKeyboardLayoutComboBox->clear();
+    virtualKeyboardLayoutComboBox->addItem(tr("Automatic"), "");
+
+    const QStringList searchDirs = buildKeyboardSearchDirs(mGameSettings);
+    const QList<KeyboardFileInfo> files = findKeyboardFiles(searchDirs);
+    const QString selectedFile = selectKeyboardFileForLayouts(files, languageCode);
+    const QString localePath = findKeyboardPath(files, selectedFile);
+
+    QString layoutsValue = readSimpleYamlValue(localePath, QStringLiteral("Layouts"));
+    if (layoutsValue.isEmpty())
+        layoutsValue = QStringLiteral("qwerty");
+
+    const QStringList layouts = layoutsValue.split(',', Qt::SkipEmptyParts);
+    for (QString layout : layouts)
+    {
+        layout = layout.trimmed();
+        if (!layout.isEmpty())
+            virtualKeyboardLayoutComboBox->addItem(layout, layout);
+    }
 }

@@ -230,6 +230,11 @@ namespace
             mControllerButtons.mX = "#{OMWEngine:JournalQuests}";
             mControllerButtons.mY = "#{Interface:Topics}";
 
+            setVisible(OptionsBTN, false);
+            setVisible(CloseBTN, false);
+            getWidget<MyGUI::Widget>(OptionsBTN)->setEnabled(false);
+            getWidget<MyGUI::Widget>(CloseBTN)->setEnabled(false);
+
             mQuestMode = false;
             mAllQuests = false;
             mOptionsMode = false;
@@ -537,8 +542,8 @@ namespace
 
             if (Settings::gui().mControllerMenus)
             {
-                list->setProperty("ControllerHighlightSkin",
-                    useControllerSelectionHighlight() ? "ControllerHighlight" : "");
+                list->setProperty(
+                    "ControllerHighlightSkin", useControllerSelectionHighlight() ? "ControllerHighlight" : "");
                 setControllerFocusedQuest(0);
                 addControllerButtons(list, mSelectedQuest);
             }
@@ -614,8 +619,8 @@ namespace
 
             if (Settings::gui().mControllerMenus)
             {
-                list->setProperty("ControllerHighlightSkin",
-                    useControllerSelectionHighlight() ? "ControllerHighlight" : "");
+                list->setProperty(
+                    "ControllerHighlightSkin", useControllerSelectionHighlight() ? "ControllerHighlight" : "");
                 addControllerButtons(list, mSelectedQuest);
                 setControllerFocusedQuest(std::min(mSelectedQuest, mButtons.size()));
             }
@@ -714,18 +719,9 @@ namespace
             else
                 mControllerButtons.mB = "#{Interface:Close}";
 
-            mControllerButtons.mL1.clear();
-            mControllerButtons.mR1.clear();
+            mControllerButtons.mL1 = "#{Interface:Prev}";
+            mControllerButtons.mR1 = "#{Interface:Next}";
             mControllerButtons.mR3.clear();
-            if (!mOptionsMode)
-            {
-                mControllerButtons.mL1 = "#{Interface:Prev}";
-                mControllerButtons.mR1 = "#{Interface:Next}";
-            }
-            else if (mQuestMode)
-            {
-                mControllerButtons.mR3 = "#{OMWEngine:JournalShowAll}";
-            }
             return &mControllerButtons;
         }
 
@@ -796,10 +792,10 @@ namespace
                     if (mSelectedQuest < list->getItemCount())
                         notifyTopicSelected(list->getItemNameAt(mSelectedQuest), 0);
                 }
-            else
-            {
-                notifyIndexLinkClicked(getSelectedIndexChar());
-            }
+                else
+                {
+                    notifyIndexLinkClicked(getSelectedIndexChar());
+                }
             }
             else if (arg.button == SDL_CONTROLLER_BUTTON_B) // B: Back
             {
@@ -992,7 +988,6 @@ std::unique_ptr<MWGui::JournalWindow> MWGui::JournalWindow::create(
 }
 
 MWGui::JournalWindow::JournalWindow()
-    : BookWindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_journal.layout" : "openmw_journal.layout")
+    : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_journal.layout" : "openmw_journal.layout")
 {
 }

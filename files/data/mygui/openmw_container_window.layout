@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Window" layer="Windows" position="0 0 600 300" name="_Main">
+    <Widget type="Window" skin="MW_Window_Pinnable_DialogNoTransp" layer="Windows" position="0 0 600 300" name="_Main">
         <Property key="MinSize" value="245 145"/>
         <Property key="Visible" value="false"/>
 

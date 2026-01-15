@@ -464,6 +464,8 @@ namespace MWGui
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:OK}";
         mControllerButtons.mLStick = "#{Interface:Mouse}";
+        if (Settings::gui().mControllerMenus)
+            mControllerButtons = {};
     }
 
     void SettingsWindow::onTabChanged(MyGUI::TabControl* /*sender*/, size_t /*index*/)

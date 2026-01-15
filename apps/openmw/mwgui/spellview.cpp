@@ -2,6 +2,7 @@
 
 #include <MyGUI_FactoryManager.h>
 #include <MyGUI_Gui.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ScrollView.h>
 
@@ -255,8 +256,8 @@ namespace MWGui
             MyGUI::ImageBox* separator = mScrollView->createWidget<MyGUI::ImageBox>(
                 "MW_HLine", MyGUI::IntCoord(0, 0, mScrollView->getWidth(), 18), MyGUI::Align::Left | MyGUI::Align::Top);
             separator->setNeedMouseFocus(false);
-            mLines.emplace_back(separator, static_cast<MyGUI::Widget*>(nullptr), static_cast<MyGUI::Widget*>(nullptr),
-                NoSpellIndex);
+            mLines.emplace_back(
+                separator, static_cast<MyGUI::Widget*>(nullptr), static_cast<MyGUI::Widget*>(nullptr), NoSpellIndex);
         }
 
         MyGUI::TextBox* groupWidget = mScrollView->createWidget<Gui::TextBox>("SandBrightText",
@@ -341,6 +342,27 @@ namespace MWGui
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
     }
 
+    MyGUI::Widget* SpellView::getControllerFocusWidget() const
+    {
+        if (!mControllerActiveWindow || mButtons.empty())
+            return nullptr;
+        if (mControllerFocus >= mButtons.size())
+            return nullptr;
+        return mButtons[mControllerFocus].mButton;
+    }
+
+    void SpellView::setControllerFocusIndex(size_t index)
+    {
+        if (mButtons.empty())
+            return;
+
+        size_t prevFocus = mControllerFocus;
+        mControllerFocus = std::min(index, mButtons.size() - 1);
+
+        if (mControllerActiveWindow)
+            updateControllerFocus(prevFocus, mControllerFocus);
+    }
+
     void SpellView::setActiveControllerWindow(bool active)
     {
         mControllerActiveWindow = active;
@@ -367,10 +389,6 @@ namespace MWGui
                     onSpellSelected(mButtons[mControllerFocus].mButton);
                     MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                 }
-                break;
-            case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
-                // Toggle info tooltip
-                winMgr->setControllerTooltipEnabled(!winMgr->getControllerTooltipEnabled());
                 break;
             case SDL_CONTROLLER_BUTTON_DPAD_UP:
                 winMgr->restoreControllerTooltips();
@@ -434,8 +452,11 @@ namespace MWGui
 
     void SpellView::updateControllerFocus(size_t prevFocus, size_t newFocus)
     {
-        MWBase::Environment::get().getWindowManager()->setCursorVisible(
-            !MWBase::Environment::get().getWindowManager()->getControllerTooltipVisible());
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (Settings::gui().mControllerMenus)
+            winMgr->setCursorVisible(false);
+        else
+            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
 
         if (mButtons.empty())
             return;
@@ -473,8 +494,12 @@ namespace MWGui
                 MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->restoreControllerTooltips();
 
-                if (winMgr->getControllerTooltipVisible())
-                    MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
+                MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
+                const MyGUI::IntCoord coord = focused->getAbsoluteCoord();
+                const int mouseX = coord.left + coord.width / 2;
+                const int mouseY = coord.top + coord.height / 4;
+                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
             }
         }
     }

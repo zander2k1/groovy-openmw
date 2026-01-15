@@ -21,7 +21,7 @@ namespace MWGui
 
         void onOpen() override;
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
         void clear() override { resetReference(); }
 
         void setSoulGem(const MWWorld::Ptr& gem);
@@ -35,6 +35,7 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "EnchantingDialog"; }
         MyGUI::EditBox* getNameEdit() const { return mName; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     protected:
         void onReferenceUnavailable() override;
@@ -52,6 +53,11 @@ namespace MWGui
         void updateLabels();
         void onTypeButtonClicked(MyGUI::Widget* sender);
         void onAccept(MyGUI::EditBox* sender);
+        void openVirtualKeyboard(MyGUI::EditBox* edit);
+        void setControllerFocusWidget(MyGUI::Widget* widget);
+        void setControllerEffectsFocusActive(bool active);
+        void updateControllerFocusHighlight();
+        void updateEditStaticState();
 
         std::unique_ptr<ItemSelectionDialog> mItemSelectionDialog;
 
@@ -71,6 +77,8 @@ namespace MWGui
         MyGUI::TextBox* mSuccessChance;
         MyGUI::TextBox* mPrice;
         MyGUI::TextBox* mPriceText;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
+        bool mControllerEffectsFocusActive = false;
 
         MWMechanics::Enchanting mEnchanting;
         ESM::EffectList mEffectList;

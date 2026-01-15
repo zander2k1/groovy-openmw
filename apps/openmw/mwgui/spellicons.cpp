@@ -52,8 +52,9 @@ namespace MWGui
         {
             const ESM::MagicEffect* effect = store->get<ESM::MagicEffect>().find(effectId);
 
-            float remainingDuration = 0;
-            float totalDuration = 0;
+        float remainingDuration = 0;
+        float totalDuration = 0;
+        float displayDuration = -1.f;
 
             std::string sourcesDescription;
 
@@ -135,6 +136,9 @@ namespace MWGui
                     }
                 }
                 if (effectInfo.mRemainingTime > -1 && Settings::game().mShowEffectDuration)
+                    displayDuration = std::max(displayDuration, effectInfo.mRemainingTime);
+
+                if (effectInfo.mRemainingTime > -1 && Settings::game().mShowEffectDuration)
                     sourcesDescription
                         += MWGui::ToolTips::getDurationString(effectInfo.mRemainingTime, " #{sDuration}");
 
@@ -144,6 +148,8 @@ namespace MWGui
             if (remainingDuration > 0.f)
             {
                 MyGUI::ImageBox* image;
+                const std::string& name = ESM::MagicEffect::indexToGmstString(effectId);
+                const std::string nameTag = "#{" + name + "}";
                 if (mWidgetMap.find(effectId) == mWidgetMap.end())
                 {
                     image = parent->createWidget<MyGUI::ImageBox>(
@@ -154,26 +160,34 @@ namespace MWGui
                         Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effect->mIcon),
                             *MWBase::Environment::get().getResourceSystem()->getVFS()));
 
-                    const std::string& name = ESM::MagicEffect::indexToGmstString(effectId);
-
                     ToolTipInfo tooltipInfo;
-                    tooltipInfo.caption = "#{" + name + "}";
+                    tooltipInfo.caption = nameTag;
                     tooltipInfo.icon = effect->mIcon;
                     tooltipInfo.imageSize = 16;
                     tooltipInfo.wordWrap = false;
 
                     image->setUserData(tooltipInfo);
-                    image->setUserString("ToolTipType", "ToolTipInfo");
                 }
                 else
                     image = mWidgetMap[effectId];
 
                 image->setPosition(w, 2);
                 image->setVisible(true);
+                image->setNeedMouseFocus(true);
+                image->setUserString("ToolTipType", "ActiveEffect");
+                image->setUserString("ActiveEffectName", nameTag);
+                image->setUserString("ActiveEffectIcon", effect->mIcon);
                 w += 16;
 
                 ToolTipInfo* tooltipInfo = image->getUserData<ToolTipInfo>();
-                tooltipInfo->text = std::move(sourcesDescription);
+                tooltipInfo->text = sourcesDescription;
+                image->setUserString("ActiveEffectText", sourcesDescription);
+
+                if (Settings::game().mShowEffectDuration && displayDuration > -1.f)
+                    image->setUserString(
+                        "ActiveEffectDuration", ToolTips::getDurationString(displayDuration, "#{sDuration}"));
+                else
+                    image->setUserString("ActiveEffectDuration", {});
 
                 // Fade out
                 if (totalDuration >= fadeTime && fadeTime > 0.f)
@@ -202,6 +216,17 @@ namespace MWGui
         {
             if (effects.find(widgetPair.first) == effects.end())
                 widgetPair.second->setVisible(false);
+        }
+    }
+
+    void SpellIcons::getVisibleWidgets(std::vector<MyGUI::ImageBox*>& out) const
+    {
+        out.clear();
+        out.reserve(mWidgetMap.size());
+        for (const auto& [effectId, widget] : mWidgetMap)
+        {
+            if (widget && widget->getVisible())
+                out.push_back(widget);
         }
     }
 

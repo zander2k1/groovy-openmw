@@ -519,6 +519,7 @@ namespace MWGui
         std::vector<GuiMode> mGuiModes;
         // The active window for controller mode for each GUI mode.
         std::map<GuiMode, size_t> mActiveControllerWindows;
+        size_t mLastInventoryControllerWindow = 1;
         // Current tooltip visibility state (can be disabled by mouse movement)
         bool mControllerTooltipVisible = false;
         // User preference for tooltips (persists across mouse/controller switches)

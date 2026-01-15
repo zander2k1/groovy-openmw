@@ -10,6 +10,8 @@
 
 #include <components/misc/notnullptr.hpp>
 
+#include <vector>
+
 namespace osg
 {
     class Group;
@@ -58,6 +60,8 @@ namespace MWGui
         SortFilterItemModel* getSortFilterModel();
         TradeItemModel* getTradeModel();
         ItemModel* getModel();
+        ItemView* getItemView() { return mItemView; }
+        bool isControllerTabsActive() const { return mControllerTabsActive; }
         MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
         void clearFilter();
 
@@ -105,6 +109,7 @@ namespace MWGui
 
         MyGUI::Widget* mLeftPane;
         MyGUI::Widget* mRightPane;
+        MyGUI::Widget* mCategories;
 
         MyGUI::Button* mFilterAll;
         MyGUI::Button* mFilterWeapon;
@@ -113,11 +118,17 @@ namespace MWGui
         MyGUI::Button* mFilterMisc;
 
         MyGUI::EditBox* mFilterEdit;
+        MyGUI::Widget* mControllerTabHighlight = nullptr;
+
+        std::vector<MyGUI::Widget*> mControllerTabWidgets;
+        int mControllerTabIndex = 0;
+        bool mControllerTabsActive = false;
 
         GuiMode mGuiMode;
 
         int mLastXSize;
         int mLastYSize;
+        MyGUI::IntSize mDefaultWindowSize;
 
         std::unique_ptr<MyGUI::ITexture> mPreviewTexture;
         std::unique_ptr<MWRender::InventoryPreview> mPreview;
@@ -131,6 +142,9 @@ namespace MWGui
         void onItemSelectedFromSourceModel(int index);
 
         void onBackgroundSelected();
+        void setControllerTabsActive(bool active);
+        void updateControllerTabFocus(int prevIndex, int newIndex);
+        int getSelectedTabIndex() const;
 
         enum class ControllerAction
         {
@@ -167,6 +181,8 @@ namespace MWGui
         /// Unequips count items from mSelectedItem, if it is equipped, and then updates mSelectedItem in case the items
         /// were re-stacked
         void ensureSelectedItemUnequipped(int count);
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
     };
 }
 

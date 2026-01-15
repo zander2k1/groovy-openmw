@@ -3,6 +3,7 @@
 #include <MyGUI_Button.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_ProgressBar.h>
+#include <MyGUI_RenderManager.h>
 #include <MyGUI_ScrollBar.h>
 #include <MyGUI_UString.h>
 #include <MyGUI_Window.h>
@@ -45,12 +46,12 @@ namespace MWGui
     }
 
     PersuasionDialog::PersuasionDialog(std::unique_ptr<ResponseCallback> callback)
-        : WindowModal("openmw_persuasion_dialog.layout")
+        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_persuasion_dialog.layout"
+                                                       : "openmw_persuasion_dialog.layout")
         , mCallback(std::move(callback))
         , mInitialGoldLabelWidth(0)
         , mInitialMainWidgetWidth(0)
     {
-        getWidget(mCancelButton, "CancelButton");
         getWidget(mAdmireButton, "AdmireButton");
         getWidget(mIntimidateButton, "IntimidateButton");
         getWidget(mTauntButton, "TauntButton");
@@ -76,10 +77,9 @@ namespace MWGui
             mMainWidget->setSize(mainWidgetSize.width, mainWidgetSize.height + diff);
         }
 
-        mInitialGoldLabelWidth = mActionsBox->getSize().width - mCancelButton->getSize().width - 8;
+        mInitialGoldLabelWidth = mActionsBox->getSize().width - 8;
         mInitialMainWidgetWidth = mMainWidget->getSize().width;
 
-        mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onCancel);
         mAdmireButton->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mIntimidateButton->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mTauntButton->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
@@ -88,8 +88,9 @@ namespace MWGui
         mBribe1000Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
 
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Select}";
-        mControllerButtons.mB = "#{Interface:Cancel}";
+        mControllerButtons.mB = "#{Interface:Back}";
     }
 
     void PersuasionDialog::adjustAction(MyGUI::Widget* action, int& totalHeight)
@@ -180,7 +181,7 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
-            onCancel(mCancelButton);
+            onCancel(nullptr);
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             setControllerFocus(mButtons, mControllerFocus, false);
@@ -215,7 +216,7 @@ namespace MWGui
         if (!mTitle.empty())
         {
             const MyGUI::Colour& headerColour = windowManager->getTextColours().header;
-            BookTypesetter::Style* title = typesetter->createStyle({}, headerColour, false);
+            BookTypesetter::Style* title = typesetter->createStyle("DialogueBoldFont", headerColour, false);
             typesetter->write(title, mTitle);
             typesetter->sectionBreak();
         }
@@ -260,7 +261,7 @@ namespace MWGui
         {
             const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
 
-            BookTypesetter::Style* style = typesetter->createStyle({}, textColours.normal, false);
+            BookTypesetter::Style* style = typesetter->createStyle("DialogueBoldFont", textColours.normal, false);
             size_t formatted = 0; // points to the first character that is not laid out yet
             for (const auto& [range, link] : hyperLinks)
             {
@@ -299,7 +300,7 @@ namespace MWGui
     {
         const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
 
-        BookTypesetter::Style* style = typesetter->createStyle({}, textColours.normal, false);
+        BookTypesetter::Style* style = typesetter->createStyle("DialogueBoldFont", textColours.normal, false);
 
         if (topic)
             style = typesetter->createHotStyle(style, textColours.link, textColours.linkOver, textColours.linkPressed,
@@ -316,7 +317,7 @@ namespace MWGui
         std::map<std::string, std::unique_ptr<Link>>&) const
     {
         const MyGUI::Colour& textColour = MWBase::Environment::get().getWindowManager()->getTextColours().notify;
-        BookTypesetter::Style* title = typesetter->createStyle({}, textColour, false);
+        BookTypesetter::Style* title = typesetter->createStyle("DialogueBoldFont", textColour, false);
         typesetter->sectionBreak(9);
         typesetter->write(title, mText);
     }
@@ -350,6 +351,11 @@ namespace MWGui
         : WindowBase("openmw_dialogue_window.layout")
         , mIsCompanion(false)
         , mGoodbye(false)
+        , mGoodbyeButton(nullptr)
+        , mDispositionBar(nullptr)
+        , mDispositionText(nullptr)
+        , mHistoryBox(nullptr)
+        , mHistoryContainer(nullptr)
         , mPersuasionDialog(std::make_unique<ResponseCallback>(this))
         , mCallback(std::make_unique<ResponseCallback>(this))
         , mGreetingCallback(std::make_unique<ResponseCallback>(this, false))
@@ -361,16 +367,13 @@ namespace MWGui
 
         // History view
         getWidget(mHistory, "History");
+        getWidget(mHistoryBox, "HistoryBox");
+        getWidget(mHistoryContainer, "HistoryContainer");
 
         // Topics list
         getWidget(mTopicsList, "TopicsList");
         mTopicsList->eventItemSelected += MyGUI::newDelegate(this, &DialogueWindow::onSelectListItem);
 
-        getWidget(mGoodbyeButton, "ByeButton");
-        mGoodbyeButton->eventMouseButtonClick += MyGUI::newDelegate(this, &DialogueWindow::onByeClicked);
-
-        getWidget(mDispositionBar, "Disposition");
-        getWidget(mDispositionText, "DispositionText");
         getWidget(mScrollBar, "VScroll");
 
         mScrollBar->eventScrollChangePosition += MyGUI::newDelegate(this, &DialogueWindow::onScrollbarMoved);
@@ -383,15 +386,26 @@ namespace MWGui
             += MyGUI::newDelegate(this, &DialogueWindow::onWindowResize);
 
         mControllerScrollWidget = mHistory->getParent();
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Ask}";
         mControllerButtons.mB = "#{Interface:Goodbye}";
-        mControllerButtons.mRStick = "#{Interface:ScrollUp}";
     }
 
     void DialogueWindow::onTradeComplete()
     {
         MyGUI::UString message = MyGUI::LanguageManager::getInstance().replaceTags("#{sBarterDialog5}");
         addResponse({}, message);
+    }
+
+    void DialogueWindow::onOpen()
+    {
+        resetFixedWindowGeometry();
+        mCurrentWindowSize = mMainWidget->getSize();
+        updateLayoutSizes();
+        redrawTopicsList();
+        updateHistory();
+        if (Settings::gui().mControllerMenus && mTopicsList->getItemCount() > 0)
+            setControllerFocus(mControllerFocus, true);
     }
 
     bool DialogueWindow::exit()
@@ -415,9 +429,40 @@ namespace MWGui
         if (mCurrentWindowSize == sender->getSize())
             return;
 
+        updateLayoutSizes();
         redrawTopicsList();
         updateHistory();
         mCurrentWindowSize = sender->getSize();
+    }
+
+    void DialogueWindow::resetFixedWindowGeometry()
+    {
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            window->setCoord(getFixedWindowCoord(viewSize));
+        }
+    }
+
+    MyGUI::IntCoord DialogueWindow::getFixedWindowCoord(const MyGUI::IntSize& viewSize) const
+    {
+        const float scale = 0.85f;
+        const float targetWidth = viewSize.width * scale;
+        const float targetHeightFromWidth = targetWidth * 10.f / 16.f;
+        const float maxHeight = viewSize.height * scale;
+
+        int width = static_cast<int>(targetWidth);
+        int height = static_cast<int>(targetHeightFromWidth);
+
+        if (height > maxHeight)
+        {
+            height = static_cast<int>(maxHeight);
+            width = static_cast<int>(height * 16.f / 10.f);
+        }
+
+        const int x = (viewSize.width - width) / 2;
+        const int y = (viewSize.height - height) / 2;
+        return MyGUI::IntCoord(x, y, width, height);
     }
 
     void DialogueWindow::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)
@@ -462,8 +507,6 @@ namespace MWGui
             && topic != sRepair)
         {
             onTopicActivated(topic);
-            if (mGoodbyeButton->getEnabled())
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
         }
         else if (topic == sPersuasion)
             mPersuasionDialog.setVisible(true);
@@ -532,8 +575,6 @@ namespace MWGui
             return;
         }
 
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
-
         setTitle(mPtr.getClass().getName(mPtr));
 
         updateTopics();
@@ -582,6 +623,34 @@ namespace MWGui
         mHistoryContents.clear();
     }
 
+    std::string DialogueWindow::getActorName() const
+    {
+        if (mPtr.isEmpty())
+            return {};
+        return std::string(mPtr.getClass().getName(mPtr));
+    }
+
+    int DialogueWindow::getDisposition() const
+    {
+        if (mPtr.isEmpty() || !mPtr.getClass().isNpc())
+            return 0;
+        return MWBase::Environment::get().getMechanicsManager()->getDerivedDisposition(mPtr);
+    }
+
+    int DialogueWindow::getDispositionBarWidth() const
+    {
+        if (mDispositionBar)
+            return mDispositionBar->getWidth();
+        if (!mMainWidget)
+            return 0;
+        return static_cast<int>(mMainWidget->getWidth() * (166.f / 588.f));
+    }
+
+    bool DialogueWindow::hasActor() const
+    {
+        return !mPtr.isEmpty();
+    }
+
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)
     {
         if (mKeywords == keyWords && isCompanion() == mIsCompanion)
@@ -594,7 +663,9 @@ namespace MWGui
 
     void DialogueWindow::redrawTopicsList()
     {
+        updateLayoutSizes();
         mTopicsList->adjustSize();
+        updateLayoutSizes();
 
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
@@ -696,7 +767,7 @@ namespace MWGui
         for (const auto& text : mHistoryContents)
             text->write(typesetter, mKeywordSearch, mTopicLinks);
 
-        BookTypesetter::Style* body = typesetter->createStyle({}, MyGUI::Colour::White, false);
+        BookTypesetter::Style* body = typesetter->createStyle("DialogueBoldFont", MyGUI::Colour::White, false);
 
         typesetter->sectionBreak(9);
         // choices
@@ -754,17 +825,20 @@ namespace MWGui
                 static_cast<int>(viewHeight / static_cast<float>(book->getSize().second) * mScrollBar->getLineSize()));
             onScrollbarMoved(mScrollBar, range - 1);
         }
-        else
+
+        if (Settings::gui().mControllerMenus && !mChoiceStyles.empty())
         {
-            // no scrollbar
+            mControllerChoice = 0;
+            mHistory->setFocusItem(mChoiceStyles.front());
+        }
+        else if (!mScrollBar->getVisible())
+        {
             onScrollbarMoved(mScrollBar, 0);
         }
-
-        bool goodbyeEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() || mGoodbye;
-        bool goodbyeWasEnabled = mGoodbyeButton->getEnabled();
-        mGoodbyeButton->setEnabled(goodbyeEnabled);
-        if (goodbyeEnabled && !goodbyeWasEnabled)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
+        else
+        {
+            onScrollbarMoved(mScrollBar, mScrollBar->getScrollPosition());
+        }
 
         bool topicsEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye;
         mTopicsList->setEnabled(topicsEnabled);
@@ -780,6 +854,12 @@ namespace MWGui
         if (mGoodbye)
             return;
 
+        if (Settings::gui().mXboxStyledDialog)
+        {
+            mHistoryContents.clear();
+            updateHistory();
+        }
+
         MWBase::Environment::get().getDialogueManager()->keywordSelected(topicId, mCallback.get());
         updateTopics();
     }
@@ -790,6 +870,12 @@ namespace MWGui
         {
             onGoodbyeActivated();
             return;
+        }
+
+        if (Settings::gui().mXboxStyledDialog)
+        {
+            mHistoryContents.clear();
+            updateHistory();
         }
         MWBase::Environment::get().getDialogueManager()->questionAnswered(id, mCallback.get());
         updateTopics();
@@ -821,6 +907,9 @@ namespace MWGui
 
     void DialogueWindow::updateDisposition()
     {
+        if (!mDispositionBar || !mDispositionText)
+            return;
+
         bool dispositionVisible = false;
         if (!mPtr.isEmpty() && mPtr.getClass().isNpc())
         {
@@ -906,6 +995,47 @@ namespace MWGui
         }
     }
 
+    void DialogueWindow::updateLayoutSizes()
+    {
+        if (!mMainWidget || !mHistoryBox || !mHistoryContainer || !mTopicsList)
+            return;
+
+        const MyGUI::IntSize windowSize = mMainWidget->getSize();
+        const int sideMargin = 10;
+        const int topMargin = 8;
+        const int bottomMargin = 16;
+        const int gap = 9;
+        const int innerHeight = std::max(0, windowSize.height - topMargin - bottomMargin);
+
+        const int listWidthMax = 130;
+        const int listWidth = std::min(listWidthMax, std::max(0, windowSize.width / 3));
+        const int listRightMargin = 16;
+        const int listX = std::max(sideMargin, windowSize.width - listRightMargin - listWidth);
+        const int leftBoxWidth = std::max(0, listX - gap - sideMargin);
+
+        mHistoryBox->setCoord(sideMargin, topMargin, leftBoxWidth, innerHeight);
+
+        const int innerPadX = 7;
+        const int innerPadY = 7;
+        const int innerRightPad = 10;
+        const int innerBottomPad = 8;
+        const int historyWidth = std::max(0, leftBoxWidth - innerPadX - innerRightPad);
+        const int historyHeight = std::max(0, innerHeight - innerBottomPad);
+        mHistoryContainer->setCoord(sideMargin + innerPadX, topMargin + innerPadY, historyWidth, historyHeight);
+        if (mHistory)
+            mHistory->setSize(MyGUI::IntSize(historyWidth, historyHeight));
+
+        if (mScrollBar)
+        {
+            const int scrollWidth = mScrollBar->getWidth();
+            const int scrollRightPadding = 5;
+            const int scrollX = sideMargin + leftBoxWidth - scrollWidth - scrollRightPadding;
+            mScrollBar->setCoord(scrollX, topMargin, scrollWidth, innerHeight);
+        }
+
+        mTopicsList->setCoord(listX, topMargin, listWidth, innerHeight);
+    }
+
     void DialogueWindow::updateTopics()
     {
         // Topic formatting needs to be updated regardless of whether the topic list has changed
@@ -929,24 +1059,16 @@ namespace MWGui
 
     void DialogueWindow::setControllerFocus(size_t index, bool focused)
     {
-        // List is mTopicsList + "Goodbye" button below the list.
-        if (index > mTopicsList->getItemCount())
+        if (mTopicsList->getItemCount() == 0 || index >= mTopicsList->getItemCount())
             return;
 
-        if (index == mTopicsList->getItemCount())
-        {
-            mGoodbyeButton->setStateSelected(focused);
-        }
-        else
-        {
-            const std::string& keyword = mTopicsList->getItemNameAt(mControllerFocus);
-            if (keyword.empty())
-                return;
+        const std::string& keyword = mTopicsList->getItemNameAt(mControllerFocus);
+        if (keyword.empty())
+            return;
 
-            MyGUI::Button* button = mTopicsList->getItemWidget(keyword);
-            button->setStateSelected(focused);
-            setTopicHighlight(index, focused);
-        }
+        MyGUI::Button* button = mTopicsList->getItemWidget(keyword);
+        button->setStateSelected(focused);
+        setTopicHighlight(index, focused);
 
         if (focused)
         {
@@ -983,9 +1105,7 @@ namespace MWGui
                 else if (mControllerChoice >= 0 && mControllerChoice < static_cast<int>(mChoices.size()))
                     onChoiceActivated(mChoices[mControllerChoice].second);
             }
-            else if (mControllerFocus == mTopicsList->getItemCount())
-                onGoodbyeActivated();
-            else
+            else if (mTopicsList->getItemCount() > 0)
                 onSelectListItem(mTopicsList->getItemNameAt(mControllerFocus), static_cast<int>(mControllerFocus));
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
@@ -1003,10 +1123,11 @@ namespace MWGui
             }
             else
             {
-                // Number of items is mTopicsList.length+1 because of "Goodbye" button.
+                if (mTopicsList->getItemCount() == 0)
+                    return true;
                 setControllerFocus(mControllerFocus, false);
                 if (mControllerFocus <= 0)
-                    mControllerFocus = mTopicsList->getItemCount(); // "Goodbye" button
+                    mControllerFocus = mTopicsList->getItemCount() - 1;
                 else if (mTopicsList->getItemNameAt(mControllerFocus - 1).empty())
                     mControllerFocus -= 2; // Skip separator
                 else
@@ -1024,12 +1145,11 @@ namespace MWGui
             }
             else
             {
-                // Number of items is mTopicsList.length+1 because of "Goodbye" button.
+                if (mTopicsList->getItemCount() == 0)
+                    return true;
                 setControllerFocus(mControllerFocus, false);
-                if (mControllerFocus >= mTopicsList->getItemCount())
+                if (mControllerFocus >= mTopicsList->getItemCount() - 1)
                     mControllerFocus = 0;
-                else if (mControllerFocus == mTopicsList->getItemCount() - 1)
-                    mControllerFocus = mTopicsList->getItemCount(); // "Goodbye" button
                 else if (mTopicsList->getItemNameAt(mControllerFocus + 1).empty())
                     mControllerFocus += 2; // Skip separator
                 else
@@ -1039,17 +1159,37 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER && mChoices.size() == 0)
         {
+            if (mTopicsList->getItemCount() == 0)
+                return true;
             setControllerFocus(mControllerFocus, false);
             mControllerFocus = mControllerFocus > 5 ? mControllerFocus - 5 : 0;
             setControllerFocus(mControllerFocus, true);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER && mChoices.size() == 0)
         {
+            if (mTopicsList->getItemCount() == 0)
+                return true;
             setControllerFocus(mControllerFocus, false);
-            mControllerFocus = std::min(mControllerFocus + 5, mTopicsList->getItemCount());
+            mControllerFocus = std::min(mControllerFocus + 5, mTopicsList->getItemCount() - 1);
             setControllerFocus(mControllerFocus, true);
         }
 
+        return true;
+    }
+
+    bool DialogueWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        if (arg.axis != SDL_CONTROLLER_AXIS_RIGHTY)
+            return false;
+
+        if (!mScrollBar->getVisible())
+            return true;
+
+        static constexpr int kDeadzone = 8000;
+        if (std::abs(arg.value) < kDeadzone)
+            return true;
+
+        onMouseWheel(nullptr, arg.value < 0 ? 1 : -1);
         return true;
     }
 }

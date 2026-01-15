@@ -1374,6 +1374,13 @@
               </widget>
              </item>
              <item row="7" column="0">
+              <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
+               <property name="text">
+                <string>XBOX Styled Dialog</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="0">
               <widget class="QCheckBox" name="useZoomOnMapCheckBox">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1429,6 +1436,32 @@
                 <string>Show Enchant Chance</string>
                </property>
               </widget>
+             </item>
+             <item row="9" column="0">
+              <widget class="QLabel" name="virtualKeyboardLanguageLabel">
+               <property name="toolTip">
+                <string>Select the language used for the virtual keyboard layout.</string>
+               </property>
+               <property name="text">
+                <string>Virtual Keyboard Language</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="1">
+              <widget class="QComboBox" name="virtualKeyboardLanguageComboBox"/>
+             </item>
+             <item row="10" column="0">
+              <widget class="QLabel" name="virtualKeyboardLayoutLabel">
+               <property name="toolTip">
+                <string>Select the keyboard layout used by the virtual keyboard.</string>
+               </property>
+               <property name="text">
+                <string>Virtual Keyboard Layout</string>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="1">
+              <widget class="QComboBox" name="virtualKeyboardLayoutComboBox"/>
              </item>
             </layout>
            </item>
@@ -1527,7 +1560,7 @@
                   <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Repeat rate for D-Pad/left stick navigation in controller menus. 0 disables turbo.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                  </property>
                  <property name="text">
-                  <string>Menu Turbo Repeat Rate</string>
+                  <string>Navigation Repeat Speed</string>
                  </property>
                 </widget>
                </item>

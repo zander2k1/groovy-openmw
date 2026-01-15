@@ -18,6 +18,7 @@
 #include "../mwbase/luamanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwgui/mapwindow.hpp"
 #include "../mwgui/windowbase.hpp"
 
 #include "actions.hpp"
@@ -30,6 +31,8 @@ namespace
     constexpr float kLeftStickDpadDeadzone = 0.6f;
     constexpr int kLeftStickDpadNone = -1;
     constexpr float kGuiTurboRepeatStartDelay = 1.f / 6.f;
+    constexpr int kTriggerPressThreshold = 16000;
+    constexpr int kTriggerReleaseThreshold = 8000;
 
     void applyRadialDeadzone(float xIn, float yIn, float deadzone, float& xOut, float& yOut)
     {
@@ -77,6 +80,11 @@ namespace
     {
         return mode == MWGui::GM_ClassCreate;
     }
+
+    bool isDialogueMode(MWGui::GuiMode mode)
+    {
+        return mode == MWGui::GM_Dialogue;
+    }
 }
 
 namespace MWInput
@@ -97,6 +105,8 @@ namespace MWInput
         , mGuiCursorEnabled(true)
         , mJoystickLastUsed(false)
         , mGamepadMousePressed(false)
+        , mLeftTriggerPressed(false)
+        , mRightTriggerPressed(false)
     {
         if (!controllerBindingsFile.empty())
         {
@@ -125,7 +135,7 @@ namespace MWInput
         {
             if (SDL_IsGameController(i))
             {
-                SDL_ControllerDeviceEvent evt;
+                SDL_ControllerDeviceEvent evt{};
                 evt.which = i;
                 static const int fakeDeviceID = 1;
                 ControllerManager::controllerAdded(fakeDeviceID, evt);
@@ -150,11 +160,30 @@ namespace MWInput
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         bool leftStickDpadActive = false;
+
+        const bool settingsVisible = winMgr->isSettingsWindowVisible();
+        const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible);
+
         if (Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad && winMgr->isGuiMode()
             && !winMgr->isSettingsWindowVisible() && !isCharGenMouseAllowed(winMgr->getMode()))
         {
             if (MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow())
-                leftStickDpadActive = topWin->isVisible();
+                leftStickDpadActive = topWin->isVisible() && dynamic_cast<MWGui::MapWindow*>(topWin) == nullptr;
+        }
+        if (Settings::gui().mControllerMenus && winMgr->isGuiMode() && !settingsVisible
+            && isDialogueMode(winMgr->getMode()))
+        {
+            if (MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow())
+            {
+                if (topWin->isVisible())
+                {
+                    if (mJoystickLastUsed && !topWin->isGamepadCursorAllowed())
+                    {
+                        winMgr->setCursorActive(false);
+                        winMgr->setCursorVisible(false);
+                    }
+                }
+            }
         }
 
         if (mGuiNavHeldButton != kLeftStickDpadNone)
@@ -185,8 +214,7 @@ namespace MWInput
                 }
             }
         }
-
-        if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled) && !leftStickDpadActive)
+        if (mGuiCursorEnabled && !(mJoystickLastUsed && !allowGuiMouseInThisContext) && !leftStickDpadActive)
         {
             float xAxis = mBindingsManager->getActionValue(A_MoveLeftRight) * 2.0f - 1.0f;
             float yAxis = mBindingsManager->getActionValue(A_MoveForwardBackward) * 2.0f - 1.0f;
@@ -200,8 +228,6 @@ namespace MWInput
             xAxis *= (1.5f - mBindingsManager->getActionValue(A_Use));
             yAxis *= (1.5f - mBindingsManager->getActionValue(A_Use));
 
-            // We keep track of our own mouse position, so that moving the mouse while in
-            // game mode does not move the position of the GUI cursor
             float uiScale = winMgr->getScalingFactor();
             const float gamepadCursorSpeed = Settings::input().mGamepadCursorSpeed;
             const float xMove = xAxis * dt * 1500.0f / uiScale * gamepadCursorSpeed;
@@ -300,6 +326,16 @@ namespace MWInput
             return;
 
         mJoystickLastUsed = true;
+        if (MWBase::Environment::get().getWindowManager()->isGuiMode() && Settings::gui().mControllerMenus)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+            {
+                MWGui::WindowBase* activeWindow
+                    = MWBase::Environment::get().getWindowManager()->getActiveControllerWindow();
+                if (!dynamic_cast<MWGui::MapWindow*>(activeWindow))
+                    MWBase::Environment::get().getWindowManager()->setControllerTooltipEnabled(false);
+            }
+        }
         if (isDpadButton(arg.button) && !mGuiNavHeldFromAxis && mGuiNavHeldButton == arg.button)
         {
             mGuiNavHeldButton = kLeftStickDpadNone;
@@ -389,6 +425,14 @@ namespace MWInput
             bool treatAsMouse = winMgr->getCursorVisible();
             winMgr->setCursorActive(false);
 
+            if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+            {
+                const bool enable = (arg.state == SDL_PRESSED);
+                MWGui::WindowBase* activeWindow = winMgr->getActiveControllerWindow();
+                if (!dynamic_cast<MWGui::MapWindow*>(activeWindow))
+                    winMgr->setControllerTooltipEnabled(enable);
+            }
+
             MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
             if (topWin && topWin->isVisible())
             {
@@ -397,7 +441,10 @@ namespace MWInput
                 if (treatAsMouse && arg.button == SDL_CONTROLLER_BUTTON_A && winMgr->getControllerTooltipVisible())
                     treatAsMouse = false;
 
-                mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
+                if (winMgr->isSettingsWindowVisible())
+                    mGamepadGuiCursorEnabled = true;
+                else
+                    mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
 
                 // Fall through to mouse click
                 if (mGamepadGuiCursorEnabled && treatAsMouse && arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -476,32 +523,57 @@ namespace MWInput
         else if (arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
             mLeftStickY = arg.value;
 
+        if (winMgr->isVirtualKeyboardVisible()
+            && (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
+        {
+            return true;
+        }
+
         if (Settings::gui().mControllerMenus)
         {
             // Left and right triggers toggle through open GUI windows.
             if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
             {
-                if (arg.value == 32767) // Treat like a button.
+                if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
+                {
+                    mRightTriggerPressed = true;
                     winMgr->cycleActiveControllerWindow(true);
+                }
+                else if (mRightTriggerPressed && arg.value <= kTriggerReleaseThreshold)
+                {
+                    mRightTriggerPressed = false;
+                }
                 return true;
             }
             else if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
             {
-                if (arg.value == 32767) // Treat like a button.
+                if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
+                {
+                    mLeftTriggerPressed = true;
                     winMgr->cycleActiveControllerWindow(false);
+                }
+                else if (mLeftTriggerPressed && arg.value <= kTriggerReleaseThreshold)
+                {
+                    mLeftTriggerPressed = false;
+                }
                 return true;
             }
 
             MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
             if (topWin && topWin->isVisible())
             {
-                // Update cursor state
-                mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
+                if (winMgr->isSettingsWindowVisible())
+                    mGamepadGuiCursorEnabled = true;
+                else
+                    mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
+
                 if (!mGamepadGuiCursorEnabled)
                     winMgr->setCursorActive(false);
 
+                const bool mapWindowActive = dynamic_cast<MWGui::MapWindow*>(topWin) != nullptr;
+
                 if (Settings::gui().mControllerJoystickDpad && !winMgr->isSettingsWindowVisible()
-                    && !isCharGenMouseAllowed(winMgr->getMode())
+                    && !isCharGenMouseAllowed(winMgr->getMode()) && !mapWindowActive
                     && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
                 {
                     const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY);
@@ -574,7 +646,9 @@ namespace MWInput
                 }
 
                 // Some windows have a specific widget to scroll with the right stick. Move the mouse there.
-                if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTY && topWin->getControllerScrollWidget() != nullptr)
+                // Only do this when the cursor is hidden (controller navigation); otherwise it fights mouse emulation.
+                if (!winMgr->getCursorVisible() && arg.axis == SDL_CONTROLLER_AXIS_RIGHTY
+                    && topWin->getControllerScrollWidget() != nullptr)
                 {
                     mMouseManager->warpMouseToWidget(topWin->getControllerScrollWidget());
                     winMgr->setCursorVisible(false);

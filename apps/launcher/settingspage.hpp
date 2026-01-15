@@ -35,6 +35,7 @@ namespace Launcher
         void slotShadowDistLimitToggled(bool checked);
         void slotDistantLandToggled(bool checked);
         void slotControllerMenusToggled(bool checked);
+        void slotVirtualKeyboardLanguageChanged(int index);
 
     private:
         Config::GameSettings& mGameSettings;
@@ -46,6 +47,8 @@ namespace Launcher
          * @param filePaths the file paths of the content files to be examined
          */
         void loadCellsForAutocomplete(QStringList filePaths);
+        void populateVirtualKeyboardLanguageComboBox();
+        void populateVirtualKeyboardLayoutComboBox(const QString& languageCode);
     };
 }
 #endif

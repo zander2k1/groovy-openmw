@@ -2,6 +2,8 @@
 
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_RenderManager.h>
+#include <MyGUI_Window.h>
 
 #include <components/settings/values.hpp>
 
@@ -35,8 +37,8 @@ namespace MWGui
 {
 
     ContainerWindow::ContainerWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer)
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_container_window.layout" : "openmw_container_window.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_container_window.layout"
+                                                      : "openmw_container_window.layout")
         , mDragAndDrop(&dragAndDrop)
         , mItemTransfer(&itemTransfer)
         , mSortModel(nullptr)
@@ -60,11 +62,12 @@ namespace MWGui
 
         setCoord(200, 0, 600, 300);
 
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Take}";
         mControllerButtons.mB = "#{Interface:Close}";
+        mControllerButtons.mR2 = "#{Interface:Inventory}";
+        mControllerButtons.mY = "#{Interface:Info}";
         mControllerButtons.mX = "#{Interface:TakeAll}";
-        mControllerButtons.mR3 = "#{Interface:Info}";
-        mControllerButtons.mL2 = "#{Interface:Inventory}";
     }
 
     void ContainerWindow::onItemSelected(int index)
@@ -160,6 +163,9 @@ namespace MWGui
         bool lootAnyway = mTreatNextOpenAsLoot;
         mTreatNextOpenAsLoot = false;
         mPtr = container;
+        mItemTransfer->addTarget(*mItemView);
+        if (auto* inventory = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            mItemTransfer->addTarget(*inventory->getItemView());
 
         bool loot = mPtr.getClass().isActor() && mPtr.getClass().getCreatureStats(mPtr).isDead();
 
@@ -205,7 +211,10 @@ namespace MWGui
 
     void ContainerWindow::onOpen()
     {
+        resetFixedWindowGeometry();
         mItemTransfer->addTarget(*mItemView);
+        if (auto* inventory = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            mItemTransfer->addTarget(*inventory->getItemView());
     }
 
     void ContainerWindow::onClose()
@@ -348,6 +357,28 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Container);
     }
 
+    void ContainerWindow::resetFixedWindowGeometry()
+    {
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const float scale = 0.85f;
+            float targetWidth = viewSize.width * scale;
+            float targetHeight = targetWidth * 10.f / 16.f;
+            const float maxHeight = viewSize.height * scale;
+            int width = static_cast<int>(targetWidth);
+            int height = static_cast<int>(targetHeight);
+            if (height > maxHeight)
+            {
+                height = static_cast<int>(maxHeight);
+                width = static_cast<int>(height * 16.f / 10.f);
+            }
+            const int x = (viewSize.width - width) / 2;
+            const int y = (viewSize.height - height) / 2;
+            window->setCoord(x, y, width, height);
+        }
+    }
+
     void ContainerWindow::onDeleteCustomData(const MWWorld::Ptr& ptr)
     {
         if (mModel && mModel->usesContainer(ptr))
@@ -397,6 +428,8 @@ namespace MWGui
     void ContainerWindow::setActiveControllerWindow(bool active)
     {
         mItemView->setActiveControllerWindow(active);
+        if (active)
+            mItemView->refreshControllerFocus();
         WindowBase::setActiveControllerWindow(active);
     }
 

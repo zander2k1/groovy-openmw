@@ -120,6 +120,7 @@
 #include "spellbuyingwindow.hpp"
 #include "spellview.hpp"
 #include "spellwindow.hpp"
+#include "spellcreationdialog.hpp"
 #include "statswindow.hpp"
 #include "textinput.hpp"
 #include "tradewindow.hpp"
@@ -149,6 +150,8 @@ namespace MWGui
             if (auto* dialog = dynamic_cast<AlchemyWindow*>(window))
                 return dialog->getNameEdit();
             if (auto* dialog = dynamic_cast<EnchantingDialog*>(window))
+                return dialog->getNameEdit();
+            if (auto* dialog = dynamic_cast<SpellCreationDialog*>(window))
                 return dialog->getNameEdit();
             if (auto* dialog = dynamic_cast<TextInputDialog*>(window))
                 return dialog->getEditBox();
@@ -505,7 +508,7 @@ namespace MWGui
         auto companionWindow
             = std::make_unique<CompanionWindow>(*mDragAndDrop, *mItemTransfer, mMessageBoxManager.get());
         trackWindow(companionWindow.get(), makeCompanionWindowSettingValues());
-        mGuiModeStates[GM_Companion] = GuiModeState({ mInventoryWindow, companionWindow.get() });
+        mGuiModeStates[GM_Companion] = GuiModeState({ companionWindow.get(), mInventoryWindow });
         mWindows.push_back(std::move(companionWindow));
 
         auto jailScreen = std::make_unique<JailScreen>();
@@ -565,6 +568,7 @@ namespace MWGui
 
         mControllerTooltipEnabled = Settings::gui().mControllerTooltips;
         mActiveControllerWindows[GM_Inventory] = 1; // Start on Inventory page
+        mLastInventoryControllerWindow = 1;
 
         mInputBlocker = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
             {}, 0, 0, w, h, MyGUI::Align::Stretch, "InputBlocker");
@@ -687,10 +691,9 @@ namespace MWGui
         if (!mMap)
             return; // UI not created yet
 
-        mHud->setVisible(mHudEnabled && !loading);
-        mToolTips->setVisible(mHudEnabled && !loading);
-
         bool gameMode = !isGuiMode();
+        mHud->setVisible(mHudEnabled && !loading && gameMode);
+        mToolTips->setVisible(mHudEnabled && !loading);
 
         MWBase::Environment::get().getInputManager()->changeInputMode(!gameMode);
 
@@ -749,15 +752,54 @@ namespace MWGui
 
         if (getMode() == GM_Inventory)
         {
-            // For the inventory mode, compute the effective set of windows to show.
-            // This is controlled both by what windows the
-            // user has opened/closed (the 'shown' variable) and by what
-            // windows we are allowed to show (the 'allowed' var.)
-            int eff = mShown & mAllowed & ~mForceHidden;
-            mMap->setVisible(eff & GW_Map);
-            mInventoryWindow->setVisible(eff & GW_Inventory);
-            mSpellWindow->setVisible(eff & GW_Magic);
-            mStatsWindow->setVisible(eff & GW_Stats);
+            if (Settings::gui().mControllerMenus)
+            {
+                const size_t winCount = mGuiModeStates[GM_Inventory].mWindows.size();
+                const size_t activeIndex
+                    = winCount > 0 ? std::clamp<size_t>(mActiveControllerWindows[GM_Inventory], 0, winCount - 1) : 0;
+                const auto canShow = [this](GuiWindow wnd) {
+                    return (mAllowed & wnd) && !(mForceHidden & wnd);
+                };
+
+                mMap->setVisible(false);
+                mInventoryWindow->setVisible(false);
+                mSpellWindow->setVisible(false);
+                mStatsWindow->setVisible(false);
+
+                switch (activeIndex)
+                {
+                    case 0:
+                        if (canShow(GW_Map))
+                            mMap->setVisible(true);
+                        break;
+                    case 1:
+                        if (canShow(GW_Inventory))
+                            mInventoryWindow->setVisible(true);
+                        break;
+                    case 2:
+                        if (canShow(GW_Magic))
+                            mSpellWindow->setVisible(true);
+                        break;
+                    case 3:
+                        if (canShow(GW_Stats))
+                            mStatsWindow->setVisible(true);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                // For the inventory mode, compute the effective set of windows to show.
+                // This is controlled both by what windows the
+                // user has opened/closed (the 'shown' variable) and by what
+                // windows we are allowed to show (the 'allowed' var.)
+                int eff = mShown & mAllowed & ~mForceHidden;
+                mMap->setVisible(eff & GW_Map);
+                mInventoryWindow->setVisible(eff & GW_Inventory);
+                mSpellWindow->setVisible(eff & GW_Magic);
+                mStatsWindow->setVisible(eff & GW_Stats);
+            }
         }
 
         updateControllerButtonsOverlay();
@@ -981,6 +1023,14 @@ namespace MWGui
             {
                 activeIndex = wrap(activeIndex, winCount, delta);
             }
+            else if (mode == GM_Companion)
+            {
+                activeIndex = wrap(activeIndex, winCount, delta);
+            }
+            else if (mode == GM_Inventory && Settings::gui().mControllerMenus)
+            {
+                activeIndex = wrap(activeIndex, winCount, delta);
+            }
             else
             {
                 // Find next/previous visible window
@@ -1004,6 +1054,13 @@ namespace MWGui
 
         const GuiMode mode = mGuiModes.back();
         size_t winCount = mGuiModeStates[mode].mWindows.size();
+        WindowBase* activeWindow = nullptr;
+
+        if (mode == GM_Inventory)
+        {
+            for (size_t i = 0; i < winCount; i++)
+                mGuiModeStates[mode].mWindows[i]->setVisible(i == mActiveControllerWindows[mode]);
+        }
 
         for (size_t i = 0; i < winCount; i++)
         {
@@ -1012,7 +1069,10 @@ namespace MWGui
                 mGuiModeStates[mode].mWindows[i]->setActiveControllerWindow(false);
         }
         if (winCount > 0)
-            mGuiModeStates[mode].mWindows[mActiveControllerWindows[mode]]->setActiveControllerWindow(true);
+        {
+            activeWindow = mGuiModeStates[mode].mWindows[mActiveControllerWindows[mode]];
+            activeWindow->setActiveControllerWindow(true);
+        }
 
         if (mode == GM_Container || mode == GM_Barter)
         {
@@ -1027,6 +1087,14 @@ namespace MWGui
                     mGuiModeStates[mode].mWindows[i]->setVisible(true);
             }
         }
+        else if (mode == GM_Companion)
+        {
+            for (size_t i = 0; i < winCount; i++)
+                mGuiModeStates[mode].mWindows[i]->setVisible(i == mActiveControllerWindows[mode]);
+        }
+
+        if (activeWindow && (mode == GM_Container || mode == GM_Barter || mode == GM_Companion))
+            activeWindow->setActiveControllerWindow(true);
     }
 
     void WindowManager::setActiveControllerWindow(GuiMode mode, size_t activeIndex)
@@ -1040,7 +1108,8 @@ namespace MWGui
 
         activeIndex = std::clamp<size_t>(activeIndex, 0, winCount - 1);
         mActiveControllerWindows[mode] = activeIndex;
-
+        if (mode == GM_Inventory)
+            mLastInventoryControllerWindow = activeIndex;
         reapplyActiveControllerWindow();
 
         const bool keyboardVisible = mVirtualKeyboard && mVirtualKeyboard->isVisible();
@@ -1054,10 +1123,15 @@ namespace MWGui
         updateControllerButtonsOverlay();
         setCursorActive(false);
 
+        if (dynamic_cast<MapWindow*>(activeWindow))
+        {
+            setCursorActive(true);
+            setCursorVisible(true);
+        }
+
         if (keyboardVisible)
         {
             // Keep the keyboard target in sync with the active tab.
-            WindowBase* activeWindow = mGuiModeStates[mode].mWindows[activeIndex];
             if (MyGUI::EditBox* edit = resolveKeyboardEdit(activeWindow))
             {
                 mVirtualKeyboard->setTargetEdit(edit);
@@ -1524,12 +1598,30 @@ namespace MWGui
                 // Ensure controller focus is on container when entering container mode.
                 setActiveControllerWindow(mode, 0);
             }
+            else if (mode == GM_Inventory)
+            {
+                const size_t winCount = mGuiModeStates[mode].mWindows.size();
+                if (winCount == 0)
+                    return;
+                const size_t index = std::min(mLastInventoryControllerWindow, winCount - 1);
+                WindowBase* target = mGuiModeStates[mode].mWindows[index];
+                if (target && target->isVisible())
+                    setActiveControllerWindow(mode, index);
+                else
+                    cycleActiveControllerWindow(true);
+            }
             else
             {
-                // Activate first visible window. This needs to be called after updateVisible.
-                if (mActiveControllerWindows[mode] != 0)
-                    mActiveControllerWindows[mode] = mActiveControllerWindows[mode] - 1;
-                cycleActiveControllerWindow(true);
+                // Restore last active window when possible; otherwise fall back to the next visible window.
+                const size_t winCount = mGuiModeStates[mode].mWindows.size();
+                if (winCount == 0)
+                    return;
+                const size_t index = std::min(mActiveControllerWindows[mode], winCount - 1);
+                WindowBase* target = mGuiModeStates[mode].mWindows[index];
+                if (target && target->isVisible())
+                    setActiveControllerWindow(mode, index);
+                else
+                    cycleActiveControllerWindow(true);
             }
         }
     }
@@ -2780,17 +2872,8 @@ namespace MWGui
 
         // setButtons will handle setting visibility based on if any buttons are defined.
         mControllerButtonsOverlay->setButtons(topWin->getControllerButtons());
-        if (mVirtualKeyboard && mVirtualKeyboard->isVisible())
-        {
-            mInventoryTabsOverlay->setVisible(false);
-        }
-        else if (getMode() == GM_Inventory)
-        {
-            mInventoryTabsOverlay->setVisible(true);
-            mInventoryTabsOverlay->setTab(mActiveControllerWindows[GM_Inventory]);
-        }
-        else
-            mInventoryTabsOverlay->setVisible(false);
+        mControllerButtonsOverlay->setAnchor(6);
+        mInventoryTabsOverlay->setVisible(false);
     }
 
     bool WindowManager::toggleVirtualKeyboard()
@@ -2818,9 +2901,10 @@ namespace MWGui
 
         const bool supportsKeyboard = dynamic_cast<AlchemyWindow*>(topWin) != nullptr
             || dynamic_cast<EnchantingDialog*>(topWin) != nullptr || dynamic_cast<TextInputDialog*>(topWin) != nullptr
-            || dynamic_cast<CreateClassDialog*>(topWin) != nullptr || dynamic_cast<DescriptionDialog*>(topWin) != nullptr
-            || dynamic_cast<InventoryWindow*>(topWin) != nullptr || dynamic_cast<SpellWindow*>(topWin) != nullptr
-            || dynamic_cast<TradeWindow*>(topWin) != nullptr;
+            || dynamic_cast<CreateClassDialog*>(topWin) != nullptr
+            || dynamic_cast<DescriptionDialog*>(topWin) != nullptr || dynamic_cast<InventoryWindow*>(topWin) != nullptr
+            || dynamic_cast<SpellWindow*>(topWin) != nullptr || dynamic_cast<TradeWindow*>(topWin) != nullptr
+            || dynamic_cast<SpellCreationDialog*>(topWin) != nullptr;
         if (!supportsKeyboard)
             return false;
 
@@ -2848,34 +2932,35 @@ namespace MWGui
 
             if (!edit)
             {
-                if (auto* window = dynamic_cast<TradeWindow*>(topWin))
-                    edit = window->getFilterEdit();
-                else if (auto* window = dynamic_cast<InventoryWindow*>(topWin))
-                    edit = window->getFilterEdit();
+                if (auto* tradeWindow = dynamic_cast<TradeWindow*>(topWin))
+                    edit = tradeWindow->getFilterEdit();
+                else if (auto* inventoryWindow = dynamic_cast<InventoryWindow*>(topWin))
+                    edit = inventoryWindow->getFilterEdit();
             }
         }
         if (!edit)
         {
-            if (auto* window = dynamic_cast<AlchemyWindow*>(topWin))
-                edit = window->getNameEdit();
-            else if (auto* window = dynamic_cast<EnchantingDialog*>(topWin))
-                edit = window->getNameEdit();
-            else if (auto* window = dynamic_cast<TextInputDialog*>(topWin))
-                edit = window->getEditBox();
-            else if (auto* window = dynamic_cast<CreateClassDialog*>(topWin))
-                edit = window->getEditName();
-            else if (auto* window = dynamic_cast<DescriptionDialog*>(topWin))
-                edit = window->getTextEdit();
-            else if (auto* window = dynamic_cast<InventoryWindow*>(topWin))
-                edit = window->getFilterEdit();
-            else if (auto* window = dynamic_cast<SpellWindow*>(topWin))
-                edit = window->getFilterEdit();
-            else if (auto* window = dynamic_cast<TradeWindow*>(topWin))
-                edit = window->getFilterEdit();
+            if (auto* alchemyWindow = dynamic_cast<AlchemyWindow*>(topWin))
+                edit = alchemyWindow->getNameEdit();
+            else if (auto* enchantingDialog = dynamic_cast<EnchantingDialog*>(topWin))
+                edit = enchantingDialog->getNameEdit();
+            else if (auto* spellCreationDialog = dynamic_cast<SpellCreationDialog*>(topWin))
+                edit = spellCreationDialog->getNameEdit();
+            else if (auto* textInputDialog = dynamic_cast<TextInputDialog*>(topWin))
+                edit = textInputDialog->getEditBox();
+            else if (auto* createClassDialog = dynamic_cast<CreateClassDialog*>(topWin))
+                edit = createClassDialog->getEditName();
+            else if (auto* descriptionDialog = dynamic_cast<DescriptionDialog*>(topWin))
+                edit = descriptionDialog->getTextEdit();
+            else if (auto* inventoryWindow = dynamic_cast<InventoryWindow*>(topWin))
+                edit = inventoryWindow->getFilterEdit();
+            else if (auto* spellWindow = dynamic_cast<SpellWindow*>(topWin))
+                edit = spellWindow->getFilterEdit();
+            else if (auto* tradeWindow = dynamic_cast<TradeWindow*>(topWin))
+                edit = tradeWindow->getFilterEdit();
         }
         if (!edit)
             return false;
-
 
         // Hide underlying windows while the keyboard is open.
         auto addHiddenWindow = [this](WindowBase* window) {

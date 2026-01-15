@@ -31,6 +31,7 @@ namespace MWGui
         void onResChange(int, int) override { center(); }
 
         std::string_view getWindowIdForLua() const override { return "SpellBuying"; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     protected:
         MyGUI::Button* mCancelButton;

@@ -42,6 +42,7 @@ namespace MWGui
     {
     public:
         void updateWidgets(MyGUI::Widget* parent, bool adjustSize);
+        void getVisibleWidgets(std::vector<MyGUI::ImageBox*>& out) const;
 
     private:
         std::map<int, MyGUI::ImageBox*> mWidgetMap;

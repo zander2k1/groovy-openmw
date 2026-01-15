@@ -21,8 +21,8 @@
 namespace MWGui
 {
     MerchantRepair::MerchantRepair()
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_merchantrepair.layout" : "openmw_merchantrepair.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_merchantrepair.layout"
+                                                      : "openmw_merchantrepair.layout")
     {
         getWidget(mList, "RepairView");
         getWidget(mOkButton, "OkButton");
@@ -195,6 +195,13 @@ namespace MWGui
     void MerchantRepair::onOkButtonClick(MyGUI::Widget* /*sender*/)
     {
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_MerchantRepair);
+    }
+
+    MyGUI::Widget* MerchantRepair::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus || mButtons.empty() || mControllerFocus >= mButtons.size())
+            return nullptr;
+        return mButtons[mControllerFocus].first;
     }
 
     bool MerchantRepair::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)

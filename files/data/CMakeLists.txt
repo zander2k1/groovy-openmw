@@ -44,6 +44,10 @@ set(BUILTIN_DATA_FILES
     fonts/DejaVuFontLicense.txt
     fonts/DejaVuLGCSansMono.ttf
     fonts/DejaVuLGCSansMono.omwfont
+    fonts/CenturyGothicPaneuropeanSemiBold.ttf
+    fonts/CenturyGothicPaneuropeanSemiBold.omwfont
+    fonts/CenturyGothicPaneuropeanBold.ttf
+    fonts/CenturyGothicPaneuropeanBold.omwfont
     fonts/DemonicLetters.ttf
     fonts/DemonicLetters.omwfont
     fonts/DemonicLettersFontLicense.txt
@@ -191,6 +195,8 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_console.skin.xml
     mygui/openmw_container_window.layout
     mygui/openmw_controllerbuttons.layout
+    textures/tx_goldicon.dds
+    textures/weight.dds
     mygui/openmw_count_window.layout
     mygui/openmw_dialogue_window.layout
     mygui/openmw_dialogue_window.skin.xml
@@ -227,6 +233,12 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_tooltips.layout
     mygui/openmw_trade_window.layout
     mygui/openmw_virtual_keyboard.layout
+    mygui/Keyboard/de.yaml
+    mygui/Keyboard/en.yaml
+    mygui/Keyboard/fr.yaml
+    mygui/Keyboard/pl.yaml
+    mygui/Keyboard/ru.yaml
+    mygui/Keyboard/sv.yaml
     mygui/openmw_spell_buying_window.layout
     mygui/openmw_windows.skin.xml
     mygui/openmw_quickkeys_menu.layout

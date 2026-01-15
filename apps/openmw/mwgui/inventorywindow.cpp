@@ -113,8 +113,9 @@ namespace MWGui
         getWidget(mFilterMisc, "MiscButton");
         getWidget(mLeftPane, "LeftPane");
         getWidget(mRightPane, "RightPane");
+        getWidget(mCategories, "Categories");
         getWidget(mArmorRating, "ArmorRating");
-        getWidget(mFilterEdit, "FilterEdit");
+        mFilterEdit = nullptr;
 
         mAvatarImage->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onAvatarClicked);
         mAvatarImage->setRenderItemTexture(mPreviewTexture.get());
@@ -129,42 +130,51 @@ namespace MWGui
         mFilterApparel->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
         mFilterMagic->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
         mFilterMisc->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
-        mFilterEdit->eventEditTextChange += MyGUI::newDelegate(this, &InventoryWindow::onNameFilterChanged);
-
         mFilterAll->setStateSelected(true);
 
         setGuiMode(mGuiMode);
 
-        if (Settings::gui().mControllerMenus)
+        mControllerTabWidgets = { mFilterAll, mFilterWeapon, mFilterApparel, mFilterMagic, mFilterMisc };
+        if (mCategories)
         {
-            // Show L1 and R1 buttons next to tabs
-            MyGUI::ImageBox* image;
-            getWidget(image, "BtnL1Image");
-            image->setVisible(true);
-            image->setUserString("Hidden", "false");
-            image->setImageTexture(MWBase::Environment::get().getInputManager()->getControllerButtonIcon(
-                SDL_CONTROLLER_BUTTON_LEFTSHOULDER));
-
-            getWidget(image, "BtnR1Image");
-            image->setVisible(true);
-            image->setUserString("Hidden", "false");
-            image->setImageTexture(MWBase::Environment::get().getInputManager()->getControllerButtonIcon(
-                SDL_CONTROLLER_BUTTON_RIGHTSHOULDER));
-
-            mControllerButtons.mR3 = "#{Interface:Info}";
-            mControllerButtons.mMenu = "#{Interface:Keyboard}";
+            mControllerTabHighlight = mCategories->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerTabHighlight->setNeedMouseFocus(false);
+            mControllerTabHighlight->setVisible(false);
         }
 
+        if (Settings::gui().mControllerMenus)
+            mControllerButtons = {};
+
+        mDefaultWindowSize = MyGUI::IntSize(600, 300);
         adjustPanes();
     }
 
     void InventoryWindow::adjustPanes()
     {
-        const float aspect = 0.5; // fixed aspect ratio for the avatar image
-        int leftPaneWidth = static_cast<int>((mMainWidget->getSize().height - 44 - mArmorRating->getHeight()) * aspect);
-        mLeftPane->setSize(leftPaneWidth, mMainWidget->getSize().height - 44);
-        mRightPane->setCoord(mLeftPane->getPosition().left + leftPaneWidth + 4, mRightPane->getPosition().top,
-            mMainWidget->getSize().width - 12 - leftPaneWidth - 15, mMainWidget->getSize().height - 44);
+        const float aspect = 0.5f; // fixed aspect ratio for the avatar image
+        const int leftGap = mEncumbranceBar ? mEncumbranceBar->getLeft() : 8;
+        const int bottomGap = leftGap;
+        const int rightGap = leftGap;
+        const int paneGap = 4;
+        const MyGUI::IntCoord client = mMainWidget->getClientCoord();
+        const int paneHeight = std::max(0, client.height - bottomGap);
+        const int leftPaneWidth
+            = std::max(0, static_cast<int>((paneHeight - mArmorRating->getHeight()) * aspect));
+        const int rightPaneWidth = std::max(0, client.width - rightGap - leftPaneWidth - paneGap);
+
+        mLeftPane->setCoord(0, 0, leftPaneWidth, paneHeight);
+        mRightPane->setCoord(leftPaneWidth + paneGap, 0, rightPaneWidth, paneHeight);
+    }
+
+    void InventoryWindow::resetFixedWindowGeometry()
+    {
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
+            window->setCoord(coord);
+        }
     }
 
     void InventoryWindow::updatePlayer()
@@ -184,7 +194,10 @@ namespace MWGui
             mItemView->setModel(std::move(sortModel));
         }
 
-        mSortModel->setNameFilter(mFilterEdit->getCaption());
+        if (mFilterEdit)
+            mSortModel->setNameFilter(mFilterEdit->getCaption());
+        else
+            mSortModel->setNameFilter({});
 
         mFilterAll->setStateSelected(true);
         mFilterWeapon->setStateSelected(false);
@@ -207,7 +220,7 @@ namespace MWGui
 
     void InventoryWindow::clearFilter()
     {
-        if (!mFilterEdit->getCaption().empty())
+        if (mFilterEdit && !mFilterEdit->getCaption().empty())
         {
             mFilterEdit->setCaption({});
             if (mSortModel)
@@ -253,11 +266,11 @@ namespace MWGui
         setPinButtonVisible(
             mode != GM_Container && mode != GM_Companion && mode != GM_Barter && !Settings::gui().mControllerMenus);
 
-        const WindowRectSettingValues& rect = settings.mIsMaximized ? settings.mMaximized : settings.mRegular;
-
+        // For all modes, use fixed 16:10 at 85% of viewport
         MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        MyGUI::IntPoint pos(static_cast<int>(rect.mX * viewSize.width), static_cast<int>(rect.mY * viewSize.height));
-        MyGUI::IntSize size(static_cast<int>(rect.mW * viewSize.width), static_cast<int>(rect.mH * viewSize.height));
+        MyGUI::IntCoord fixed = getFixedWindowCoord(viewSize);
+        MyGUI::IntPoint pos(fixed.left, fixed.top);
+        MyGUI::IntSize size(fixed.width, fixed.height);
 
         bool needUpdate = (size.width != mMainWidget->getWidth() || size.height != mMainWidget->getHeight());
 
@@ -289,6 +302,95 @@ namespace MWGui
     {
         if (mDragAndDrop->mIsOnDragAndDrop)
             mDragAndDrop->drop(mTradeModel, mItemView);
+    }
+
+    int InventoryWindow::getSelectedTabIndex() const
+    {
+        if (mFilterAll->getStateSelected())
+            return 0;
+        if (mFilterWeapon->getStateSelected())
+            return 1;
+        if (mFilterApparel->getStateSelected())
+            return 2;
+        if (mFilterMagic->getStateSelected())
+            return 3;
+        if (mFilterMisc->getStateSelected())
+            return 4;
+        return 0;
+    }
+
+    void InventoryWindow::setControllerTabsActive(bool active)
+    {
+        if (mControllerTabWidgets.empty())
+            return;
+
+        if (!active && mItemView && mItemView->getItemCount() <= 0)
+        {
+            mControllerTabsActive = true;
+            mControllerTabIndex = getSelectedTabIndex();
+            updateControllerTabFocus(-1, mControllerTabIndex);
+            mItemView->setActiveControllerWindow(false);
+            return;
+        }
+
+        mControllerTabsActive = active;
+        if (mControllerTabsActive)
+        {
+            mControllerTabIndex = getSelectedTabIndex();
+            updateControllerTabFocus(-1, mControllerTabIndex);
+            if (mItemView)
+                mItemView->setActiveControllerWindow(false);
+        }
+        else
+        {
+            if (mControllerTabHighlight)
+                mControllerTabHighlight->setVisible(false);
+            mItemView->setActiveControllerWindow(true);
+            mItemView->refreshControllerFocus();
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
+        }
+    }
+
+    void InventoryWindow::updateControllerTabFocus(int prevIndex, int newIndex)
+    {
+        if (newIndex < 0 || static_cast<size_t>(newIndex) >= mControllerTabWidgets.size())
+            return;
+
+        if (prevIndex >= 0 && static_cast<size_t>(prevIndex) < mControllerTabWidgets.size())
+        {
+            MyGUI::Widget* prevWidget = mControllerTabWidgets[prevIndex];
+            if (mFilterEdit && prevWidget == mFilterEdit)
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nullptr);
+        }
+
+        MyGUI::Widget* widget = mControllerTabWidgets[newIndex];
+        if (widget == nullptr)
+            return;
+
+        if (mControllerTabHighlight)
+        {
+            if (mCategories)
+            {
+                const MyGUI::IntCoord widgetCoord = widget->getAbsoluteCoord();
+                const MyGUI::IntCoord categoriesCoord = mCategories->getAbsoluteCoord();
+                mControllerTabHighlight->setCoord(widgetCoord.left - categoriesCoord.left,
+                    widgetCoord.top - categoriesCoord.top, widgetCoord.width, widgetCoord.height);
+                mControllerTabHighlight->setVisible(true);
+            }
+            else
+            {
+                mControllerTabHighlight->setVisible(false);
+            }
+        }
+
+        MWBase::Environment::get().getInputManager()->warpMouseToWidget(widget);
+        const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
+        const int mouseX = coord.left + coord.width / 2;
+        const int mouseY = coord.top + coord.height / 2;
+        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+        if (Settings::gui().mControllerMenus)
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
     }
 
     void InventoryWindow::onItemSelected(int index)
@@ -503,9 +605,11 @@ namespace MWGui
 
     void InventoryWindow::onOpen()
     {
+        resetFixedWindowGeometry();
+
         // Reset the filter focus when opening the window
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-        if (focus == mFilterEdit)
+        if (mFilterEdit && focus == mFilterEdit)
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nullptr);
 
         if (!mPtr.isEmpty())
@@ -515,6 +619,8 @@ namespace MWGui
             notifyContentChanged();
         }
         adjustPanes();
+        if (Settings::gui().mControllerMenus)
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
 
         mItemTransfer->addTarget(*mItemView);
     }
@@ -522,6 +628,9 @@ namespace MWGui
     void InventoryWindow::onClose()
     {
         mItemTransfer->removeTarget(*mItemView);
+        if (mControllerTabHighlight)
+            mControllerTabHighlight->setVisible(false);
+        mControllerTabsActive = false;
     }
 
     void InventoryWindow::onWindowResize(MyGUI::Window* sender)
@@ -571,7 +680,8 @@ namespace MWGui
 
     void InventoryWindow::onNameFilterChanged(MyGUI::EditBox* sender)
     {
-        mSortModel->setNameFilter(sender->getCaption());
+        if (mSortModel)
+            mSortModel->setNameFilter(sender->getCaption());
         mItemView->update();
     }
 
@@ -593,9 +703,15 @@ namespace MWGui
         mFilterMagic->setStateSelected(false);
         mFilterMisc->setStateSelected(false);
 
+        if (Settings::gui().mControllerMenus && mControllerTabsActive)
+            mItemView->setActiveControllerWindow(false);
         mItemView->update();
 
         sender->castType<MyGUI::Button>()->setStateSelected(true);
+        if (Settings::gui().mControllerMenus && mControllerTabsActive)
+            mItemView->setActiveControllerWindow(false);
+        if (Settings::gui().mControllerMenus && mItemView->getItemCount() <= 0)
+            setControllerTabsActive(true);
     }
 
     void InventoryWindow::onPinToggled()
@@ -783,8 +899,15 @@ namespace MWGui
             mDragAndDrop->update();
             mItemView->update();
             notifyContentChanged();
+            if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
+                && mItemView->getItemCount() <= 0)
+                setControllerTabsActive(true);
             mUpdateNextFrame = false;
         }
+
+        if (Settings::gui().mControllerMenus && !mControllerTabsActive && !mControllerTabWidgets.empty()
+            && mItemView->getItemCount() <= 0)
+            setControllerTabsActive(true);
     }
 
     void InventoryWindow::setTrading(bool trading)
@@ -976,32 +1099,36 @@ namespace MWGui
 
     ControllerButtons* InventoryWindow::getControllerButtons()
     {
+        mControllerButtons = {};
         switch (mGuiMode)
         {
             case MWGui::GM_Companion:
-                mControllerButtons.mA = "#{OMWEngine:InventorySelect}";
+                mControllerButtons.mA = "Give";
                 mControllerButtons.mB = "#{Interface:Close}";
-                mControllerButtons.mX.clear();
-                mControllerButtons.mR2 = "#{Interface:Share}";
+                mControllerButtons.mY = "#{Interface:Info}";
+                mControllerButtons.mL2 = "#{Interface:Container}";
                 break;
             case MWGui::GM_Container:
                 mControllerButtons.mA = "#{OMWEngine:InventorySelect}";
                 mControllerButtons.mB = "#{Interface:Close}";
-                mControllerButtons.mX = "#{Interface:TakeAll}";
-                mControllerButtons.mR2 = "#{Interface:Container}";
+                mControllerButtons.mX = "#{Interface:Container}";
+                mControllerButtons.mY = "#{Interface:Info}";
+                mControllerButtons.mL2 = "#{Interface:TakeAll}";
                 break;
             case MWGui::GM_Barter:
                 mControllerButtons.mA = "#{Interface:Sell}";
                 mControllerButtons.mB = "#{Interface:Cancel}";
-                mControllerButtons.mX = "#{Interface:Offer}";
-                mControllerButtons.mR2 = "#{Interface:Barter}";
+                mControllerButtons.mY = "#{Interface:Info}";
+                mControllerButtons.mL2 = "#{Interface:Barter}";
                 break;
             case MWGui::GM_Inventory:
             default:
-                mControllerButtons.mA = "#{Interface:Equip}";
+                mControllerButtons.mA = "#{Interface:Select}";
                 mControllerButtons.mB = "#{Interface:Back}";
                 mControllerButtons.mX = "#{Interface:Drop}";
-                mControllerButtons.mR2.clear();
+                mControllerButtons.mY = "#{Interface:Info}";
+                mControllerButtons.mL2 = "#{sMap}";
+                mControllerButtons.mR2 = "#{sMagicMenu}";
                 break;
         }
         return &mControllerButtons;
@@ -1011,9 +1138,53 @@ namespace MWGui
     {
         mPendingControllerAction = ControllerAction::None; // Clear any pending controller actions
 
+        if (Settings::gui().mControllerMenus)
+        {
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
+            if (mControllerTabsActive)
+            {
+                if (mControllerTabWidgets.empty())
+                    return true;
+                if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+                {
+                    int delta = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? 1 : -1;
+                    int prev = mControllerTabIndex;
+                    mControllerTabIndex
+                        = wrap(static_cast<size_t>(mControllerTabIndex), mControllerTabWidgets.size(), delta);
+                    updateControllerTabFocus(prev, mControllerTabIndex);
+                    return true;
+                }
+                if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+                {
+                    if (mItemView->getItemCount() <= 0)
+                        return true;
+                    setControllerTabsActive(false);
+                    return true;
+                }
+                if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+                    return true;
+                if (arg.button == SDL_CONTROLLER_BUTTON_A)
+                {
+                    MyGUI::Widget* widget = mControllerTabWidgets[mControllerTabIndex];
+                    onFilterChanged(widget);
+                    MWBase::Environment::get().getWindowManager()->playSound(
+                        ESM::RefId::stringRefId("Menu Click"));
+                    return true;
+                }
+            }
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+            {
+                if (mItemView->isControllerFocusTopRow())
+                {
+                    setControllerTabsActive(true);
+                    return true;
+                }
+            }
+        }
+
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
-            if (!mFilterEdit->getCaption().empty())
+            if (mFilterEdit && !mFilterEdit->getCaption().empty())
             {
                 clearFilter();
                 return true;
@@ -1055,34 +1226,6 @@ namespace MWGui
                 tradeWindow->onControllerButtonEvent(arg);
             }
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
-        {
-            if (mFilterAll->getStateSelected())
-                onFilterChanged(mFilterMisc);
-            else if (mFilterWeapon->getStateSelected())
-                onFilterChanged(mFilterAll);
-            else if (mFilterApparel->getStateSelected())
-                onFilterChanged(mFilterWeapon);
-            else if (mFilterMagic->getStateSelected())
-                onFilterChanged(mFilterApparel);
-            else if (mFilterMisc->getStateSelected())
-                onFilterChanged(mFilterMagic);
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
-        }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
-        {
-            if (mFilterAll->getStateSelected())
-                onFilterChanged(mFilterWeapon);
-            else if (mFilterWeapon->getStateSelected())
-                onFilterChanged(mFilterApparel);
-            else if (mFilterApparel->getStateSelected())
-                onFilterChanged(mFilterMagic);
-            else if (mFilterMagic->getStateSelected())
-                onFilterChanged(mFilterMisc);
-            else if (mFilterMisc->getStateSelected())
-                onFilterChanged(mFilterAll);
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
-        }
         else
         {
             mItemView->onControllerButton(arg.button);
@@ -1099,13 +1242,12 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the screen, or limit to a certain size on large screens. Size chosen to
-            // match the size of the stats window.
             MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-            int width = std::min(viewSize.width, 1600);
-            int height = std::min(winMgr->getControllerMenuHeight(), StatsWindow::getIdealHeight());
-            int x = (viewSize.width - width) / 2;
-            int y = (viewSize.height - height) / 2;
+            MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
+            int x = coord.left;
+            int y = coord.top;
+            int width = coord.width;
+            int height = coord.height;
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
             window->setCoord(x, active ? y : viewSize.height + 1, width, height);
@@ -1114,17 +1256,44 @@ namespace MWGui
             updatePreviewSize();
         }
 
-        // Show L1 and R1 buttons next to tabs
-        MyGUI::Widget* image;
-        getWidget(image, "BtnL1Image");
-        image->setVisible(active);
-
-        getWidget(image, "BtnR1Image");
-        image->setVisible(active);
-
-        if (active && winMgr->getMode() != MWGui::GM_Barter)
+        if (mFilterEdit && active && winMgr->getMode() != MWGui::GM_Barter)
             clearFilter();
-        mItemView->setActiveControllerWindow(active);
+        winMgr->setCursorVisible(false);
+        if (!active)
+            mControllerTabsActive = false;
+        if (active && Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
+            && mItemView->getItemCount() <= 0)
+        {
+            setControllerTabsActive(true);
+            mItemView->setActiveControllerWindow(false);
+        }
+        mItemView->setActiveControllerWindow(active && !mControllerTabsActive);
+        if (active && !mControllerTabsActive)
+            mItemView->refreshControllerFocus();
+        winMgr->setCursorVisible(false);
+        if (active)
+            adjustPanes();
         WindowBase::setActiveControllerWindow(active);
+    }
+
+    MyGUI::IntCoord InventoryWindow::getFixedWindowCoord(const MyGUI::IntSize& viewSize) const
+    {
+        const float scale = 0.85f;
+        const float targetWidth = viewSize.width * scale;
+        const float targetHeightFromWidth = targetWidth * 10.f / 16.f;
+        const float maxHeight = viewSize.height * scale;
+
+        int width = static_cast<int>(targetWidth);
+        int height = static_cast<int>(targetHeightFromWidth);
+
+        if (height > maxHeight)
+        {
+            height = static_cast<int>(maxHeight);
+            width = static_cast<int>(height * 16.f / 10.f);
+        }
+
+        const int x = (viewSize.width - width) / 2;
+        const int y = (viewSize.height - height) / 2;
+        return MyGUI::IntCoord(x, y, width, height);
     }
 }

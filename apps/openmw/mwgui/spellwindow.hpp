@@ -2,6 +2,15 @@
 #define MWGUI_SPELLWINDOW_H
 
 #include <memory>
+#include <vector>
+
+#include <MyGUI_Types.h>
+
+namespace MyGUI
+{
+    class ImageBox;
+    class Widget;
+}
 
 #include "spellicons.hpp"
 #include "spellmodel.hpp"
@@ -17,8 +26,8 @@ namespace MWGui
         SpellWindow(DragAndDrop* drag);
 
         void updateSpells();
-        MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
-        void clearFilter();
+        MyGUI::EditBox* getFilterEdit() const { return nullptr; }
+        SpellView* getSpellView() const { return mSpellView; }
 
         void onFrame(float dt) override;
 
@@ -26,6 +35,8 @@ namespace MWGui
         void cycle(bool next);
 
         std::string_view getWindowIdForLua() const override { return "Magic"; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
+        MyGUI::Widget* getEffectWidgetAt(const MyGUI::IntPoint& pos) const;
 
     protected:
         MyGUI::Widget* mEffectBox;
@@ -35,8 +46,6 @@ namespace MWGui
         void onEnchantedItemSelected(MWWorld::Ptr item, bool alreadyEquipped);
         void onSpellSelected(const ESM::RefId& spellId);
         void onModelIndexSelected(SpellModel::ModelIndex index);
-        void onFilterChanged(MyGUI::EditBox* sender);
-        void onDeleteClicked(MyGUI::Widget* widget);
         void onDeleteSpellAccept();
         void askDeleteSpell(const ESM::RefId& spellId);
 
@@ -48,10 +57,22 @@ namespace MWGui
 
         SpellView* mSpellView;
         std::unique_ptr<SpellIcons> mSpellIcons;
-        MyGUI::EditBox* mFilterEdit;
+        std::vector<MyGUI::ImageBox*> mEffectIcons;
+        std::vector<MyGUI::IntCoord> mEffectIconCoords;
+        std::vector<MyGUI::Widget*> mEffectWidgets;
+        size_t mEffectsFocus = 0;
+        size_t mPrevSpellFocus = 0;
+        bool mEffectsFocusActive = false;
 
     private:
         float mUpdateTimer;
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
+        void refreshEffectWidgets();
+        void setEffectsFocusActive(bool active);
+        void updateEffectsHighlight();
+        bool moveEffectsFocus(int delta);
+        void warpToEffectWidget();
     };
 }
 

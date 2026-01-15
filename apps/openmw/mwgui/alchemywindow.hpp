@@ -17,7 +17,9 @@
 
 namespace MyGUI
 {
+    class EditBox;
     class ListBox;
+    class Widget;
 }
 
 namespace MWGui
@@ -33,11 +35,13 @@ namespace MWGui
         AlchemyWindow();
 
         void onOpen() override;
+        void onFrame(float duration) override;
 
         void onResChange(int, int) override { center(); }
 
         std::string_view getWindowIdForLua() const override { return "Alchemy"; }
         MyGUI::EditBox* getNameEdit() const { return mNameEdit; }
+        ItemView* getItemView() const { return mItemView; }
 
     private:
         static const float sCountChangeInitialPause; // in seconds
@@ -70,6 +74,15 @@ namespace MWGui
         MyGUI::Widget* mFilterListHighlight = nullptr;
         MyGUI::EditBox* mNameEdit;
         Gui::NumericEditBox* mBrewCountEdit;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
+        bool mControllerItemViewFocus = false;
+
+        void openVirtualKeyboard(MyGUI::EditBox* edit);
+        void setControllerFocusWidget(MyGUI::Widget* widget);
+        void updateControllerFocusHighlight();
+        void updateControllerFocusState();
+        void updateEditStaticState();
+        bool isFocusInItemView(MyGUI::Widget* focus) const;
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onCreateButtonClicked(MyGUI::Widget* sender);

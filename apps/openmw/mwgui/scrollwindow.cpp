@@ -21,8 +21,7 @@ namespace MWGui
 {
 
     ScrollWindow::ScrollWindow()
-        : BookWindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_scroll.layout" : "openmw_scroll.layout")
+        : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_scroll.layout" : "openmw_scroll.layout")
         , mTakeButtonShow(true)
         , mTakeButtonAllowed(true)
     {

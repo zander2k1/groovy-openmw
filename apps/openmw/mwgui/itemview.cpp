@@ -4,6 +4,7 @@
 
 #include <MyGUI_FactoryManager.h>
 #include <MyGUI_Gui.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ScrollView.h>
 
@@ -80,7 +81,7 @@ namespace MWGui
 
         MyGUI::IntSize size = MyGUI::IntSize(std::max(mScrollView->getSize().width, x), mScrollView->getSize().height);
 
-        if (Settings::gui().mControllerMenus)
+        if (Settings::gui().mControllerMenus && mControllerActiveWindow)
         {
             if (mItemCount > 0)
                 mControllerFocus = std::clamp(mControllerFocus, 0, mItemCount - 1);
@@ -197,9 +198,36 @@ namespace MWGui
             active && Settings::gui().mControllerTooltips);
 
         if (active)
+        {
+            if (mItemCount > 0)
+                mControllerFocus = std::clamp(mControllerFocus, 0, mItemCount - 1);
+            else
+                mControllerFocus = -1;
             updateControllerFocus(-1, mControllerFocus);
+        }
         else
             updateControllerFocus(mControllerFocus, -1);
+    }
+
+    bool ItemView::isControllerFocusTopRow() const
+    {
+        if (mControllerFocus < 0 || mRows <= 0)
+            return false;
+        return (mControllerFocus % mRows) == 0;
+    }
+
+    bool ItemView::isControllerFocusBottomRow() const
+    {
+        if (mControllerFocus < 0 || mRows <= 0)
+            return false;
+        if (mControllerFocus >= mItemCount - 1)
+            return true;
+        return (mControllerFocus % mRows) == mRows - 1;
+    }
+
+    void ItemView::refreshControllerFocus()
+    {
+        updateControllerFocus(-1, mControllerFocus);
     }
 
     void ItemView::onControllerButton(const unsigned char button)
@@ -219,11 +247,6 @@ namespace MWGui
                     MyGUI::Widget* dragArea = mScrollView->getChildAt(0);
                     onSelectedItem(dragArea->getChildAt(mControllerFocus));
                 }
-                break;
-            case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
-                // Toggle info tooltip
-                winMgr->setControllerTooltipEnabled(!winMgr->getControllerTooltipEnabled());
-                updateControllerFocus(-1, mControllerFocus);
                 break;
             case SDL_CONTROLLER_BUTTON_DPAD_UP:
                 winMgr->restoreControllerTooltips();
@@ -263,8 +286,11 @@ namespace MWGui
 
     void ItemView::updateControllerFocus(int prevFocus, int newFocus)
     {
-        MWBase::Environment::get().getWindowManager()->setCursorVisible(
-            !MWBase::Environment::get().getWindowManager()->getControllerTooltipVisible());
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (Settings::gui().mControllerMenus)
+            winMgr->setCursorVisible(false);
+        else
+            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
 
         if (!mItemCount)
             return;
@@ -295,8 +321,12 @@ namespace MWGui
                 MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->restoreControllerTooltips();
 
-                if (winMgr->getControllerTooltipVisible())
-                    MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
+                MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
+                const MyGUI::IntCoord coord = focused->getAbsoluteCoord();
+                const int mouseX = coord.left + coord.width / 2;
+                const int mouseY = coord.top + coord.height / 4;
+                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
             }
         }
     }

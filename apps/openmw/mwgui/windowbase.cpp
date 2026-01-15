@@ -75,8 +75,8 @@ void MWGui::updateControllerListHighlight(MyGUI::ListBox* list, MyGUI::Widget* h
 
     const MyGUI::IntCoord itemCoord = item->getAbsoluteCoord();
     const MyGUI::IntCoord clientCoord = client->getAbsoluteCoord();
-    highlight->setCoord(itemCoord.left - clientCoord.left, itemCoord.top - clientCoord.top, itemCoord.width,
-        itemCoord.height);
+    highlight->setCoord(
+        itemCoord.left - clientCoord.left, itemCoord.top - clientCoord.top, itemCoord.width, itemCoord.height);
     highlight->setVisible(true);
 }
 

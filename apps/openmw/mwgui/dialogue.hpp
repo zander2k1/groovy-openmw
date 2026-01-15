@@ -164,9 +164,14 @@ namespace MWGui
 
         void updateTopics();
 
+        void onOpen() override;
         void onClose() override;
 
         std::string_view getWindowIdForLua() const override { return "Dialogue"; }
+        std::string getActorName() const;
+        int getDisposition() const;
+        int getDispositionBarWidth() const;
+        bool hasActor() const;
 
     protected:
         void updateTopicsPane();
@@ -188,13 +193,17 @@ namespace MWGui
         void onReferenceUnavailable() override;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
         void updateDisposition();
         void restock();
         void deleteLater();
         void redrawTopicsList();
         void setTopicHighlight(size_t index, bool visible);
+        void updateLayoutSizes();
 
         bool mIsCompanion;
         std::list<std::string> mKeywords;
@@ -212,6 +221,8 @@ namespace MWGui
         TopicSearch mKeywordSearch;
 
         BookPage* mHistory;
+        MyGUI::Widget* mHistoryBox;
+        MyGUI::Widget* mHistoryContainer;
         Gui::MWList* mTopicsList;
         MyGUI::ScrollBar* mScrollBar;
         MyGUI::ProgressBar* mDispositionBar;
@@ -230,6 +241,7 @@ namespace MWGui
         int mControllerChoice = -1;
 
         void updateTopicFormat();
+
     };
 }
 #endif

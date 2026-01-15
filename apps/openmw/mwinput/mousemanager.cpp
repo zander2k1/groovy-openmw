@@ -14,6 +14,7 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
+#include "../mwgui/mapwindow.hpp"
 #include "../mwgui/settingswindow.hpp"
 
 #include "../mwworld/player.hpp"
@@ -181,6 +182,12 @@ namespace MWInput
             MWBase::Environment::get().getWindowManager()->setCursorActive(true);
         }
 
+        if (id == SDL_BUTTON_LEFT && MWBase::Environment::get().getWindowManager()->isConsoleMode())
+        {
+            MWBase::Environment::get().getWindowManager()->setConsoleSelectedObject(
+                MWBase::Environment::get().getWorld()->getFocusObject());
+        }
+
         mBindingsManager->setPlayerControlsEnabled(!guiMode);
 
         // Don't trigger any mouse bindings while in settings menu, otherwise rebinding controls becomes impossible
@@ -271,6 +278,22 @@ namespace MWInput
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
         mGuiCursorX = std::clamp<float>(mGuiCursorX, 0.f, viewSize.width - 1.f);
         mGuiCursorY = std::clamp<float>(mGuiCursorY, 0.f, viewSize.height - 1.f);
+
+        if (Settings::gui().mControllerMenus)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            if (winMgr->getCursorVisible() && winMgr->isGuiMode() && winMgr->getMode() == MWGui::GM_Inventory)
+            {
+                MWGui::WindowBase* activeWindow = winMgr->getActiveControllerWindow();
+                auto* mapWindow = activeWindow ? dynamic_cast<MWGui::MapWindow*>(activeWindow) : nullptr;
+                if (mapWindow && mapWindow->isVisible())
+                {
+                    const MyGUI::IntCoord rect = mapWindow->mMainWidget->getAbsoluteCoord();
+                    mGuiCursorX = std::clamp<float>(mGuiCursorX, rect.left, rect.left + rect.width - 1.f);
+                    mGuiCursorY = std::clamp<float>(mGuiCursorY, rect.top, rect.top + rect.height - 1.f);
+                }
+            }
+        }
 
         MyGUI::InputManager::getInstance().injectMouseMove(
             static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), mMouseWheel);

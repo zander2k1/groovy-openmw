@@ -35,7 +35,7 @@ namespace MWGui
 
     RaceDialog::RaceDialog(osg::Group* parent, Resource::ResourceSystem* resourceSystem)
         : WindowModal(
-              Settings::gui().mControllerMenus ? "openmw_controller_chargen_race.layout" : "openmw_chargen_race.layout")
+            Settings::gui().mControllerMenus ? "openmw_controller_chargen_race.layout" : "openmw_chargen_race.layout")
         , mParent(parent)
         , mResourceSystem(resourceSystem)
         , mGenderIndex(0)
@@ -118,10 +118,10 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
-            mControllerButtons.mLStick = "#{Interface:Mouse}";
-            mControllerButtons.mA = "#{Interface:Select}";
+            mControllerButtons = {};
+            mControllerButtons.mA = "#{Interface:OK}";
             mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mY = "#{Interface:Sex}";
+            mControllerButtons.mX = "#{Interface:Sex}";
             mControllerButtons.mL1 = "#{Interface:Hair}";
             mControllerButtons.mR1 = "#{Interface:Face}";
         }
@@ -141,13 +141,13 @@ namespace MWGui
         {
             okButton->setCaption(
                 MyGUI::UString(MWBase::Environment::get().getWindowManager()->getGameSettingString("sNext", {})));
-            mControllerButtons.mX = "#{Interface:Next}";
+            mControllerButtons.mA = "#{Interface:OK}";
         }
         else if (Settings::gui().mControllerMenus)
         {
             okButton->setCaption(
                 MyGUI::UString(MWBase::Environment::get().getWindowManager()->getGameSettingString("sDone", {})));
-            mControllerButtons.mX = "#{Interface:Done}";
+            mControllerButtons.mA = "#{Interface:OK}";
         }
         else
             okButton->setCaption(
@@ -501,11 +501,11 @@ namespace MWGui
         {
             onBackClicked(mBackButton);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onOkClicked(mOkButton);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
         {
             onSelectNextGender(nullptr);
         }

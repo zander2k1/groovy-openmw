@@ -61,6 +61,11 @@ namespace MWGui
 
         void setActiveControllerWindow(bool active);
         void onControllerButton(const unsigned char button);
+        MyGUI::Widget* getControllerFocusWidget() const;
+        size_t getControllerFocusIndex() const { return mControllerFocus; }
+        size_t getControllerButtonCount() const { return mButtons.size(); }
+        bool isControllerAtTop() const { return mControllerFocus == 0; }
+        void setControllerFocusIndex(size_t index);
 
     private:
         std::unique_ptr<SpellModel> mModel;

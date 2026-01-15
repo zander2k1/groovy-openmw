@@ -25,8 +25,8 @@ namespace MWGui
 {
 
     Recharge::Recharge()
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_recharge_dialog.layout" : "openmw_recharge_dialog.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_recharge_dialog.layout"
+                                                      : "openmw_recharge_dialog.layout")
     {
         getWidget(mBox, "Box");
         getWidget(mGemBox, "GemBox");

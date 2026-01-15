@@ -20,8 +20,7 @@ namespace MWGui
 {
 
     BookWindow::BookWindow()
-        : BookWindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_book.layout" : "openmw_book.layout")
+        : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_book.layout" : "openmw_book.layout")
         , mCurrentPage(0)
         , mTakeButtonShow(true)
         , mTakeButtonAllowed(true)
@@ -67,6 +66,7 @@ namespace MWGui
                 0, 0, static_cast<int>((64 - 7) * scale), static_cast<int>(mNextPageButton->getSize().height * scale)));
         }
 
+        mControllerButtons = {};
         mControllerButtons.mL1 = "#{Interface:Prev}";
         mControllerButtons.mR1 = "#{Interface:Next}";
         mControllerButtons.mB = "#{Interface:Close}";
@@ -232,6 +232,8 @@ namespace MWGui
         return &mControllerButtons;
     }
 
+    
+
     bool BookWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -245,6 +247,10 @@ namespace MWGui
             prevPage();
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             nextPage();
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+            nextPage();
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+            prevPage();
 
         return true;
     }

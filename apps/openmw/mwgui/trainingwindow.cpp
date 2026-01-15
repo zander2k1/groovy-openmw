@@ -26,8 +26,8 @@ namespace MWGui
 {
 
     TrainingWindow::TrainingWindow()
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_trainingwindow.layout" : "openmw_trainingwindow.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_trainingwindow.layout"
+                                                      : "openmw_trainingwindow.layout")
     {
         getWidget(mTrainingOptions, "TrainingOptions");
         getWidget(mCancelButton, "OkButton");
@@ -126,8 +126,8 @@ namespace MWGui
             if (price <= playerGold && useControllerSelectionHighlight())
             {
                 highlight = mTrainingOptions->createWidget<MyGUI::Widget>("ControllerHighlight",
-                    MyGUI::IntCoord(4, static_cast<int>(3 + i * lineHeight), mTrainingOptions->getWidth() - 10,
-                        lineHeight),
+                    MyGUI::IntCoord(
+                        4, static_cast<int>(3 + i * lineHeight), mTrainingOptions->getWidth() - 10, lineHeight),
                     MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setVisible(false);

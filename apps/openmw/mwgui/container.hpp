@@ -79,6 +79,7 @@ namespace MWGui
         void onDisposeCorpseButtonClicked(MyGUI::Widget* sender);
 
         void onReferenceUnavailable() override;
+        void resetFixedWindowGeometry();
     };
 }
 #endif // CONTAINER_H

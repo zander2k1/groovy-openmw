@@ -20,6 +20,7 @@ namespace MWGui
 
         int getHeight();
         void setButtons(ControllerButtons* buttons);
+        void setAnchor(int margin);
 
         enum Button
         {

@@ -28,8 +28,8 @@ namespace MWGui
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
 
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:OK}";
-        mControllerButtons.mMenu = "#{Interface:Keyboard}";
     }
 
     void TextInputDialog::setNextButtonShow(bool shown)

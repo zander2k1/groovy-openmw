@@ -70,7 +70,6 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
-            mControllerButtons.mLStick = "#{Interface:Mouse}";
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
         }

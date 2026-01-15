@@ -578,6 +578,10 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <source>Text file (*.txt)</source>
         <translation>Plik tekstowy (*.txt)</translation>
     </message>
+    <message>
+        <source>Automatic</source>
+        <translation type="unfinished">Automatyczne</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
@@ -1504,6 +1508,62 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If enabled - makes transitions between different animations/poses much smoother. Also allows to load animation blending config YAML files that can be bundled with animations in order to customise blending styles.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Jeśli włączone -- sprawia, że przejścia między różnymi animacjami/pozycjami są znacznie płynniejsze. Pozwala również na ładowanie plików konfiguracyjnych blendowania animacji w formacie YAML, które mogą być dołączone do animacji w celu dostosowania stylów blendowania.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <source>Select the language used for the virtual keyboard layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Virtual Keyboard Language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the keyboard layout used by the virtual keyboard.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Virtual Keyboard Layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>General</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Controller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, only the focused container or trade window is visible.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Singular Window in the Container/Trade UI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Highlight the current controller selection in menus.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Highlighted Selections with Controller Interfaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, use the left stick to navigate like the D-Pad instead of enabling the mouse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Left Stick for D-Pad Navigation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Repeat rate for D-Pad/left stick navigation in controller menus. 0 disables turbo.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Navigation Repeat Speed</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

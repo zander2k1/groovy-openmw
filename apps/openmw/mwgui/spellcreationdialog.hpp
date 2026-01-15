@@ -149,6 +149,11 @@ namespace MWGui
         virtual void notifyEffectsChanged() {}
 
         virtual bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg);
+        void setControllerEffectsFocus(bool active);
+        void setControllerEffectsRightColumn(bool rightColumn);
+        bool isControllerEffectsAtTop() const;
+        bool isControllerEffectsRightColumn() const;
+        MyGUI::Widget* getControllerEffectsTooltipWidget() const;
 
     private:
         Type mType;
@@ -158,6 +163,7 @@ namespace MWGui
         bool mRightColumn = false;
         std::vector<MyGUI::Button*> mAvailableButtons;
         std::vector<std::pair<Widgets::MWSpellEffectPtr, MyGUI::Button*>> mEffectButtons;
+        std::vector<MyGUI::Widget*> mEffectHighlights;
     };
 
     class SpellCreationDialog : public WindowBase, public ReferenceInterface, public EffectEditorBase
@@ -168,11 +174,13 @@ namespace MWGui
         void onOpen() override;
         void clear() override { resetReference(); }
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
         std::string_view getWindowIdForLua() const override { return "SpellCreationDialog"; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
+        MyGUI::EditBox* getNameEdit() const { return mNameEdit; }
 
     protected:
         void onReferenceUnavailable() override;
@@ -193,6 +201,15 @@ namespace MWGui
         MyGUI::TextBox* mPlayerGold;
 
         ESM::Spell mSpell;
+
+        void openVirtualKeyboard(MyGUI::EditBox* edit);
+        void setControllerFocusWidget(MyGUI::Widget* widget);
+        void setControllerEffectsFocusActive(bool active);
+        void updateControllerFocusHighlight();
+        void updateEditStaticState();
+
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
+        bool mControllerEffectsFocusActive = false;
     };
 
 }

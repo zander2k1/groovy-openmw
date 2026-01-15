@@ -1,24 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Window" layer="Windows" position="0 0 600 300" name="_Main">
+    <Widget type="Window" skin="MW_Window_Pinnable_DialogNoTransp" layer="Windows" position="0 0 600 300" name="_Main">
         <Property key="MinSize" value="245 145"/>
 
-        <!-- Top row with filter and encumbrance bar -->
+        <!-- Top row with encumbrance bar -->
         <Widget type="HBox" position="5 5 590 23" align="Left Top HStretch" name="_TopRow">
             <Property key="Spacing" value="10"/>
 
             <Widget type="MWDynamicStat" skin="MW_ChargeBar_Blue" position="0 0 490 23" name="EncumbranceBar" align="Left Top">
             </Widget>
-            
-            <Widget type="EditBox" skin="MW_TextBoxEditWithBorder" position="0 0 206 23" name="FilterEdit" align="Left Top">
-                <UserString key="AcceptTab" value="true"/>
-            </Widget>
-         
         </Widget>
         
         <!-- Items -->
-        <Widget type="ItemView" skin="MW_ItemView" position="5 33 575 222" name="ItemView" align="Left Top Stretch">
+        <Widget type="ItemView" skin="MW_ItemView" position="5 33 582 252" name="ItemView" align="Left Top Stretch">
         </Widget>
 
         <Widget type="HBox" position="5 235 575 24" align="Bottom HStretch">

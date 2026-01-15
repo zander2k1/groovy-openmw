@@ -30,7 +30,7 @@ namespace MWGui
 {
     TravelWindow::TravelWindow()
         : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_travel_window.layout" : "openmw_travel_window.layout")
+            Settings::gui().mControllerMenus ? "openmw_controller_travel_window.layout" : "openmw_travel_window.layout")
         , mCurrentY(0)
     {
         getWidget(mCancelButton, "CancelButton");
@@ -42,7 +42,7 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             mDisableGamepadCursor = true;
-            mControllerButtons.mA = "#{Interface:Travel}";
+            mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Cancel}";
         }
     }

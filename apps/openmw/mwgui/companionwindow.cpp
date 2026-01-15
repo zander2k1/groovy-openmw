@@ -5,6 +5,8 @@
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_RenderManager.h>
+#include <MyGUI_Window.h>
 
 #include <components/settings/values.hpp>
 
@@ -42,8 +44,8 @@ namespace MWGui
 {
 
     CompanionWindow::CompanionWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer, MessageBoxManager* manager)
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_companion_window.layout" : "openmw_companion_window.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_companion_window.layout"
+                                                      : "openmw_companion_window.layout")
         , mSortModel(nullptr)
         , mModel(nullptr)
         , mSelectedItem(-1)
@@ -55,20 +57,20 @@ namespace MWGui
         getWidget(mCloseButton, "CloseButton");
         getWidget(mProfitLabel, "ProfitLabel");
         getWidget(mEncumbranceBar, "EncumbranceBar");
-        getWidget(mFilterEdit, "FilterEdit");
+        mFilterEdit = nullptr;
         getWidget(mItemView, "ItemView");
         mItemView->eventBackgroundClicked += MyGUI::newDelegate(this, &CompanionWindow::onBackgroundSelected);
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &CompanionWindow::onItemSelected);
-        mFilterEdit->eventEditTextChange += MyGUI::newDelegate(this, &CompanionWindow::onNameFilterChanged);
 
         mCloseButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CompanionWindow::onCloseButtonClicked);
 
         setCoord(200, 0, 600, 300);
 
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Take}";
         mControllerButtons.mB = "#{Interface:Close}";
-        mControllerButtons.mR3 = "#{Interface:Info}";
-        mControllerButtons.mL2 = "#{Interface:Inventory}";
+        mControllerButtons.mY = "#{Interface:Info}";
+        mControllerButtons.mR2 = "#{Interface:Inventory}";
     }
 
     void CompanionWindow::onItemSelected(int index)
@@ -117,7 +119,8 @@ namespace MWGui
 
     void CompanionWindow::onNameFilterChanged(MyGUI::EditBox* sender)
     {
-        mSortModel->setNameFilter(sender->getCaption());
+        if (mSortModel)
+            mSortModel->setNameFilter(sender->getCaption());
         mItemView->update();
     }
 
@@ -145,12 +148,16 @@ namespace MWGui
         if (actor.isEmpty() || !actor.getClass().isActor())
             throw std::runtime_error("Invalid argument in CompanionWindow::setPtr");
         mPtr = actor;
+        mItemTransfer->addTarget(*mItemView);
+        if (auto* inventory = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            mItemTransfer->addTarget(*inventory->getItemView());
         updateEncumbranceBar();
         auto model = std::make_unique<CompanionItemModel>(actor);
         mModel = model.get();
         auto sortModel = std::make_unique<SortFilterItemModel>(std::move(model));
         mSortModel = sortModel.get();
-        mFilterEdit->setCaption({});
+        if (mFilterEdit)
+            mFilterEdit->setCaption({});
         mItemView->setModel(std::move(sortModel));
         mItemView->resetScrollBars();
 
@@ -243,12 +250,40 @@ namespace MWGui
 
     void CompanionWindow::onOpen()
     {
+        resetFixedWindowGeometry();
         mItemTransfer->addTarget(*mItemView);
+        if (auto* inventory = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            mItemTransfer->addTarget(*inventory->getItemView());
     }
 
     void CompanionWindow::onClose()
     {
+        // Only remove transfer targets when leaving companion mode entirely.
+        if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Companion))
+            return;
         mItemTransfer->removeTarget(*mItemView);
+    }
+
+    void CompanionWindow::resetFixedWindowGeometry()
+    {
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const float scale = 0.85f;
+            float targetWidth = viewSize.width * scale;
+            float targetHeight = targetWidth * 10.f / 16.f;
+            const float maxHeight = viewSize.height * scale;
+            int width = static_cast<int>(targetWidth);
+            int height = static_cast<int>(targetHeight);
+            if (height > maxHeight)
+            {
+                height = static_cast<int>(maxHeight);
+                width = static_cast<int>(height * 16.f / 10.f);
+            }
+            const int x = (viewSize.width - width) / 2;
+            const int y = (viewSize.height - height) / 2;
+            window->setCoord(x, y, width, height);
+        }
     }
 
     bool CompanionWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -276,6 +311,8 @@ namespace MWGui
     void CompanionWindow::setActiveControllerWindow(bool active)
     {
         mItemView->setActiveControllerWindow(active);
+        if (active)
+            mItemView->refreshControllerFocus();
         WindowBase::setActiveControllerWindow(active);
     }
 }

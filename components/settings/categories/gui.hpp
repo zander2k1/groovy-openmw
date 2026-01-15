@@ -36,7 +36,10 @@ namespace Settings
         SettingValue<MyGUI::Colour> mColorBackgroundOwned{ mIndex, "GUI", "color background owned" };
         SettingValue<MyGUI::Colour> mColorCrosshairOwned{ mIndex, "GUI", "color crosshair owned" };
         SettingValue<bool> mKeyboardNavigation{ mIndex, "GUI", "keyboard navigation" };
+        SettingValue<std::string> mVirtualKeyboardLanguage{ mIndex, "GUI", "virtual keyboard language" };
+        SettingValue<std::string> mVirtualKeyboardLayout{ mIndex, "GUI", "virtual keyboard layout" };
         SettingValue<bool> mColorTopicEnable{ mIndex, "GUI", "color topic enable" };
+        SettingValue<bool> mXboxStyledDialog{ mIndex, "GUI", "xbox styled dialog" };
         SettingValue<MyGUI::Colour> mColorTopicSpecific{ mIndex, "GUI", "color topic specific" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificOver{ mIndex, "GUI", "color topic specific over" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificPressed{ mIndex, "GUI", "color topic specific pressed" };

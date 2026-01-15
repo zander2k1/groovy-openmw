@@ -48,9 +48,10 @@ namespace MWGui
         }
         void updateSkillArea();
 
-        void onOpen() override { onWindowResize(mMainWidget->castType<MyGUI::Window>()); }
+        void onOpen() override;
 
         std::string_view getWindowIdForLua() const override { return "Stats"; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     protected:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
@@ -60,6 +61,9 @@ namespace MWGui
         struct ControllerItem
         {
             MyGUI::Widget* mTooltipWidget = nullptr;
+            MyGUI::Widget* mHighlight = nullptr;
+            bool mHighlightFollowsTooltip = true;
+            MyGUI::Widget* mGroupHeader = nullptr;
             std::vector<MyGUI::TextBox*> mTextWidgets;
             bool mRightPane = false;
         };
@@ -74,16 +78,20 @@ namespace MWGui
         struct StaticControllerEntry
         {
             MyGUI::Widget* mTooltipWidget = nullptr;
+            MyGUI::Widget* mHighlight = nullptr;
+            bool mHighlightFollowsTooltip = true;
             std::vector<MyGUI::TextBox*> mTextWidgets;
         };
 
         void addSkills(const std::vector<ESM::RefId>& skills, const std::string& titleId,
             const std::string& titleDefault, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         void addSeparator(MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
-        void addGroup(std::string_view label, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
+        MyGUI::Widget* addGroup(std::string_view label, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         std::pair<MyGUI::TextBox*, MyGUI::TextBox*> addValueItem(std::string_view text, const std::string& value,
-            const std::string& state, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
-        MyGUI::Widget* addItem(const std::string& text, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
+            const std::string& state, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2,
+            MyGUI::Widget* groupHeader = nullptr);
+        MyGUI::Widget* addItem(const std::string& text, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2,
+            MyGUI::Widget* groupHeader = nullptr);
 
         void setFactions(const FactionList& factions);
         void setExpelled(const std::set<ESM::RefId>& expelled);
@@ -92,18 +100,22 @@ namespace MWGui
         void onWindowResize(MyGUI::Window* window);
         void onMouseWheel(MyGUI::Widget* sender, int rel);
         void resetControllerItems();
-        void addStaticControllerEntry(
-            MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets);
-        void addControllerItem(
-            bool rightPane, MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets);
-        void addControllerItem(
-            bool rightPane, MyGUI::Widget* tooltipWidget, const std::vector<MyGUI::TextBox*>& textWidgets);
+        void addStaticControllerEntry(MyGUI::Widget* tooltipWidget,
+            const std::initializer_list<MyGUI::TextBox*>& textWidgets, MyGUI::Widget* highlight = nullptr,
+            bool highlightFollowsTooltip = true);
+        void addControllerItem(bool rightPane, MyGUI::Widget* tooltipWidget,
+            const std::initializer_list<MyGUI::TextBox*>& textWidgets, MyGUI::Widget* highlight = nullptr,
+            bool highlightFollowsTooltip = true, MyGUI::Widget* groupHeader = nullptr);
+        void addControllerItem(bool rightPane, MyGUI::Widget* tooltipWidget,
+            const std::vector<MyGUI::TextBox*>& textWidgets, MyGUI::Widget* highlight = nullptr,
+            bool highlightFollowsTooltip = true, MyGUI::Widget* groupHeader = nullptr);
         void setControllerWidgetBaseState(MyGUI::TextBox* widget, std::string_view state);
         void updateControllerFocus(size_t prevFocus, size_t newFocus);
         bool isControllerWidgetFocused(MyGUI::TextBox* widget) const;
-        void scrollSkillViewToWidget(MyGUI::Widget* widget);
+        void scrollSkillViewToWidget(MyGUI::Widget* widget, MyGUI::Widget* headerWidget);
         size_t findClosestControllerItem(bool rightPane, MyGUI::Widget* widget) const;
         void setControllerFocus(size_t newFocus);
+        void updateStaticHighlights();
 
         MyGUI::Widget* mLeftPane;
         MyGUI::Widget* mRightPane;
@@ -130,10 +142,19 @@ namespace MWGui
         std::unordered_map<MyGUI::TextBox*, std::string> mControllerBaseStates;
         std::vector<AttributeControllerEntry> mAttributeControllerEntries;
         std::vector<StaticControllerEntry> mStaticControllerEntries;
+        bool mPendingControllerFocusRefresh = false;
+        MyGUI::Widget* mLevelHighlight = nullptr;
+        MyGUI::Widget* mRaceHighlight = nullptr;
+        MyGUI::Widget* mClassHighlight = nullptr;
+        MyGUI::Widget* mLevelRow = nullptr;
+        MyGUI::Widget* mRaceRow = nullptr;
+        MyGUI::Widget* mClassRow = nullptr;
 
     protected:
         void onPinToggled() override;
         void onTitleDoubleClicked() override;
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
     };
 }
 #endif

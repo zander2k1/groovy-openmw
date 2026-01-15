@@ -38,8 +38,8 @@
 namespace MWGui
 {
     SaveGameDialog::SaveGameDialog()
-        : WindowModal(
-              Settings::gui().mControllerMenus ? "openmw_controller_savegame_dialog.layout" : "openmw_savegame_dialog.layout")
+        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_savegame_dialog.layout"
+                                                       : "openmw_savegame_dialog.layout")
         , mSaving(true)
         , mCurrentCharacter(nullptr)
         , mCurrentSlot(nullptr)
@@ -550,6 +550,7 @@ namespace MWGui
 
     ControllerButtons* SaveGameDialog::getControllerButtons()
     {
+        mControllerButtons.mX = mSaving ? "" : "#{Interface:Delete}";
         mControllerButtons.mY = mSaving ? "" : "#{OMWEngine:LoadingSelectCharacter}";
         return &mControllerButtons;
     }
@@ -574,6 +575,11 @@ namespace MWGui
             index = wrap(index, mCharacterSelection->getItemCount(), 1);
             mCharacterSelection->setIndexSelected(index);
             onCharacterSelected(mCharacterSelection, index);
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X && !mSaving)
+        {
+            confirmDeleteSave();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)

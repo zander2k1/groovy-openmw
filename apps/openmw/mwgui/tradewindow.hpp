@@ -4,6 +4,8 @@
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
 
+#include <vector>
+
 #include "../mwworld/containerstore.hpp"
 
 namespace Gui
@@ -32,7 +34,7 @@ namespace MWGui
         void onClose() override;
         void onFrame(float dt) override;
         void clear() override { resetReference(); }
-
+        void onOpen() override;
         bool exit() override;
 
         void resetReference() override;
@@ -40,6 +42,8 @@ namespace MWGui
         void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
 
         void updateItemView();
+        ItemView* getItemView() { return mItemView; }
+        bool isControllerTabsActive() const { return mControllerTabsActive; }
         MyGUI::EditBox* getFilterEdit() const { return mFilterEdit; }
         void clearFilter();
 
@@ -69,8 +73,14 @@ namespace MWGui
         MyGUI::Button* mFilterApparel;
         MyGUI::Button* mFilterMagic;
         MyGUI::Button* mFilterMisc;
+        MyGUI::Widget* mCategories;
 
         MyGUI::EditBox* mFilterEdit;
+
+        std::vector<MyGUI::Widget*> mControllerTabWidgets;
+        MyGUI::Widget* mControllerTabHighlight = nullptr;
+        int mControllerTabIndex = 0;
+        bool mControllerTabsActive = false;
 
         MyGUI::Button* mIncreaseButton;
         MyGUI::Button* mDecreaseButton;
@@ -127,6 +137,12 @@ namespace MWGui
         void onReferenceUnavailable() override;
 
         int getMerchantGold();
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
+
+        int getSelectedTabIndex() const;
+        void setControllerTabsActive(bool active);
+        void updateControllerTabFocus(int prevIndex, int newIndex);
     };
 }
 

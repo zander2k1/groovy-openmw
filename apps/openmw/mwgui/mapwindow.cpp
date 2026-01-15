@@ -20,6 +20,7 @@
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -789,7 +790,7 @@ namespace MWGui
         : WindowPinnableBase("openmw_map_window_vr.layout")
 #else
         : WindowPinnableBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_map_window.layout" : "openmw_map_window.layout")
+            Settings::gui().mControllerMenus ? "openmw_controller_map_window.layout" : "openmw_map_window.layout")
 #endif
         , LocalMapBase(customMarkers, localMapRender, true)
         , NoDrop(drag, mMainWidget)
@@ -835,6 +836,18 @@ namespace MWGui
         const bool global = Settings::map().mGlobal;
 
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
+        mButton->setNeedMouseFocus(false);
+        mButton->setEnabled(false);
+        mButton->setVisible(false);
+
+        if (!mCursorAnchor)
+        {
+            mCursorAnchor
+                = mMainWidget->createWidget<MyGUI::Widget>({}, MyGUI::IntCoord(0, 0, 2, 4), MyGUI::Align::Default);
+            mCursorAnchor->setVisible(false);
+            mCursorAnchor->setNeedMouseFocus(false);
+            mCursorAnchor->setEnabled(false);
+        }
 
         getWidget(mEventBoxGlobal, "EventBoxGlobal");
         mEventBoxGlobal->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
@@ -847,6 +860,10 @@ namespace MWGui
         mEventBoxGlobal->setDepth(Global_ExploreOverlayLayer);
 
         getWidget(mEventBoxLocal, "EventBoxLocal");
+        mEventBoxLocal->setVisible(true);
+        mEventBoxLocal->setEnabled(true);
+        mEventBoxLocal->setNeedMouseFocus(true);
+        mEventBoxLocal->setDepth(Local_MapLayer);
         mEventBoxLocal->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
         mEventBoxLocal->eventMouseButtonPressed += MyGUI::newDelegate(this, &MapWindow::onDragStart);
         mEventBoxLocal->eventMouseButtonDoubleClick += MyGUI::newDelegate(this, &MapWindow::onMapDoubleClicked);
@@ -860,11 +877,12 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
+            mControllerButtons = {};
+            mControllerButtons.mA = "#{Interface:World}";
             mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
-            mControllerButtons.mY = "#{Interface:Center}";
-            if (!Settings::map().mAllowZooming)
-                mControllerButtons.mDpad = "#{Interface:Move}";
+            mControllerButtons.mX = "#{Interface:Center}";
+            mControllerButtons.mL2 = "#{sStats}";
+            mControllerButtons.mR2 = "#{Interface:Inventory}";
         }
     }
 
@@ -1056,7 +1074,7 @@ namespace MWGui
     {
         WindowBase::setVisible(visible);
         MWGui::GuiMode mode = MWBase::Environment::get().getWindowManager()->getMode();
-        mButton->setVisible(visible && mode != MWGui::GM_None);
+        mButton->setVisible(false);
 
         if (Settings::gui().mControllerMenus && mode == MWGui::GM_None && pinned() && visible)
         {
@@ -1082,6 +1100,12 @@ namespace MWGui
     void MapWindow::setCellName(const std::string& cellName)
     {
         setTitle("#{sCell=" + cellName + "}");
+        if (mEventBoxLocal != nullptr)
+        {
+            mEventBoxLocal->setUserString("ToolTipType", "Layout");
+            mEventBoxLocal->setUserString("ToolTipLayout", "TextToolTipOneLine");
+            mEventBoxLocal->setUserString("Caption_TextOneLine", cellName);
+        }
     }
 
     MyGUI::IntCoord MapWindow::createMarkerCoords(float x, float y, float agregatedWeight) const
@@ -1101,7 +1125,7 @@ namespace MWGui
         MyGUI::Widget* markerWidget = mGlobalMap->createWidget<MyGUI::Widget>(
             "MarkerButton", createMarkerCoords(x, y, agregatedWeight), MyGUI::Align::Default);
         markerWidget->setVisible(markerWidget->getHeight() >= 6.0);
-        markerWidget->setUserString("Caption_TextOneLine", "#{sCell=" + name + "}");
+        markerWidget->setUserString("Caption_TextOneLine", name);
         setGlobalMapMarkerTooltip(markerWidget, static_cast<int>(x), static_cast<int>(y));
 
         markerWidget->setUserString("ToolTipLayout", "TextToolTipOneLine");
@@ -1259,8 +1283,14 @@ namespace MWGui
         mLocalMap->setVisible(!global);
 
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
-        mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
         MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
+
+        if (Settings::gui().mControllerMenus)
+        {
+            MWBase::Environment::get().getWindowManager()->setCursorActive(true);
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(true);
+            warpCursorToMapCenter();
+        }
     }
 
     void MapWindow::onPinToggled()
@@ -1282,6 +1312,7 @@ namespace MWGui
 
     void MapWindow::onOpen()
     {
+        resetFixedWindowGeometry();
         ensureGlobalMapLoaded();
 
         globalMapUpdatePlayer();
@@ -1427,12 +1458,12 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             onWorldButtonClicked(mButton);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X || arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
             centerView();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
@@ -1467,27 +1498,76 @@ namespace MWGui
         }
     }
 
+    void MapWindow::warpCursorToMapCenter()
+    {
+        if (!mCursorAnchor)
+            return;
+
+        MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        MyGUI::IntCoord parentCoord = mMainWidget->getAbsoluteCoord();
+
+        constexpr int anchorWidth = 2;
+        constexpr int anchorHeight = 4;
+        const int targetX = viewSize.width / 2;
+        const int targetY = viewSize.height / 2;
+        const int localLeft = targetX - parentCoord.left - anchorWidth / 2;
+        const int localTop = targetY - parentCoord.top - anchorHeight / 4;
+
+        mCursorAnchor->setCoord(localLeft, localTop, anchorWidth, anchorHeight);
+        MWBase::Environment::get().getInputManager()->warpMouseToWidget(mCursorAnchor);
+    }
+
     void MapWindow::setActiveControllerWindow(bool active)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (winMgr->getMode() == MWGui::GM_Inventory)
         {
-            // Fill the screen, or limit to a certain size on large screens. Size chosen to
-            // show the entire local map without scrolling.
             MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-            MyGUI::IntSize canvasSize = mLocalMap->getCanvasSize();
-            MyGUI::IntSize borderSize = mMainWidget->getSize() - mMainWidget->getClientWidget()->getSize();
-
-            int width = std::min(viewSize.width, canvasSize.width + borderSize.width);
-            int height = std::min(winMgr->getControllerMenuHeight(), canvasSize.height + borderSize.height);
-            int x = (viewSize.width - width) / 2;
-            int y = (viewSize.height - height) / 2;
+            MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
-            window->setCoord(x, active ? y : viewSize.height + 1, width, height);
+            window->setCoord(
+                coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
+        }
+
+        if (Settings::gui().mControllerMenus)
+        {
+            winMgr->setControllerTooltipVisible(active && Settings::gui().mControllerTooltips);
+            winMgr->setCursorVisible(active);
+            if (active)
+                warpCursorToMapCenter();
         }
 
         WindowBase::setActiveControllerWindow(active);
+    }
+
+
+    void MapWindow::resetFixedWindowGeometry()
+    {
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            window->setCoord(getFixedWindowCoord(viewSize));
+        }
+    }
+
+    MyGUI::IntCoord MapWindow::getFixedWindowCoord(const MyGUI::IntSize& viewSize) const
+    {
+        const float scale = 0.85f;
+        float width = viewSize.width * scale;
+        float height = width * 10.f / 16.f;
+        const float maxHeight = viewSize.height * scale;
+        if (height > maxHeight)
+        {
+            height = maxHeight;
+            width = height * 16.f / 10.f;
+        }
+
+        const int w = static_cast<int>(width);
+        const int h = static_cast<int>(height);
+        const int x = (viewSize.width - w) / 2;
+        const int y = (viewSize.height - h) / 2;
+        return { x, y, w, h };
     }
 
     // -------------------------------------------------------------------

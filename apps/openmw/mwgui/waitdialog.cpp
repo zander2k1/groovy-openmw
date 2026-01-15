@@ -52,7 +52,7 @@ namespace MWGui
 
     WaitDialog::WaitDialog()
         : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_wait_dialog.layout" : "openmw_wait_dialog.layout")
+            Settings::gui().mControllerMenus ? "openmw_controller_wait_dialog.layout" : "openmw_wait_dialog.layout")
         , mSleeping(false)
         , mHours(1)
         , mManualHours(1)
@@ -335,8 +335,6 @@ namespace MWGui
         if (mSleeping)
         {
             mControllerButtons.mA = "#{Interface:Rest}";
-            if (mUntilHealedButton->getVisible())
-                mControllerButtons.mX = "#{Interface:UntilHealed}";
         }
         else
         {

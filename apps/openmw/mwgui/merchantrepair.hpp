@@ -17,6 +17,7 @@ namespace MWGui
         void setPtr(const MWWorld::Ptr& actor) override;
 
         std::string_view getWindowIdForLua() const override { return "MerchantRepair"; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     private:
         MyGUI::ScrollView* mList;

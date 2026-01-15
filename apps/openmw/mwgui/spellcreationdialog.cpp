@@ -1,9 +1,14 @@
 #include "spellcreationdialog.hpp"
 
 #include <MyGUI_Button.h>
+#include <MyGUI_EditBox.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_ScrollBar.h>
+#include <MyGUI_RenderManager.h>
+#include <MyGUI_Widget.h>
+#include <MyGUI_Window.h>
 
 #include <components/misc/resourcehelpers.hpp>
 #include <components/resource/resourcesystem.hpp>
@@ -40,6 +45,15 @@ namespace
 
         return gmst.find(ESM::MagicEffect::indexToGmstString(id1))->mValue.getString()
             < gmst.find(ESM::MagicEffect::indexToGmstString(id2))->mValue.getString();
+    }
+
+    MyGUI::IntCoord getCenteredWindowCoord(const MyGUI::IntSize& viewSize, const MyGUI::IntSize& windowSize)
+    {
+        const int w = windowSize.width;
+        const int h = windowSize.height;
+        const int x = (viewSize.width - w) / 2;
+        const int y = (viewSize.height - h) / 2;
+        return { x, y, w, h };
     }
 
     void init(ESM::ENAMstruct& effect)
@@ -578,8 +592,8 @@ namespace MWGui
     // ------------------------------------------------------------------------------------------------
 
     SpellCreationDialog::SpellCreationDialog()
-        : WindowBase(
-              Settings::gui().mControllerMenus ? "openmw_controller_spellcreation_dialog.layout" : "openmw_spellcreation_dialog.layout")
+        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_spellcreation_dialog.layout"
+                                                      : "openmw_spellcreation_dialog.layout")
         , EffectEditorBase(EffectEditorBase::Spellmaking)
     {
         getWidget(mNameEdit, "NameEdit");
@@ -600,10 +614,23 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
+            mNameEdit->setEditStatic(true);
+            mNameEdit->setNeedKeyFocus(true);
+
+            MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+            if (!highlightParent)
+                highlightParent = mMainWidget;
+            mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerFocusHighlight->setNeedMouseFocus(false);
+            mControllerFocusHighlight->setDepth(1);
+            mControllerFocusHighlight->setVisible(false);
+
+            mControllerButtons = {};
             mControllerButtons.mA = "#{Interface:Select}";
-            mControllerButtons.mB = "#{Interface:Cancel}";
             mControllerButtons.mX = "#{Interface:Buy}";
-            mControllerButtons.mR3 = "#{Interface:Info}";
+            mControllerButtons.mY = "#{Interface:Info}";
+            mControllerButtons.mB = "#{Interface:Cancel}";
         }
     }
 
@@ -686,8 +713,29 @@ namespace MWGui
 
     void SpellCreationDialog::onOpen()
     {
-        center();
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+        {
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            window->setCoord(getCenteredWindowCoord(viewSize, window->getSize()));
+        }
+        if (Settings::gui().mControllerMenus)
+            setControllerEffectsFocusActive(true);
+        else
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+    }
+
+    void SpellCreationDialog::onFrame(float dt)
+    {
+        checkReferenceAvailable();
+
+        if (!Settings::gui().mControllerMenus)
+            return;
+
+        if (mControllerEffectsFocusActive)
+            setControllerEffectsFocus(true);
+
+        updateControllerFocusHighlight();
+        updateEditStaticState();
     }
 
     void SpellCreationDialog::onReferenceUnavailable()
@@ -703,6 +751,13 @@ namespace MWGui
             mMagickaCost->setCaption("0");
             mPriceLabel->setCaption("0");
             mSuccessChance->setCaption("0");
+            if (Settings::gui().mControllerMenus)
+            {
+                if (mControllerEffectsFocusActive)
+                    setControllerEffectsFocus(true);
+                else if (!MWBase::Environment::get().getWindowManager()->isVirtualKeyboardVisible())
+                    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+            }
             return;
         }
 
@@ -737,6 +792,14 @@ namespace MWGui
 
         int intChance = std::min(100, int(chance));
         mSuccessChance->setCaption(MyGUI::utility::toString(intChance));
+
+        if (Settings::gui().mControllerMenus)
+        {
+            if (mControllerEffectsFocusActive)
+                setControllerEffectsFocus(true);
+            else if (!MWBase::Environment::get().getWindowManager()->isVirtualKeyboardVisible())
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+        }
     }
 
     bool SpellCreationDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -751,8 +814,124 @@ namespace MWGui
             onBuyButtonClicked(mBuyButton);
             return true;
         }
-        else
-            return EffectEditorBase::onControllerButtonEvent(arg);
+        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
+        {
+            if (!mControllerEffectsFocusActive
+                && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
+            {
+                openVirtualKeyboard(mNameEdit);
+                return true;
+            }
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+        {
+            if (mControllerEffectsFocusActive && isControllerEffectsAtTop())
+            {
+                if (isControllerEffectsRightColumn())
+                {
+                    setControllerEffectsRightColumn(false);
+                    return true;
+                }
+
+                setControllerFocusWidget(mNameEdit);
+                return true;
+            }
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+        {
+            if (MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
+            {
+                setControllerEffectsRightColumn(false);
+                setControllerEffectsFocusActive(true);
+                return true;
+            }
+        }
+
+        return EffectEditorBase::onControllerButtonEvent(arg);
+    }
+
+    void SpellCreationDialog::openVirtualKeyboard(MyGUI::EditBox* edit)
+    {
+        if (!edit)
+            return;
+
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (winMgr->isVirtualKeyboardVisible())
+            return;
+
+        edit->setEditStatic(false);
+        winMgr->setKeyFocusWidget(edit);
+        winMgr->toggleVirtualKeyboard();
+    }
+
+    void SpellCreationDialog::setControllerFocusWidget(MyGUI::Widget* widget)
+    {
+        if (!widget)
+            return;
+
+        setControllerEffectsFocusActive(false);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(widget);
+        updateControllerFocusHighlight();
+    }
+
+    void SpellCreationDialog::setControllerEffectsFocusActive(bool active)
+    {
+        if (mControllerEffectsFocusActive == active)
+            return;
+
+        mControllerEffectsFocusActive = active;
+        setControllerEffectsFocus(active);
+
+        if (active)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
+            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
+        }
+
+        updateControllerFocusHighlight();
+    }
+
+    void SpellCreationDialog::updateControllerFocusHighlight()
+    {
+        if (!mControllerFocusHighlight || !Settings::gui().mControllerMenus)
+            return;
+
+        if (mControllerEffectsFocusActive)
+        {
+            mControllerFocusHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        if (focus != mNameEdit)
+        {
+            mControllerFocusHighlight->setVisible(false);
+            return;
+        }
+
+        const MyGUI::IntCoord focusCoord = focus->getAbsoluteCoord();
+        MyGUI::Widget* highlightParent = mControllerFocusHighlight->getParent();
+        const MyGUI::IntCoord baseCoord = highlightParent ? highlightParent->getAbsoluteCoord()
+                                                          : mMainWidget->getAbsoluteCoord();
+        mControllerFocusHighlight->setCoord(
+            focusCoord.left - baseCoord.left, focusCoord.top - baseCoord.top, focusCoord.width, focusCoord.height);
+        mControllerFocusHighlight->setVisible(true);
+    }
+
+    void SpellCreationDialog::updateEditStaticState()
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool shouldStatic = !winMgr->isVirtualKeyboardVisible();
+        if (mNameEdit->getEditStatic() != shouldStatic)
+            mNameEdit->setEditStatic(shouldStatic);
+    }
+
+    MyGUI::Widget* SpellCreationDialog::getControllerFocusTooltipWidget() const
+    {
+        if (mControllerEffectsFocusActive)
+            return getControllerEffectsTooltipWidget();
+        return nullptr;
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -823,7 +1002,7 @@ namespace MWGui
             mButtonMapping[i] = effectId;
             ++i;
         }
-        if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
+        if (Settings::gui().mControllerMenus)
             mAvailableEffectsList->setProperty("ControllerHighlightSkin", "ControllerHighlight");
         else
             mAvailableEffectsList->setProperty("ControllerHighlightSkin", "");
@@ -858,7 +1037,7 @@ namespace MWGui
                 MWBase::WindowManager& winMgr = *MWBase::Environment::get().getWindowManager();
                 winMgr.setCursorVisible(!winMgr.getControllerTooltipVisible());
                 mAvailableButtons[0]->setStateSelected(true);
-                if (Settings::gui().mControllerHighlightSelections)
+                if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(0, true);
                 if (winMgr.getControllerTooltipVisible())
                     MWBase::Environment::get().getInputManager()->warpMouseToWidget(mAvailableButtons[0]);
@@ -976,6 +1155,7 @@ namespace MWGui
         MyGUI::IntSize size(0, 0);
 
         mEffectButtons.clear();
+        mEffectHighlights.clear();
         int i = 0;
         for (const ESM::ENAMstruct& effectInfo : mEffects)
         {
@@ -995,6 +1175,9 @@ namespace MWGui
             button->setUserData(i);
             button->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellCreationDialog::onEditEffect);
             button->setNeedMouseFocus(true);
+            ToolTips::createMagicEffectToolTip(button, effectInfo.mEffectID);
+            if (mType == Enchanting || mType == Spellmaking)
+                button->setUserString("ForceCollapsedTooltip", "true");
 
             Widgets::MWSpellEffectPtr effect = button->createWidget<Widgets::MWSpellEffect>(
                 "MW_EffectImage", MyGUI::IntCoord(0, 0, 0, 24), MyGUI::Align::Default);
@@ -1005,11 +1188,23 @@ namespace MWGui
             effect->setSize(effect->getRequestedWidth(), 24);
             button->setSize(effect->getRequestedWidth(), 24);
 
+            MyGUI::Widget* highlight = nullptr;
+            if (Settings::gui().mControllerMenus)
+            {
+                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
+                    "ControllerHighlight", MyGUI::IntCoord(0, size.height, effect->getRequestedWidth(), 24),
+                    MyGUI::Align::Default);
+                highlight->setNeedMouseFocus(false);
+                highlight->setDepth(1);
+                highlight->setVisible(false);
+            }
+
             size.width = std::max(size.width, effect->getRequestedWidth());
             size.height += 24;
             ++i;
 
             mEffectButtons.emplace_back(std::pair(effect, button));
+            mEffectHighlights.emplace_back(highlight);
         }
 
         // Canvas size must be expressed with HScroll disabled, otherwise MyGUI would expand the scroll area when the
@@ -1065,31 +1260,32 @@ namespace MWGui
                 winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
             }
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK)
-        {
-            // Toggle info tooltip
-            winMgr->setControllerTooltipEnabled(!winMgr->getControllerTooltipEnabled());
-        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             if (mRightColumn && !mEffectButtons.empty())
             {
                 if (mEffectFocus < mEffectButtons.size())
+                {
                     mEffectButtons[mEffectFocus].first->setStateSelected(false);
+                    if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                        mEffectHighlights[mEffectFocus]->setVisible(false);
+                }
                 mEffectFocus = wrap(mEffectFocus, mEffectButtons.size(), -1);
                 mEffectButtons[mEffectFocus].first->setStateSelected(true);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(true);
             }
             else if (!mRightColumn && !mAvailableButtons.empty())
             {
                 if (mAvailableFocus < mAvailableButtons.size())
                 {
                     mAvailableButtons[mAvailableFocus]->setStateSelected(false);
-                    if (Settings::gui().mControllerHighlightSelections)
+                    if (Settings::gui().mControllerMenus)
                         mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
                 }
                 mAvailableFocus = wrap(mAvailableFocus, mAvailableButtons.size(), -1);
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
-                if (Settings::gui().mControllerHighlightSelections)
+                if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
             }
         }
@@ -1098,21 +1294,27 @@ namespace MWGui
             if (mRightColumn && !mEffectButtons.empty())
             {
                 if (mEffectFocus < mEffectButtons.size())
+                {
                     mEffectButtons[mEffectFocus].first->setStateSelected(false);
+                    if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                        mEffectHighlights[mEffectFocus]->setVisible(false);
+                }
                 mEffectFocus = wrap(mEffectFocus, mEffectButtons.size(), 1);
                 mEffectButtons[mEffectFocus].first->setStateSelected(true);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(true);
             }
             else if (!mRightColumn && !mAvailableButtons.empty())
             {
                 if (mAvailableFocus < mAvailableButtons.size())
                 {
                     mAvailableButtons[mAvailableFocus]->setStateSelected(false);
-                    if (Settings::gui().mControllerHighlightSelections)
+                    if (Settings::gui().mControllerMenus)
                         mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
                 }
                 mAvailableFocus = wrap(mAvailableFocus, mAvailableButtons.size(), 1);
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
-                if (Settings::gui().mControllerHighlightSelections)
+                if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
             }
         }
@@ -1120,11 +1322,15 @@ namespace MWGui
         {
             mRightColumn = false;
             if (mEffectFocus < mEffectButtons.size())
+            {
                 mEffectButtons[mEffectFocus].first->setStateSelected(false);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(false);
+            }
             if (mAvailableFocus < mAvailableButtons.size())
             {
                 mAvailableButtons[mAvailableFocus]->setStateSelected(true);
-                if (Settings::gui().mControllerHighlightSelections)
+                if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
             }
 
@@ -1136,11 +1342,15 @@ namespace MWGui
             if (mAvailableFocus < mAvailableButtons.size())
             {
                 mAvailableButtons[mAvailableFocus]->setStateSelected(false);
-                if (Settings::gui().mControllerHighlightSelections)
+                if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
             }
             if (mEffectFocus < mEffectButtons.size())
+            {
                 mEffectButtons[mEffectFocus].first->setStateSelected(true);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(true);
+            }
 
             winMgr->setControllerTooltipVisible(false);
         }
@@ -1166,5 +1376,113 @@ namespace MWGui
         }
 
         return true;
+    }
+
+    void EffectEditorBase::setControllerEffectsFocus(bool active)
+    {
+        if (!Settings::gui().mControllerMenus)
+            return;
+
+        if (!active)
+        {
+            if (!mRightColumn && mAvailableFocus < mAvailableButtons.size())
+            {
+                mAvailableButtons[mAvailableFocus]->setStateSelected(false);
+                mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
+            }
+            if (mRightColumn && mEffectFocus < mEffectButtons.size())
+            {
+                mEffectButtons[mEffectFocus].first->setStateSelected(false);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(false);
+            }
+            return;
+        }
+
+        if (!mRightColumn && mAvailableFocus < mAvailableButtons.size())
+        {
+            mAvailableButtons[mAvailableFocus]->setStateSelected(true);
+            mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
+        }
+        else if (mRightColumn && mEffectFocus < mEffectButtons.size())
+        {
+            mEffectButtons[mEffectFocus].first->setStateSelected(true);
+            if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                mEffectHighlights[mEffectFocus]->setVisible(true);
+        }
+    }
+
+    void EffectEditorBase::setControllerEffectsRightColumn(bool rightColumn)
+    {
+        if (!Settings::gui().mControllerMenus || !mAvailableEffectsList)
+        {
+            mRightColumn = rightColumn;
+            return;
+        }
+
+        if (mRightColumn == rightColumn)
+            return;
+
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+
+        if (rightColumn)
+        {
+            if (mAvailableFocus < mAvailableButtons.size())
+            {
+                mAvailableButtons[mAvailableFocus]->setStateSelected(false);
+                mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, false);
+            }
+            if (mEffectFocus < mEffectButtons.size())
+            {
+                mEffectButtons[mEffectFocus].first->setStateSelected(true);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(true);
+            }
+            winMgr->setControllerTooltipVisible(false);
+        }
+        else
+        {
+            if (mEffectFocus < mEffectButtons.size())
+            {
+                mEffectButtons[mEffectFocus].first->setStateSelected(false);
+                if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
+                    mEffectHighlights[mEffectFocus]->setVisible(false);
+            }
+            if (mAvailableFocus < mAvailableButtons.size())
+            {
+                mAvailableButtons[mAvailableFocus]->setStateSelected(true);
+                mAvailableEffectsList->setItemHighlightVisible(mAvailableFocus, true);
+            }
+            winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
+        }
+
+        mRightColumn = rightColumn;
+        winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
+    }
+
+    bool EffectEditorBase::isControllerEffectsAtTop() const
+    {
+        if (mRightColumn)
+            return mEffectButtons.empty() || mEffectFocus == 0;
+        return mAvailableButtons.empty() || mAvailableFocus == 0;
+    }
+
+    bool EffectEditorBase::isControllerEffectsRightColumn() const
+    {
+        return mRightColumn;
+    }
+
+    MyGUI::Widget* EffectEditorBase::getControllerEffectsTooltipWidget() const
+    {
+        if (mRightColumn)
+        {
+            if (mEffectFocus < mEffectButtons.size())
+                return mEffectButtons[mEffectFocus].second;
+            return nullptr;
+        }
+
+        if (mAvailableFocus < mAvailableButtons.size())
+            return mAvailableButtons[mAvailableFocus];
+        return nullptr;
     }
 }

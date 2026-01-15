@@ -1,6 +1,7 @@
 #ifndef MWGUI_VIRTUALKEYBOARD_H
 #define MWGUI_VIRTUALKEYBOARD_H
 
+#include <array>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -27,12 +28,23 @@ namespace MWGui
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
 
     private:
+        struct LayoutSpec
+        {
+            std::string mName;
+            std::array<std::string, 3> mPage1Rows;
+            std::array<std::string, 3> mPage1ShiftRows;
+            std::array<std::string, 3> mPage2Rows;
+            std::array<std::string, 3> mPage2ShiftRows;
+        };
+
         enum class Action
         {
             Text,
             Backspace,
             Shift,
-            Done
+            Done,
+            More,
+            Space
         };
 
         struct KeySpec
@@ -48,18 +60,35 @@ namespace MWGui
         std::vector<KeySpec> mKeys;
         std::unordered_map<MyGUI::Widget*, size_t> mKeyLookup;
         std::vector<std::vector<size_t>> mNavRows;
-        std::vector<size_t> mShiftKeys;
+        std::vector<size_t> mTextKeys;
+        std::vector<LayoutSpec> mLayouts;
         size_t mNavRow = 0;
         size_t mNavCol = 0;
+        size_t mLayoutIndex = 0;
+        size_t mPage = 0;
         bool mShifted = false;
         float mCursorBlinkTimer = 0.f;
         bool mCursorBlinkVisible = true;
+        size_t mKeyShift = 0;
+        size_t mKeyBackspace = 0;
+        size_t mKeyDone = 0;
+        size_t mKeySpace = 0;
+        size_t mKeyMore = 0;
+        std::string mCaptionShift;
+        std::string mCaptionBackspace;
+        std::string mCaptionDone;
+        std::string mCaptionSpace;
+        std::string mCaptionNext;
+        std::string mCaptionPrev;
 
         size_t registerTextKey(std::string_view widgetName, std::string_view text, std::string_view shifted);
-        size_t registerShiftKey(std::string_view widgetName, std::string_view text, std::string_view shifted);
         size_t registerActionKey(std::string_view widgetName, Action action, std::string_view caption);
         void onKeyClicked(MyGUI::Widget* sender);
         void updateKeyCaptions();
+        void updateActionCaptions();
+        void updateControllerButtons();
+        void reloadLayout();
+        void applyLayout();
         void ensureRowsVisible();
         void centerInMenuArea();
         void syncInputBar();
@@ -67,6 +96,8 @@ namespace MWGui
         void injectBackspace();
         void selectNav(size_t row, size_t col);
         size_t mapColumn(size_t fromRow, size_t toRow) const;
+        bool isNavRowUsable(size_t row) const;
+        size_t findNextNavRow(size_t startRow, int delta) const;
     };
 }
 

@@ -13,7 +13,7 @@ namespace MWGui
 {
     CountDialog::CountDialog()
         : WindowModal(
-              Settings::gui().mControllerMenus ? "openmw_controller_count_window.layout" : "openmw_count_window.layout")
+            Settings::gui().mControllerMenus ? "openmw_controller_count_window.layout" : "openmw_count_window.layout")
     {
         getWidget(mSlider, "CountSlider");
         getWidget(mItemEdit, "ItemEdit");

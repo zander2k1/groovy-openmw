@@ -287,6 +287,7 @@ namespace MWGui
         void onNoteDoubleClicked(MyGUI::Widget* sender);
         void onChangeScrollWindowCoord(MyGUI::Widget* sender);
         void globalMapUpdatePlayer();
+        void warpCursorToMapCenter();
         void setGlobalMapMarkerTooltip(MyGUI::Widget* widget, int x, int y);
         float getMarkerSize(size_t agregatedWeight) const;
         void resizeGlobalMap();
@@ -303,6 +304,7 @@ namespace MWGui
         MyGUI::ImageBox* mPlayerArrowLocal;
         MyGUI::ImageBox* mPlayerArrowGlobal;
         MyGUI::Button* mButton;
+        MyGUI::Widget* mCursorAnchor = nullptr;
         MyGUI::IntPoint mLastDragPos;
 
         MyGUI::IntCoord mLastScrollWindowCoordinates;
@@ -340,6 +342,8 @@ namespace MWGui
         void notifyPlayerUpdate() override;
 
         void centerView() override;
+        void resetFixedWindowGeometry();
+        MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
     };
 }
 #endif

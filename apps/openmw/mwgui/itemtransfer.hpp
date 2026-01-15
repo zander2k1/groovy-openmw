@@ -52,6 +52,20 @@ namespace MWGui
                 targetView = view;
             }
 
+            if (targetView == nullptr)
+            {
+                const MWGui::GuiMode mode = mWindowManager->getMode();
+                if (mode == MWGui::GM_Container || mode == MWGui::GM_Companion)
+                {
+                    if (auto* inventory = mWindowManager->getInventoryWindow())
+                    {
+                        ItemView* inventoryView = inventory->getItemView();
+                        if (inventoryView && inventoryView != &sourceView)
+                            targetView = inventoryView;
+                    }
+                }
+            }
+
             WorldItemModel worldItemModel(0.5f, 0.5f);
             ItemModel* const targetModel = targetView == nullptr ? &worldItemModel : targetView->getModel();
 

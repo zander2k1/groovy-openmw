@@ -127,6 +127,7 @@ namespace MWGui
         virtual void setFocusItem(BookTypesetter::Style* itemStyle) = 0;
         virtual void setFocusByInteractiveId(TypesetBook::InteractiveId id) = 0;
     };
+
 }
 
 #endif // MWGUI_BOOKPAGE_HPP
