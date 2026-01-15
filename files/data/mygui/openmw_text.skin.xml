@@ -15,6 +15,7 @@ color_misc=0,205,205 # ????
         <Property key="TextAlign" value="Left Bottom"/>
         <BasisSkin type="SimpleText" offset="0 0 16 16" align="Stretch">
             <State name="normal" colour="#{fontcolour=header}" shift="0"/>
+            <State name="highlighted" colour="#{fontcolour=active_over}" shift="0"/>
         </BasisSkin>
     </Resource>
 
@@ -23,6 +24,7 @@ color_misc=0,205,205 # ????
         <Property key="TextAlign" value="Left Bottom"/>
         <BasisSkin type="SimpleText" offset="0 -1 16 16" align="Stretch">
             <State name="normal" colour="#{fontcolour=normal}" shift="0"/>
+            <State name="highlighted" colour="#{fontcolour=active_over}" shift="0"/>
         </BasisSkin>
     </Resource>
 
@@ -39,6 +41,7 @@ color_misc=0,205,205 # ????
         <Property key="TextAlign" value="Right Bottom"/>
         <BasisSkin type="SimpleText" offset="0 0 16 16" align="Stretch">
             <State name="normal" colour="#{fontcolour=normal}"/>
+            <State name="highlighted" colour="#{fontcolour=active_over}"/>
             <State name="increased" colour="#{fontcolour=positive}"/>
             <State name="decreased" colour="#{fontcolour=negative}"/>
         </BasisSkin>

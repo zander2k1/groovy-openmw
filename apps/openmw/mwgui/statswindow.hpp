@@ -5,6 +5,7 @@
 #include "windowpinnablebase.hpp"
 #include <components/esm/attr.hpp>
 #include <components/esm/refid.hpp>
+#include <unordered_map>
 
 namespace MWGui
 {
@@ -56,6 +57,26 @@ namespace MWGui
         void setActiveControllerWindow(bool active) override;
 
     private:
+        struct ControllerItem
+        {
+            MyGUI::Widget* mTooltipWidget = nullptr;
+            std::vector<MyGUI::TextBox*> mTextWidgets;
+            bool mRightPane = false;
+        };
+
+        struct AttributeControllerEntry
+        {
+            MyGUI::Widget* mTooltipWidget = nullptr;
+            MyGUI::TextBox* mNameWidget = nullptr;
+            MyGUI::TextBox* mValueWidget = nullptr;
+        };
+
+        struct StaticControllerEntry
+        {
+            MyGUI::Widget* mTooltipWidget = nullptr;
+            std::vector<MyGUI::TextBox*> mTextWidgets;
+        };
+
         void addSkills(const std::vector<ESM::RefId>& skills, const std::string& titleId,
             const std::string& titleDefault, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         void addSeparator(MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
@@ -70,6 +91,19 @@ namespace MWGui
 
         void onWindowResize(MyGUI::Window* window);
         void onMouseWheel(MyGUI::Widget* sender, int rel);
+        void resetControllerItems();
+        void addStaticControllerEntry(
+            MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets);
+        void addControllerItem(
+            bool rightPane, MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets);
+        void addControllerItem(
+            bool rightPane, MyGUI::Widget* tooltipWidget, const std::vector<MyGUI::TextBox*>& textWidgets);
+        void setControllerWidgetBaseState(MyGUI::TextBox* widget, std::string_view state);
+        void updateControllerFocus(size_t prevFocus, size_t newFocus);
+        bool isControllerWidgetFocused(MyGUI::TextBox* widget) const;
+        void scrollSkillViewToWidget(MyGUI::Widget* widget);
+        size_t findClosestControllerItem(bool rightPane, MyGUI::Widget* widget) const;
+        void setControllerFocus(size_t newFocus);
 
         MyGUI::Widget* mLeftPane;
         MyGUI::Widget* mRightPane;
@@ -89,6 +123,13 @@ namespace MWGui
 
         bool mChanged;
         const int mMinFullWidth;
+        size_t mControllerFocus = 0;
+        std::vector<ControllerItem> mControllerItems;
+        std::vector<size_t> mControllerLeftItems;
+        std::vector<size_t> mControllerRightItems;
+        std::unordered_map<MyGUI::TextBox*, std::string> mControllerBaseStates;
+        std::vector<AttributeControllerEntry> mAttributeControllerEntries;
+        std::vector<StaticControllerEntry> mStaticControllerEntries;
 
     protected:
         void onPinToggled() override;
