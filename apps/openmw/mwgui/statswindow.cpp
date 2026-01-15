@@ -11,6 +11,10 @@
 #include <MyGUI_TextIterator.h>
 #include <MyGUI_Window.h>
 
+#include <algorithm>
+#include <cstdlib>
+#include <limits>
+
 #include <components/debug/debuglog.hpp>
 
 #include <components/esm3/loadbsgn.hpp>
@@ -22,6 +26,7 @@
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -66,6 +71,7 @@ namespace MWGui
                 "SandTextRight", { 160, 0, 44, 18 }, MyGUI::Align::Right | MyGUI::Align::Top);
             value->setNeedMouseFocus(false);
             mAttributeWidgets.emplace(attribute.mId, value);
+            mAttributeControllerEntries.push_back({ box, name, value });
         }
 
         getWidget(mSkillView, "SkillView");
@@ -81,12 +87,62 @@ namespace MWGui
         MyGUI::Window* t = mMainWidget->castType<MyGUI::Window>();
         t->eventWindowChangeCoord += MyGUI::newDelegate(this, &StatsWindow::onWindowResize);
 
+        {
+            MyGUI::Widget* healthWidget = nullptr;
+            MyGUI::Widget* magickaWidget = nullptr;
+            MyGUI::Widget* fatigueWidget = nullptr;
+            MyGUI::TextBox* healthName = nullptr;
+            MyGUI::TextBox* magickaName = nullptr;
+            MyGUI::TextBox* fatigueName = nullptr;
+            MyGUI::TextBox* healthValue = nullptr;
+            MyGUI::TextBox* magickaValue = nullptr;
+            MyGUI::TextBox* fatigueValue = nullptr;
+
+            getWidget(healthWidget, "Health");
+            getWidget(magickaWidget, "Magicka");
+            getWidget(fatigueWidget, "Fatigue");
+            getWidget(healthName, "Health_str");
+            getWidget(magickaName, "Magicka_str");
+            getWidget(fatigueName, "Fatigue_str");
+            getWidget(healthValue, "HBarT");
+            getWidget(magickaValue, "MBarT");
+            getWidget(fatigueValue, "FBarT");
+
+            addStaticControllerEntry(healthWidget, { healthName, healthValue });
+            addStaticControllerEntry(magickaWidget, { magickaName, magickaValue });
+            addStaticControllerEntry(fatigueWidget, { fatigueName, fatigueValue });
+
+            MyGUI::Widget* levelWidget = nullptr;
+            MyGUI::Widget* raceWidget = nullptr;
+            MyGUI::Widget* classWidget = nullptr;
+            MyGUI::TextBox* levelName = nullptr;
+            MyGUI::TextBox* raceName = nullptr;
+            MyGUI::TextBox* className = nullptr;
+            MyGUI::TextBox* levelValue = nullptr;
+            MyGUI::TextBox* raceValue = nullptr;
+            MyGUI::TextBox* classValue = nullptr;
+
+            getWidget(levelWidget, "LevelText");
+            getWidget(raceWidget, "RaceText");
+            getWidget(classWidget, "ClassText");
+            getWidget(levelName, "Level_str");
+            getWidget(raceName, "Race_str");
+            getWidget(className, "Class_str");
+            getWidget(levelValue, "LevelText");
+            getWidget(raceValue, "RaceText");
+            getWidget(classValue, "ClassText");
+
+            addStaticControllerEntry(levelWidget, { levelName, levelValue });
+            addStaticControllerEntry(raceWidget, { raceName, raceValue });
+            addStaticControllerEntry(classWidget, { className, classValue });
+        }
+
         if (Settings::gui().mControllerMenus)
         {
             setPinButtonVisible(false);
             mControllerButtons.mLStick = "#{Interface:Mouse}";
-            mControllerButtons.mRStick = "#{Interface:ScrollDown}";
             mControllerButtons.mB = "#{Interface:Back}";
+            mControllerButtons.mR3 = "#{Interface:Info}";
         }
 
         onWindowResize(t);
@@ -172,12 +228,13 @@ namespace MWGui
         {
             MyGUI::TextBox* box = it->second;
             box->setCaption(std::to_string(static_cast<int>(value.getModified())));
+            std::string state = "normal";
             if (value.getModified() > value.getBase())
-                box->_setWidgetState("increased");
+                state = "increased";
             else if (value.getModified() < value.getBase())
-                box->_setWidgetState("decreased");
-            else
-                box->_setWidgetState("normal");
+                state = "decreased";
+            box->_setWidgetState(state);
+            setControllerWidgetBaseState(box, state);
         }
     }
 
@@ -270,6 +327,7 @@ namespace MWGui
 
             valueWidget->setCaption(text);
             valueWidget->_setWidgetState(state);
+            setControllerWidgetBaseState(valueWidget, state);
 
             int widthAfter = valueWidget->getTextSize().width;
             if (widthBefore != widthAfter)
@@ -458,6 +516,7 @@ namespace MWGui
 
         mSkillWidgets.push_back(skillNameWidget);
         mSkillWidgets.push_back(skillValueWidget);
+        addControllerItem(true, skillNameWidget, { skillNameWidget, skillValueWidget });
 
         const int lineHeight = Settings::gui().mFontSize + 2;
         coord1.top += lineHeight;
@@ -479,6 +538,7 @@ namespace MWGui
         skillNameWidget->setSize(textWidth, skillNameWidget->getHeight());
 
         mSkillWidgets.push_back(skillNameWidget);
+        addControllerItem(true, skillNameWidget, { skillNameWidget });
 
         const int lineHeight = Settings::gui().mFontSize + 2;
         coord1.top += lineHeight;
@@ -541,6 +601,8 @@ namespace MWGui
     void StatsWindow::updateSkillArea()
     {
         mChanged = false;
+
+        resetControllerItems();
 
         for (MyGUI::Widget* widget : mSkillWidgets)
         {
@@ -712,6 +774,12 @@ namespace MWGui
         mSkillView->setVisibleVScroll(false);
         mSkillView->setCanvasSize(mSkillView->getWidth(), std::max(mSkillView->getHeight(), coord1.top));
         mSkillView->setVisibleVScroll(true);
+
+        if (Settings::gui().mControllerMenus && mActiveControllerWindow && !mControllerItems.empty())
+        {
+            mControllerFocus = std::min(mControllerFocus, mControllerItems.size() - 1);
+            updateControllerFocus(mControllerItems.size(), mControllerFocus);
+        }
     }
 
     void StatsWindow::onPinToggled()
@@ -739,6 +807,48 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            winMgr->setControllerTooltipEnabled(!winMgr->getControllerTooltipEnabled());
+            if (!mControllerItems.empty())
+                updateControllerFocus(mControllerItems.size(), mControllerFocus);
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+        {
+            if (mControllerItems.empty())
+                return true;
+
+            MWBase::Environment::get().getWindowManager()->restoreControllerTooltips();
+            const bool rightPane = mControllerItems[mControllerFocus].mRightPane;
+            const std::vector<size_t>& list = rightPane ? mControllerRightItems : mControllerLeftItems;
+            if (list.empty())
+                return true;
+
+            const auto it = std::find(list.begin(), list.end(), mControllerFocus);
+            size_t index = 0;
+            if (it != list.end())
+                index = static_cast<size_t>(std::distance(list.begin(), it));
+
+            const int delta = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP) ? -1 : 1;
+            index = wrap(index, list.size(), delta);
+            setControllerFocus(list[index]);
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+        {
+            if (mControllerItems.empty())
+                return true;
+
+            MWBase::Environment::get().getWindowManager()->restoreControllerTooltips();
+            const bool targetRightPane = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+            if (targetRightPane == mControllerItems[mControllerFocus].mRightPane)
+                return true;
+
+            const size_t newFocus
+                = findClosestControllerItem(targetRightPane, mControllerItems[mControllerFocus].mTooltipWidget);
+            if (newFocus < mControllerItems.size())
+                setControllerFocus(newFocus);
+        }
 
         return true;
     }
@@ -764,5 +874,226 @@ namespace MWGui
         }
 
         WindowBase::setActiveControllerWindow(active);
+
+        if (Settings::gui().mControllerMenus)
+        {
+            winMgr->setControllerTooltipVisible(active && Settings::gui().mControllerTooltips);
+
+            if (active && !mControllerItems.empty())
+            {
+                mControllerFocus = std::min(mControllerFocus, mControllerItems.size() - 1);
+                updateControllerFocus(mControllerItems.size(), mControllerFocus);
+            }
+            else if (!active && !mControllerItems.empty())
+            {
+                updateControllerFocus(mControllerFocus, mControllerItems.size());
+            }
+        }
+    }
+
+    void StatsWindow::resetControllerItems()
+    {
+        if (mActiveControllerWindow && !mControllerItems.empty())
+            updateControllerFocus(mControllerFocus, mControllerItems.size());
+
+        const auto previousStates = mControllerBaseStates;
+
+        mControllerItems.clear();
+        mControllerLeftItems.clear();
+        mControllerRightItems.clear();
+        mControllerBaseStates.clear();
+
+        for (const StaticControllerEntry& entry : mStaticControllerEntries)
+            addControllerItem(false, entry.mTooltipWidget, entry.mTextWidgets);
+
+        for (const AttributeControllerEntry& entry : mAttributeControllerEntries)
+        {
+            if (auto it = previousStates.find(entry.mNameWidget); it != previousStates.end())
+                mControllerBaseStates[entry.mNameWidget] = it->second;
+            if (auto it = previousStates.find(entry.mValueWidget); it != previousStates.end())
+                mControllerBaseStates[entry.mValueWidget] = it->second;
+
+            addControllerItem(false, entry.mTooltipWidget, { entry.mNameWidget, entry.mValueWidget });
+        }
+    }
+
+    void StatsWindow::addStaticControllerEntry(
+        MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets)
+    {
+        StaticControllerEntry entry;
+        entry.mTooltipWidget = tooltipWidget;
+        entry.mTextWidgets.assign(textWidgets.begin(), textWidgets.end());
+        mStaticControllerEntries.push_back(std::move(entry));
+    }
+
+    void StatsWindow::addControllerItem(
+        bool rightPane, MyGUI::Widget* tooltipWidget, const std::vector<MyGUI::TextBox*>& textWidgets)
+    {
+        ControllerItem item;
+        item.mTooltipWidget = tooltipWidget;
+        item.mRightPane = rightPane;
+        item.mTextWidgets = textWidgets;
+
+        const size_t index = mControllerItems.size();
+        mControllerItems.push_back(item);
+        (rightPane ? mControllerRightItems : mControllerLeftItems).push_back(index);
+
+        for (MyGUI::TextBox* widget : item.mTextWidgets)
+        {
+            if (widget == nullptr)
+                continue;
+            if (mControllerBaseStates.find(widget) == mControllerBaseStates.end())
+                mControllerBaseStates.emplace(widget, "normal");
+        }
+
+        if (item.mTooltipWidget != nullptr)
+            item.mTooltipWidget->setNeedMouseFocus(true);
+    }
+
+    void StatsWindow::addControllerItem(
+        bool rightPane, MyGUI::Widget* tooltipWidget, const std::initializer_list<MyGUI::TextBox*>& textWidgets)
+    {
+        ControllerItem item;
+        item.mTooltipWidget = tooltipWidget;
+        item.mRightPane = rightPane;
+        item.mTextWidgets.assign(textWidgets.begin(), textWidgets.end());
+
+        const size_t index = mControllerItems.size();
+        mControllerItems.push_back(item);
+        (rightPane ? mControllerRightItems : mControllerLeftItems).push_back(index);
+
+        for (MyGUI::TextBox* widget : item.mTextWidgets)
+        {
+            if (widget == nullptr)
+                continue;
+            if (mControllerBaseStates.find(widget) == mControllerBaseStates.end())
+                mControllerBaseStates.emplace(widget, "normal");
+        }
+
+        if (item.mTooltipWidget != nullptr)
+            item.mTooltipWidget->setNeedMouseFocus(true);
+    }
+
+    void StatsWindow::setControllerWidgetBaseState(MyGUI::TextBox* widget, std::string_view state)
+    {
+        if (widget == nullptr)
+            return;
+
+        auto it = mControllerBaseStates.find(widget);
+        if (it != mControllerBaseStates.end())
+            it->second = std::string(state);
+        else
+            mControllerBaseStates.emplace(widget, std::string(state));
+
+        if (Settings::gui().mControllerMenus && isControllerWidgetFocused(widget))
+            widget->_setWidgetState("highlighted");
+    }
+
+    void StatsWindow::updateControllerFocus(size_t prevFocus, size_t newFocus)
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
+
+        if (prevFocus < mControllerItems.size())
+        {
+            for (MyGUI::TextBox* widget : mControllerItems[prevFocus].mTextWidgets)
+            {
+                if (widget == nullptr)
+                    continue;
+                const auto it = mControllerBaseStates.find(widget);
+                widget->_setWidgetState(it != mControllerBaseStates.end() ? it->second : "normal");
+            }
+        }
+
+        if (!mActiveControllerWindow || newFocus >= mControllerItems.size())
+            return;
+
+        const ControllerItem& item = mControllerItems[newFocus];
+
+        for (MyGUI::TextBox* widget : item.mTextWidgets)
+        {
+            if (widget != nullptr)
+                widget->_setWidgetState("highlighted");
+        }
+
+        if (item.mRightPane && item.mTooltipWidget != nullptr)
+            scrollSkillViewToWidget(item.mTooltipWidget);
+
+        winMgr->restoreControllerTooltips();
+        if (item.mTooltipWidget != nullptr && winMgr->getControllerTooltipEnabled())
+            MWBase::Environment::get().getInputManager()->warpMouseToWidget(item.mTooltipWidget);
+    }
+
+    bool StatsWindow::isControllerWidgetFocused(MyGUI::TextBox* widget) const
+    {
+        if (widget == nullptr || mControllerItems.empty())
+            return false;
+        if (mControllerFocus >= mControllerItems.size())
+            return false;
+        const ControllerItem& item = mControllerItems[mControllerFocus];
+        return std::find(item.mTextWidgets.begin(), item.mTextWidgets.end(), widget) != item.mTextWidgets.end();
+    }
+
+    void StatsWindow::scrollSkillViewToWidget(MyGUI::Widget* widget)
+    {
+        if (widget == nullptr || mSkillView == nullptr)
+            return;
+
+        const MyGUI::IntCoord itemCoord = widget->getAbsoluteCoord();
+        const MyGUI::IntCoord viewCoord = mSkillView->getAbsoluteCoord();
+
+        int newOffset = mSkillView->getViewOffset().top;
+        if (itemCoord.top < viewCoord.top)
+        {
+            newOffset += viewCoord.top - itemCoord.top;
+        }
+        else if (itemCoord.top + itemCoord.height > viewCoord.top + viewCoord.height)
+        {
+            newOffset -= (itemCoord.top + itemCoord.height) - (viewCoord.top + viewCoord.height);
+        }
+        else
+            return;
+
+        const int minOffset = std::min(0, mSkillView->getHeight() - mSkillView->getCanvasSize().height);
+        newOffset = std::clamp(newOffset, minOffset, 0);
+        mSkillView->setViewOffset(MyGUI::IntPoint(0, newOffset));
+    }
+
+    size_t StatsWindow::findClosestControllerItem(bool rightPane, MyGUI::Widget* widget) const
+    {
+        const std::vector<size_t>& list = rightPane ? mControllerRightItems : mControllerLeftItems;
+        if (list.empty() || widget == nullptr)
+            return mControllerFocus;
+
+        const int targetTop = widget->getAbsoluteCoord().top;
+        size_t bestIndex = list.front();
+        int bestDistance = std::numeric_limits<int>::max();
+
+        for (size_t index : list)
+        {
+            const ControllerItem& item = mControllerItems[index];
+            if (item.mTooltipWidget == nullptr)
+                continue;
+
+            const int itemTop = item.mTooltipWidget->getAbsoluteCoord().top;
+            const int distance = std::abs(itemTop - targetTop);
+            if (distance < bestDistance)
+            {
+                bestDistance = distance;
+                bestIndex = index;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    void StatsWindow::setControllerFocus(size_t newFocus)
+    {
+        if (newFocus >= mControllerItems.size())
+            return;
+
+        const size_t prevFocus = mControllerFocus;
+        mControllerFocus = newFocus;
+        updateControllerFocus(prevFocus, mControllerFocus);
     }
 }

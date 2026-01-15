@@ -41,10 +41,11 @@
     <Resource type="ResourceSkin" name="ProgressText" size="16 16">
         <Property key="FontName" value="Default"/>
         <Property key="TextAlign" value="VCenter HCenter"/>
-        <Property key="TextColour" value="#{fontcolour=normal}"/>
         <Property key="TextShadow" value="true"/>
-
-        <BasisSkin type="SimpleText" offset="0 0 16 16" align="Stretch"/>
+        <BasisSkin type="SimpleText" offset="0 0 16 16" align="Stretch">
+            <State name="normal" colour="#{fontcolour=normal}" shift="0"/>
+            <State name="highlighted" colour="#{fontcolour=active_over}" shift="0"/>
+        </BasisSkin>
     </Resource>
 
     <!-- Main energy bar widget definitions. There's one for each color.-->
