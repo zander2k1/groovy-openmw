@@ -624,6 +624,7 @@ namespace MWGui
     {
         const bool hasItems = mItemView && mItemView->getItemCount() > 0;
         MyGUI::Widget* postListFocus = hasItems ? static_cast<MyGUI::Widget*>(mItemView) : mNameEdit;
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
         if (arg.button == SDL_CONTROLLER_BUTTON_A || arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
@@ -632,7 +633,7 @@ namespace MWGui
             onFilterChanged(mFilterValue, index);
             setControllerFocusWidget(postListFocus);
 
-            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
@@ -641,9 +642,15 @@ namespace MWGui
             setControllerFocusWidget(postListFocus);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
-            MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowUp, 0, false);
+        {
+            winMgr->injectKeyPress(MyGUI::KeyCode::ArrowUp, 0, false);
+            winMgr->injectKeyRelease(MyGUI::KeyCode::ArrowUp);
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
-            MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
+        {
+            winMgr->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
+            winMgr->injectKeyRelease(MyGUI::KeyCode::ArrowDown);
+        }
     }
 
     MyGUI::ListBox* AlchemyWindow::getFilterListBox(MyGUI::Widget* focus) const

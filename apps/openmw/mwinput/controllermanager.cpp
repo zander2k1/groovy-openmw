@@ -29,6 +29,7 @@ namespace
 {
     constexpr float kLeftStickAxisMax = 32768.0f;
     constexpr float kLeftStickDpadDeadzone = 0.6f;
+    constexpr float kLeftStickDpadReleaseDeadzone = 0.4f;
     constexpr int kLeftStickDpadNone = -1;
     constexpr float kGuiTurboRepeatStartDelay = 1.f / 6.f;
     constexpr int kTriggerPressThreshold = 16000;
@@ -56,11 +57,11 @@ namespace
         yOut = (yIn / magnitude) * scaled;
     }
 
-    int pickLeftStickDpadButton(int x, int y)
+    int pickLeftStickDpadButton(int x, int y, float deadzone)
     {
         float xAxis = static_cast<float>(x) / kLeftStickAxisMax;
         float yAxis = static_cast<float>(y) / kLeftStickAxisMax;
-        applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
+        applyRadialDeadzone(xAxis, yAxis, deadzone, xAxis, yAxis);
         if (xAxis == 0.f && yAxis == 0.f)
             return kLeftStickDpadNone;
 
@@ -186,6 +187,26 @@ namespace MWInput
             }
         }
 
+        if (mGuiNavHeldFromAxis && Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad
+            && winMgr->isGuiMode() && !winMgr->isSettingsWindowVisible() && !isCharGenMouseAllowed(winMgr->getMode()))
+        {
+            SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
+            if (cntrl)
+            {
+                float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadReleaseDeadzone, xAxis, yAxis);
+                if (xAxis == 0.f && yAxis == 0.f)
+                {
+                    mLeftStickDpadButton = kLeftStickDpadNone;
+                    mGuiNavHeldButton = kLeftStickDpadNone;
+                    mGuiNavHoldTime = 0.f;
+                    mGuiNavRepeatTime = 0.f;
+                    mGuiNavHeldFromAxis = false;
+                }
+            }
+        }
+
         if (mGuiNavHeldButton != kLeftStickDpadNone)
         {
             const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 5.f;
@@ -223,6 +244,10 @@ namespace MWInput
             if (winMgr->isGuiMode())
             {
                 applyRadialDeadzone(xAxis, yAxis, 0.6f, xAxis, yAxis);
+                const float joystickDeadZone = Settings::input().mJoystickDeadZone;
+                const float scrollDeadzone = joystickDeadZone > 0.2f ? joystickDeadZone : 0.2f;
+                if (std::abs(zAxis) < scrollDeadzone)
+                    zAxis = 0.f;
             }
 
             xAxis *= (1.5f - mBindingsManager->getActionValue(A_Use));
@@ -267,6 +292,8 @@ namespace MWInput
         mJoystickLastUsed = true;
         if (isDpadButton(arg.button))
         {
+            if (mGuiNavHeldButton == arg.button && !mGuiNavHeldFromAxis)
+                return;
             mGuiNavHeldButton = arg.button;
             mGuiNavHeldFromAxis = false;
             mGuiNavHoldTime = 0.f;
@@ -576,7 +603,10 @@ namespace MWInput
                     && !isCharGenMouseAllowed(winMgr->getMode()) && !mapWindowActive
                     && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
                 {
-                    const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY);
+                    const float deadzone = (mLeftStickDpadButton == kLeftStickDpadNone)
+                        ? kLeftStickDpadDeadzone
+                        : kLeftStickDpadReleaseDeadzone;
+                    const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY, deadzone);
                     if (nextButton != mLeftStickDpadButton)
                     {
                         mLeftStickDpadButton = nextButton;
