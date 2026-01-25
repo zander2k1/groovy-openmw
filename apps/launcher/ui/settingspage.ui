@@ -1317,11 +1317,11 @@
                </property>
               </widget>
              </item>
-             <item row="2" column="1">
-              <widget class="QSpinBox" name="fontSizeSpinBox">
-               <property name="minimum">
-                <number>12</number>
-               </property>
+            <item row="2" column="1">
+             <widget class="QSpinBox" name="fontSizeSpinBox">
+              <property name="minimum">
+               <number>12</number>
+              </property>
                <property name="maximum">
                 <number>18</number>
                </property>
@@ -1329,15 +1329,44 @@
                 <number>1</number>
                </property>
                <property name="value">
-                <number>16</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="scalingLabel">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting scales GUI windows. A value of 1.0 results in the normal scale.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
+               <number>16</number>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="gamepadCursorSpeedLabel">
+              <property name="toolTip">
+               <string>Speed multiplier for the gamepad cursor.</string>
+              </property>
+              <property name="text">
+               <string>Gamepad Cursor Speed</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QDoubleSpinBox" name="gamepadCursorSpeedSpinBox">
+              <property name="decimals">
+               <number>2</number>
+              </property>
+              <property name="minimum">
+               <double>0.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>10.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.100000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.500000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="scalingLabel">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting scales GUI windows. A value of 1.0 results in the normal scale.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
                <property name="text">
                 <string>GUI Scaling Factor</string>
                </property>
@@ -1488,67 +1517,82 @@
            <item>
             <layout class="QGridLayout" name="interfaceControllerGridLayout">
              <item row="0" column="0">
-              <widget class="QCheckBox" name="controllerMenusCheckBox">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Make it easier to use game menus with a controller.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Enable Controller Menus</string>
-               </property>
-              </widget>
-             </item>
+             <widget class="QCheckBox" name="controllerMenusCheckBox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Make it easier to use game menus with a controller.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Enable Controller Menus</string>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
              <item row="1" column="0">
-              <widget class="QCheckBox" name="controllerMenuTooltipsCheckBox">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
+             <widget class="QCheckBox" name="controllerMenuTooltipsCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, make tooltips visible by default.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
-               <property name="text">
-                <string>Show Controller Tooltips By Default</string>
-               </property>
-              </widget>
-             </item>
+              <property name="text">
+               <string>Show Controller Tooltips By Default</string>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
              <item row="2" column="0">
-              <widget class="QCheckBox" name="singularContainerTradeWindowCheckBox">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
+             <widget class="QCheckBox" name="singularContainerTradeWindowCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, only the focused container or trade window is visible.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
-               <property name="text">
-                <string>Enable Singular Window in the Container/Trade UI</string>
-               </property>
-              </widget>
-             </item>
+              <property name="text">
+               <string>Enable Singular Window in the Container/Trade UI</string>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
              <item row="3" column="0">
-              <widget class="QCheckBox" name="controllerMenuHighlightCheckBox">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
+             <widget class="QCheckBox" name="controllerMenuHighlightCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Highlight the current controller selection in menus.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
-               <property name="text">
-                <string>Enable Highlighted Selections with Controller Interfaces</string>
-               </property>
-              </widget>
-             </item>
+              <property name="text">
+               <string>Enable Highlighted Selections with Controller Interfaces</string>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
              <item row="4" column="0">
-              <widget class="QCheckBox" name="controllerMenuJoystickDpadCheckBox">
-               <property name="enabled">
-                <bool>false</bool>
-               </property>
+             <widget class="QCheckBox" name="controllerMenuJoystickDpadCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When using controller menus, use the left stick to navigate like the D-Pad instead of enabling the mouse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
-               <property name="text">
-                <string>Use Left Stick for D-Pad Navigation</string>
-               </property>
-              </widget>
-             </item>
+              <property name="text">
+               <string>Use Left Stick for D-Pad Navigation</string>
+              </property>
+              <property name="visible">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
              <item row="5" column="0">
               <layout class="QHBoxLayout" name="controllerMenuTurboLayout">
                <item>
