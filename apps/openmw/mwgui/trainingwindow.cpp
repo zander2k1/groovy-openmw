@@ -18,9 +18,56 @@
 #include "../mwmechanics/npcstats.hpp"
 
 #include <components/esm3/loadclas.hpp>
+#include <components/esm3/loadnpc.hpp>
 #include <components/settings/values.hpp>
 
 #include "tooltips.hpp"
+
+namespace
+{
+    void setTrainingSkillToolTip(MyGUI::Widget* widget, const ESM::Skill& skill, const MWMechanics::NpcStats& stats)
+    {
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const ESM::Attribute* attr
+            = store.get<ESM::Attribute>().find(ESM::Attribute::indexToRefId(skill.mData.mAttribute));
+
+        widget->setUserString("ToolTipDynamic", "Stats");
+        widget->setUserString("ToolTipType", "Layout");
+        widget->setUserString("ToolTipLayout", "SkillToolTip");
+        widget->setUserString("Caption_SkillName", MyGUI::TextIterator::toTagsString(skill.mName));
+        widget->setUserString("Caption_SkillDescription", skill.mDescription);
+        widget->setUserString(
+            "Caption_SkillAttribute", "#{sGoverningAttribute}: " + MyGUI::TextIterator::toTagsString(attr->mName));
+        widget->setUserString("ImageTexture_SkillImage", skill.mIcon);
+        widget->setUserString("Range_SkillProgress", "100");
+
+        const MWMechanics::SkillValue& value = stats.getSkill(skill.mId);
+        const float base = value.getBase();
+        const float modified = value.getModified();
+        const std::string valueText = MyGUI::utility::toString(static_cast<int>(modified));
+
+        widget->setUserString("CollapsedLabel", MyGUI::TextIterator::toTagsString(skill.mName).asUTF8());
+        widget->setUserString("CollapsedValue", valueText);
+
+        if (base < 100.f)
+        {
+            MWWorld::Ptr player = MWMechanics::getPlayer();
+            float progressRequirement = stats.getSkillProgressRequirement(
+                skill.mId, *store.get<ESM::Class>().find(player.get<ESM::NPC>()->mBase->mClass));
+            int progressPercent = int(value.getProgress() / progressRequirement * 100.f + 0.5f);
+
+            widget->setUserString("Visible_SkillMaxed", "false");
+            widget->setUserString("Visible_SkillProgressVBox", "true");
+            widget->setUserString("Caption_SkillProgressText", MyGUI::utility::toString(progressPercent) + "/100");
+            widget->setUserString("RangePosition_SkillProgress", MyGUI::utility::toString(progressPercent));
+        }
+        else
+        {
+            widget->setUserString("Visible_SkillMaxed", "true");
+            widget->setUserString("Visible_SkillProgressVBox", "false");
+        }
+    }
+}
 
 namespace MWGui
 {
@@ -147,7 +194,7 @@ namespace MWGui
 
             button->setSize(button->getTextSize().width + 12, button->getSize().height);
 
-            ToolTips::createSkillToolTip(button, skill->mId);
+            setTrainingSkillToolTip(button, *skill, pcStats);
 
             if (price <= playerGold)
             {
@@ -260,6 +307,13 @@ namespace MWGui
     {
         checkReferenceAvailable();
         mTimeAdvancer.onFrame(dt);
+    }
+
+    MyGUI::Widget* TrainingWindow::getControllerFocusTooltipWidget() const
+    {
+        if (mTrainingButtons.empty() || mControllerFocus >= mTrainingButtons.size())
+            return nullptr;
+        return mTrainingButtons[mControllerFocus];
     }
 
     bool TrainingWindow::exit()

@@ -229,7 +229,6 @@ namespace MWGui
         if (mLeftPane->isUserString("LeftOffsetWidth"))
             leftOffsetWidth = MyGUI::utility::parseInt(mLeftPane->getUserString("LeftOffsetWidth"));
 
-        float rightPaneRatio = 1.f - leftPaneRatio;
         int minLeftWidth = static_cast<int>(mMinFullWidth * leftPaneRatio);
         int minLeftOffsetWidth = minLeftWidth + leftOffsetWidth;
 

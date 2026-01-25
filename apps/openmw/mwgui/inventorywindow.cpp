@@ -259,7 +259,6 @@ namespace MWGui
             return;
 
         mGuiMode = mode;
-        const WindowSettingValues settings = getModeSettings(mGuiMode);
         setPinButtonVisible(
             mode != GM_Container && mode != GM_Companion && mode != GM_Barter && !Settings::gui().mControllerMenus);
 

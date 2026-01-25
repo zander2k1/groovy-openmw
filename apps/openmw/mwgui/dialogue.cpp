@@ -351,11 +351,11 @@ namespace MWGui
         : WindowBase("openmw_dialogue_window.layout")
         , mIsCompanion(false)
         , mGoodbye(false)
-        , mGoodbyeButton(nullptr)
-        , mDispositionBar(nullptr)
-        , mDispositionText(nullptr)
         , mHistoryBox(nullptr)
         , mHistoryContainer(nullptr)
+        , mDispositionBar(nullptr)
+        , mDispositionText(nullptr)
+        , mGoodbyeButton(nullptr)
         , mPersuasionDialog(std::make_unique<ResponseCallback>(this))
         , mCallback(std::make_unique<ResponseCallback>(this))
         , mGreetingCallback(std::make_unique<ResponseCallback>(this, false))
@@ -1062,11 +1062,11 @@ namespace MWGui
         if (mTopicsList->getItemCount() == 0 || index >= mTopicsList->getItemCount())
             return;
 
-        const std::string& keyword = mTopicsList->getItemNameAt(mControllerFocus);
-        if (keyword.empty())
+        const std::string& focusKeyword = mTopicsList->getItemNameAt(mControllerFocus);
+        if (focusKeyword.empty())
             return;
 
-        MyGUI::Button* button = mTopicsList->getItemWidget(keyword);
+        MyGUI::Button* button = mTopicsList->getItemWidget(focusKeyword);
         button->setStateSelected(focused);
         setTopicHighlight(index, focused);
 
@@ -1076,11 +1076,11 @@ namespace MWGui
             int offset = 0;
             for (int i = 6; i < static_cast<int>(index); i++)
             {
-                const std::string& keyword = mTopicsList->getItemNameAt(i);
-                if (keyword.empty())
+                const std::string& itemKeyword = mTopicsList->getItemNameAt(i);
+                if (itemKeyword.empty())
                     offset += 18 + sVerticalPadding * 2;
                 else
-                    offset += mTopicsList->getItemWidget(keyword)->getHeight() + sVerticalPadding * 2;
+                    offset += mTopicsList->getItemWidget(itemKeyword)->getHeight() + sVerticalPadding * 2;
             }
             mTopicsList->setViewOffset(-offset);
         }

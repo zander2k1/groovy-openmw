@@ -54,6 +54,7 @@
 #include "spellwindow.hpp"
 #include "statswindow.hpp"
 #include "tradewindow.hpp"
+#include "trainingwindow.hpp"
 
 #include "itemmodel.hpp"
 
@@ -166,8 +167,10 @@ namespace MWGui
         const bool controllerInventory = Settings::gui().mControllerMenus
             && (winMgr->getMode() == GM_Inventory || winMgr->getMode() == GM_Container || winMgr->getMode() == GM_Barter
                 || winMgr->getMode() == GM_Companion || winMgr->getMode() == GM_Levelup
-                || winMgr->getMode() == GM_Repair || winMgr->getMode() == GM_MerchantRepair || controllerAlchemy
-                || controllerEnchanting || controllerSpellCreation || controllerSpellBuying);
+                || winMgr->getMode() == GM_Training || winMgr->getMode() == GM_Repair
+                || winMgr->getMode() == GM_MerchantRepair || controllerAlchemy || controllerEnchanting
+                || controllerSpellCreation || controllerSpellBuying);
+        const bool trainingMode = winMgr->getMode() == GM_Training;
         const bool controllerMap = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Inventory
             && dynamic_cast<MapWindow*>(activeControllerWindow);
         const bool controllerCollapsed = controllerInventory && !winMgr->getControllerTooltipEnabled();
@@ -185,6 +188,26 @@ namespace MWGui
             {
                 controllerWinRect = invWindow->mMainWidget->getAbsoluteCoord();
                 controllerTooltipWidth = controllerWinRect.width;
+            }
+        }
+        if (trainingMode)
+        {
+            if (auto* invWindow = winMgr->getInventoryWindow())
+            {
+                controllerWinRect = invWindow->mMainWidget->getAbsoluteCoord();
+                controllerTooltipWidth = controllerWinRect.width;
+            }
+            else
+            {
+                for (WindowBase* window : winMgr->getGuiModeWindows(GM_Training))
+                {
+                    if (auto* trainingWindow = dynamic_cast<TrainingWindow*>(window))
+                    {
+                        controllerWinRect = trainingWindow->mMainWidget->getAbsoluteCoord();
+                        controllerTooltipWidth = controllerWinRect.width;
+                        break;
+                    }
+                }
             }
         }
         const bool suppressControllerBar = [&]() {
@@ -879,7 +902,7 @@ namespace MWGui
             const int height = y + padding;
             const MyGUI::IntSize statsSize(width, height);
 
-            if (controllerInventory)
+            if (controllerInventory || trainingMode)
             {
                 const int anchorHeight = 28;
                 const int anchorPadding = 4;
@@ -1014,6 +1037,17 @@ namespace MWGui
             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
             setCoord(winRect.left, posY, width, height);
         };
+        auto showEmptyControllerBarForActive = [&](WindowBase* activeWindow) {
+            if (controllerInventory)
+            {
+                const int width = controllerTooltipWidth > 0 ? controllerTooltipWidth : controllerWinRect.width;
+                showEmptyControllerBar(controllerWinRect, width);
+                return;
+            }
+            if (activeWindow)
+                showEmptyControllerBar(
+                    activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
+        };
         auto renderCollapsedTextBar = [&](const std::string& text, const MyGUI::IntCoord& winRect, int width) -> bool {
             if (text.empty())
                 return false;
@@ -1096,6 +1130,8 @@ namespace MWGui
                 return spellBuyingWindow->getControllerFocusTooltipWidget();
             if (auto* levelupDialog = dynamic_cast<LevelupDialog*>(activeWindow))
                 return levelupDialog->getControllerFocusTooltipWidget();
+            if (auto* trainingWindow = dynamic_cast<TrainingWindow*>(activeWindow))
+                return trainingWindow->getControllerFocusTooltipWidget();
             if (auto* repairWindow = dynamic_cast<Repair*>(activeWindow))
                 return repairWindow->getControllerFocusTooltipWidget();
             if (auto* merchantRepairWindow = dynamic_cast<MerchantRepair*>(activeWindow))
@@ -1354,12 +1390,10 @@ namespace MWGui
 
                 MyGUI::IntSize tooltipSize;
                 ToolTipInfo info;
-                bool isOwned = false;
                 if (!objectclass.hasToolTip(mFocusObject) && winMgr->isConsoleMode())
                 {
                     setCoord(0, 0, 300, 300);
                     mDynamicToolTipBox->setVisible(true);
-                    ToolTipInfo info;
                     info.caption = mFocusObject.getClass().getName(mFocusObject);
                     if (info.caption.empty())
                         info.caption = mFocusObject.getCellRef().getRefId().toDebugString();
@@ -1458,8 +1492,7 @@ namespace MWGui
                         if (controllerActive && !suppressControllerBar)
                         {
                             if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBar(activeWindow->mMainWidget->getAbsoluteCoord(),
-                                    activeWindow->mMainWidget->getWidth());
+                                showEmptyControllerBarForActive(activeWindow);
                         }
                         return;
                     }
@@ -1505,8 +1538,7 @@ namespace MWGui
                         if (controllerActive && !suppressControllerBar)
                         {
                             if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBar(activeWindow->mMainWidget->getAbsoluteCoord(),
-                                    activeWindow->mMainWidget->getWidth());
+                                showEmptyControllerBarForActive(activeWindow);
                         }
                         return;
                     }
@@ -1545,8 +1577,7 @@ namespace MWGui
                         if (controllerActive && !suppressControllerBar)
                         {
                             if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBar(activeWindow->mMainWidget->getAbsoluteCoord(),
-                                    activeWindow->mMainWidget->getWidth());
+                                showEmptyControllerBarForActive(activeWindow);
                         }
                         return;
                     }
@@ -1557,7 +1588,8 @@ namespace MWGui
                 int tooltipWidth = controllerTooltipWidth;
                 if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible())
                 {
-                    if (winMgr->getMode() != GM_Repair && winMgr->getMode() != GM_MerchantRepair)
+                    if (winMgr->getMode() != GM_Repair && winMgr->getMode() != GM_MerchantRepair
+                        && winMgr->getMode() != GM_Training)
                     {
                         if (MyGUI::Window* owner = getOwningWindow(focus))
                         {
@@ -1651,7 +1683,7 @@ namespace MWGui
                         std::string iconTexture;
                         for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
                         {
-                            if (spellEffect.mData.mEffectID == -1)
+                            if (spellEffect.mData.mEffectID.empty())
                                 continue;
                             const ESM::MagicEffect* magicEffect
                                 = store->get<ESM::MagicEffect>().find(spellEffect.mData.mEffectID);
@@ -1755,7 +1787,7 @@ namespace MWGui
                             std::string effectIcon;
                             for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
                             {
-                                if (spellEffect.mData.mEffectID == -1)
+                                if (spellEffect.mData.mEffectID.empty())
                                     continue;
 
                                 const ESM::MagicEffect* magicEffect
@@ -1836,14 +1868,14 @@ namespace MWGui
                                 }
                                 else if (type == "ActiveEffect")
                                 {
-                                    const bool controllerMenu = Settings::gui().mControllerMenus;
-                                    const bool collapsed
-                                        = controllerMenu && (!winMgr->getControllerTooltipEnabled() || controllerMap);
+                                    const bool activeEffectControllerMenu = Settings::gui().mControllerMenus;
+                                    const bool activeEffectCollapsed = activeEffectControllerMenu
+                                        && (!winMgr->getControllerTooltipEnabled() || controllerMap);
 
                                     const std::string nameRaw = focus->isUserString("ActiveEffectName")
                                         ? std::string(focus->getUserString("ActiveEffectName"))
                                         : std::string();
-                                    const std::string iconTexture = focus->isUserString("ActiveEffectIcon")
+                                    const std::string activeEffectIconTexture = focus->isUserString("ActiveEffectIcon")
                                         ? std::string(focus->getUserString("ActiveEffectIcon"))
                                         : std::string();
                                     const std::string textRaw = focus->isUserString("ActiveEffectText")
@@ -1853,14 +1885,15 @@ namespace MWGui
                                     const std::string nameText
                                         = MyGUI::LanguageManager::getInstance().replaceTags(nameRaw);
 
-                                    if (controllerMenu)
+                                    if (activeEffectControllerMenu)
                                     {
-                                        const int padding = 8;
-                                        const int spacing = 4;
-                                        const int iconSize = 16;
-                                        const int width = tooltipWidth > 0 ? tooltipWidth : tooltipWinRect.width;
+                                        const int activeEffectPadding = 8;
+                                        const int activeEffectSpacing = 4;
+                                        const int activeEffectIconSize = 16;
+                                        const int activeEffectWidth
+                                            = tooltipWidth > 0 ? tooltipWidth : tooltipWinRect.width;
 
-                                        if (collapsed)
+                                        if (activeEffectCollapsed)
                                         {
                                             const int height = 28;
                                             const int textHeight = height - 8;
@@ -1869,36 +1902,40 @@ namespace MWGui
                                             mDynamicToolTipBox->setVisible(true);
                                             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
 
-                                            int nameLeft = padding;
-                                            if (!iconTexture.empty())
+                                            int nameLeft = activeEffectPadding;
+                                            if (!activeEffectIconTexture.empty())
                                             {
-                                                const int iconTop = (height - iconSize) / 2;
+                                                const int iconTop = (height - activeEffectIconSize) / 2;
                                                 MyGUI::ImageBox* icon
                                                     = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                                                        MyGUI::IntCoord(padding, iconTop, iconSize, iconSize),
+                                                        MyGUI::IntCoord(activeEffectPadding, iconTop,
+                                                            activeEffectIconSize, activeEffectIconSize),
                                                         MyGUI::Align::VCenter | MyGUI::Align::Left);
                                                 icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                                    VFS::Path::toNormalized(iconTexture),
+                                                    VFS::Path::toNormalized(activeEffectIconTexture),
                                                     *MWBase::Environment::get().getResourceSystem()->getVFS()));
-                                                nameLeft = padding + iconSize + spacing;
+                                                nameLeft
+                                                    = activeEffectPadding + activeEffectIconSize + activeEffectSpacing;
                                             }
 
-                                            const int rightPadding = padding;
-                                            const int nameWidth = std::max(0, width - nameLeft - rightPadding);
+                                            const int rightPadding = activeEffectPadding;
+                                            const int nameWidth
+                                                = std::max(0, activeEffectWidth - nameLeft - rightPadding);
 
-                                            MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(
-                                                "NormalText", MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
-                                                MyGUI::Align::Left | MyGUI::Align::VCenter);
-                                            name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
-                                            name->setCaption(nameText.empty() ? nameRaw : nameText);
+                                            MyGUI::TextBox* activeEffectName
+                                                = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                                                    MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
+                                                    MyGUI::Align::Left | MyGUI::Align::VCenter);
+                                            activeEffectName->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
+                                            activeEffectName->setCaption(nameText.empty() ? nameRaw : nameText);
 
-                                            tooltipSize = MyGUI::IntSize(width, height);
+                                            tooltipSize = MyGUI::IntSize(activeEffectWidth, height);
                                         }
                                         else
                                         {
                                             ToolTipInfo info;
                                             info.caption = nameRaw;
-                                            info.icon = iconTexture;
+                                            info.icon = activeEffectIconTexture;
                                             info.imageSize = 16;
                                             info.text = textRaw;
                                             tooltipSize = createToolTip(info, false, tooltipWidth, true);
