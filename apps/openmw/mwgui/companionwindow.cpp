@@ -162,8 +162,6 @@ namespace MWGui
         mItemView->resetScrollBars();
 
         setTitle(actor.getClass().getName(actor));
-
-        mPtr.getClass().getContainerStore(mPtr).setContListener(this);
     }
 
     void CompanionWindow::onFrame(float dt)
@@ -238,14 +236,10 @@ namespace MWGui
         mSortModel = nullptr;
     }
 
-    void CompanionWindow::itemAdded(const MWWorld::ConstPtr& item, int count)
+    void CompanionWindow::onInventoryUpdate(const MWWorld::Ptr& ptr)
     {
-        mUpdateNextFrame = true;
-    }
-
-    void CompanionWindow::itemRemoved(const MWWorld::ConstPtr& item, int count)
-    {
-        mUpdateNextFrame = true;
+        if (ptr == mPtr)
+            mUpdateNextFrame = true;
     }
 
     void CompanionWindow::onOpen()

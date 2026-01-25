@@ -2993,4 +2993,10 @@ namespace MWGui
     {
         return mVirtualKeyboard && mVirtualKeyboard->isVisible();
     }
+
+    void WindowManager::inventoryUpdated(const MWWorld::Ptr& ptr) const
+    {
+        for (const auto& window : mWindows)
+            window->onInventoryUpdate(ptr);
+    }
 }

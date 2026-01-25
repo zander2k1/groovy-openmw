@@ -45,7 +45,7 @@ namespace MWGui
         void getVisibleWidgets(std::vector<MyGUI::ImageBox*>& out) const;
 
     private:
-        std::map<int, MyGUI::ImageBox*> mWidgetMap;
+        std::map<ESM::RefId, MyGUI::ImageBox*> mWidgetMap;
     };
 
 }

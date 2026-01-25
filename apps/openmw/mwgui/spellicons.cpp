@@ -1,5 +1,6 @@
 #include "spellicons.hpp"
 
+#include <format>
 #include <iomanip>
 #include <sstream>
 
@@ -28,7 +29,7 @@ namespace MWGui
         MWWorld::Ptr player = MWMechanics::getPlayer();
         const MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
 
-        std::map<int, std::vector<MagicEffectInfo>> effects;
+        std::map<ESM::RefId, std::vector<MagicEffectInfo>> effects;
         for (const auto& params : stats.getActiveSpells())
         {
             for (const auto& effect : params.getEffects())
@@ -148,8 +149,7 @@ namespace MWGui
             if (remainingDuration > 0.f)
             {
                 MyGUI::ImageBox* image;
-                const std::string& name = ESM::MagicEffect::indexToGmstString(effectId);
-                const std::string nameTag = "#{" + name + "}";
+                const std::string nameTag = std::format("#{{{}}}", ESM::MagicEffect::refIdToGmstString(effectId));
                 if (mWidgetMap.find(effectId) == mWidgetMap.end())
                 {
                     image = parent->createWidget<MyGUI::ImageBox>(
