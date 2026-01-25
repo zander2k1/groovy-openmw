@@ -1526,8 +1526,7 @@ namespace MWGui
             MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
-            window->setCoord(
-                coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
+            window->setCoord(coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
         }
 
         if (Settings::gui().mControllerMenus)
@@ -1540,7 +1539,6 @@ namespace MWGui
 
         WindowBase::setActiveControllerWindow(active);
     }
-
 
     void MapWindow::resetFixedWindowGeometry()
     {

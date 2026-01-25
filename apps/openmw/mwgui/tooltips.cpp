@@ -20,8 +20,8 @@
 #include <components/esm/records.hpp>
 #include <components/l10n/manager.hpp>
 #include <components/misc/resourcehelpers.hpp>
-#include <components/vfs/manager.hpp>
 #include <components/settings/values.hpp>
+#include <components/vfs/manager.hpp>
 #include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
@@ -36,9 +36,9 @@
 
 #include "alchemywindow.hpp"
 #include "companionwindow.hpp"
+#include "confirmationdialog.hpp"
 #include "container.hpp"
 #include "countdialog.hpp"
-#include "confirmationdialog.hpp"
 #include "dialogue.hpp"
 #include "enchantingdialog.hpp"
 #include "inventorywindow.hpp"
@@ -46,12 +46,12 @@
 #include "itemview.hpp"
 #include "levelupdialog.hpp"
 #include "mapwindow.hpp"
-#include "spellcreationdialog.hpp"
-#include "spellbuyingwindow.hpp"
-#include "spellview.hpp"
-#include "spellwindow.hpp"
 #include "merchantrepair.hpp"
 #include "repair.hpp"
+#include "spellbuyingwindow.hpp"
+#include "spellcreationdialog.hpp"
+#include "spellview.hpp"
+#include "spellwindow.hpp"
 #include "statswindow.hpp"
 #include "tradewindow.hpp"
 
@@ -161,13 +161,11 @@ namespace MWGui
             = Settings::gui().mControllerMenus ? winMgr->getActiveControllerWindow() : nullptr;
         const bool controllerAlchemy = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Alchemy;
         const bool controllerEnchanting = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Enchanting;
-        const bool controllerSpellCreation
-            = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellCreation;
-        const bool controllerSpellBuying
-            = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellBuying;
+        const bool controllerSpellCreation = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellCreation;
+        const bool controllerSpellBuying = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellBuying;
         const bool controllerInventory = Settings::gui().mControllerMenus
-            && (winMgr->getMode() == GM_Inventory || winMgr->getMode() == GM_Container
-                || winMgr->getMode() == GM_Barter || winMgr->getMode() == GM_Companion || winMgr->getMode() == GM_Levelup
+            && (winMgr->getMode() == GM_Inventory || winMgr->getMode() == GM_Container || winMgr->getMode() == GM_Barter
+                || winMgr->getMode() == GM_Companion || winMgr->getMode() == GM_Levelup
                 || winMgr->getMode() == GM_Repair || winMgr->getMode() == GM_MerchantRepair || controllerAlchemy
                 || controllerEnchanting || controllerSpellCreation || controllerSpellBuying);
         const bool controllerMap = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Inventory
@@ -280,8 +278,7 @@ namespace MWGui
             label->setCaption(name);
 
             MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>("MW_Progress_Blue",
-                MyGUI::IntCoord(barLeft, y, barWidth, rowHeight),
-                MyGUI::Align::Right | MyGUI::Align::VCenter);
+                MyGUI::IntCoord(barLeft, y, barWidth, rowHeight), MyGUI::Align::Right | MyGUI::Align::VCenter);
             bar->setProgressRange(100);
             const int disposition = std::clamp(dialogueWindow->getDisposition(), 0, 100);
             bar->setProgressPosition(disposition);
@@ -293,8 +290,8 @@ namespace MWGui
             return true;
         };
 
-        auto renderCollapsedLayoutTooltip = [&](bool collapsed, MyGUI::Widget* focus, const MyGUI::IntCoord& winRect,
-                                                    int tooltipWidth) -> bool {
+        auto renderCollapsedLayoutTooltip
+            = [&](bool collapsed, MyGUI::Widget* focus, const MyGUI::IntCoord& winRect, int tooltipWidth) -> bool {
             if (!collapsed || focus == nullptr || !focus->isUserString("ToolTipLayout"))
                 return false;
 
@@ -391,8 +388,7 @@ namespace MWGui
                 int textLeft = paddingX;
                 if (focus->isUserString("ImageTexture_MagicEffectImage"))
                 {
-                    const std::string iconTexture
-                        = std::string(focus->getUserString("ImageTexture_MagicEffectImage"));
+                    const std::string iconTexture = std::string(focus->getUserString("ImageTexture_MagicEffectImage"));
                     if (!iconTexture.empty())
                     {
                         const VFS::Manager& vfs = *MWBase::Environment::get().getResourceSystem()->getVFS();
@@ -471,8 +467,8 @@ namespace MWGui
                     if (row.mProgress)
                     {
                         const int barWidth = valueWidth;
-                        MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>("MW_Progress_Red",
-                            MyGUI::IntCoord(paddingX * 2 + labelWidth, y, barWidth, rowHeight),
+                        MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>(
+                            "MW_Progress_Red", MyGUI::IntCoord(paddingX * 2 + labelWidth, y, barWidth, rowHeight),
                             MyGUI::Align::Right | MyGUI::Align::VCenter);
                         const int range = std::max(1, row.mProgressRange);
                         const int pos = std::clamp(row.mProgressValue, 0, range);
@@ -503,10 +499,9 @@ namespace MWGui
             setCoord(winRect.left, posY, width, height);
             return true;
         };
-        auto renderStatsLayoutTooltip = [&](MyGUI::Widget* focus, const MyGUI::IntCoord& winRect,
-                                                int tooltipWidth) -> bool {
-            if (!focus || !focus->isUserString("ToolTipDynamic")
-                || focus->getUserString("ToolTipDynamic") != "Stats")
+        auto renderStatsLayoutTooltip
+            = [&](MyGUI::Widget* focus, const MyGUI::IntCoord& winRect, int tooltipWidth) -> bool {
+            if (!focus || !focus->isUserString("ToolTipDynamic") || focus->getUserString("ToolTipDynamic") != "Stats")
                 return false;
             if (!focus->isUserString("ToolTipLayout"))
                 return false;
@@ -551,11 +546,9 @@ namespace MWGui
                 if (!iconPath.empty())
                 {
                     MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                        MyGUI::IntCoord(padding, y, iconSize, iconSize),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                        MyGUI::IntCoord(padding, y, iconSize, iconSize), MyGUI::Align::Left | MyGUI::Align::Top);
                     icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                        VFS::Path::toNormalized(iconPath),
-                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                        VFS::Path::toNormalized(iconPath), *MWBase::Environment::get().getResourceSystem()->getVFS()));
                     nameLeft = padding + iconSize + spacing;
                 }
 
@@ -563,8 +556,7 @@ namespace MWGui
                 if (!nameText.empty())
                 {
                     MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                        MyGUI::IntCoord(nameLeft, y, textWidth, lineHeight),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                        MyGUI::IntCoord(nameLeft, y, textWidth, lineHeight), MyGUI::Align::Left | MyGUI::Align::Top);
                     name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
                     name->setCaption(nameText);
                 }
@@ -605,20 +597,17 @@ namespace MWGui
                 if (!iconPath.empty())
                 {
                     MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                        MyGUI::IntCoord(padding, y, iconSize, iconSize),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                        MyGUI::IntCoord(padding, y, iconSize, iconSize), MyGUI::Align::Left | MyGUI::Align::Top);
                     icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                        VFS::Path::toNormalized(iconPath),
-                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                        VFS::Path::toNormalized(iconPath), *MWBase::Environment::get().getResourceSystem()->getVFS()));
                     textLeft = padding + iconSize + spacing;
                 }
 
                 const int textWidth = std::max(0, width - textLeft - padding);
                 if (!descriptionText.empty())
                 {
-                    auto* desc = mDynamicToolTipBox->createWidget<Gui::AutoSizedEditBox>("SandText",
-                        MyGUI::IntCoord(textLeft, y, textWidth, 0),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                    auto* desc = mDynamicToolTipBox->createWidget<Gui::AutoSizedEditBox>(
+                        "SandText", MyGUI::IntCoord(textLeft, y, textWidth, 0), MyGUI::Align::Left | MyGUI::Align::Top);
                     desc->setEditStatic(true);
                     desc->setNeedKeyFocus(false);
                     desc->setEditMultiLine(true);
@@ -641,8 +630,8 @@ namespace MWGui
                 spacing = 6;
                 y = padding;
 
-                const std::string progressLabel = MyGUI::LanguageManager::getInstance().replaceTags(
-                    "#{sLevelProgress}");
+                const std::string progressLabel
+                    = MyGUI::LanguageManager::getInstance().replaceTags("#{sLevelProgress}");
                 MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
                     MyGUI::IntCoord(padding, y, std::max(0, width - padding * 2), lineHeight),
                     MyGUI::Align::Center | MyGUI::Align::Top);
@@ -653,8 +642,7 @@ namespace MWGui
                 const int barWidth = std::min(200, std::max(0, width - padding * 2));
                 const int barLeft = (width - barWidth) / 2;
                 MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>("MW_Progress_Red",
-                    MyGUI::IntCoord(barLeft, y, barWidth, barHeight),
-                    MyGUI::Align::Center | MyGUI::Align::Top);
+                    MyGUI::IntCoord(barLeft, y, barWidth, barHeight), MyGUI::Align::Center | MyGUI::Align::Top);
                 const int range = std::max(1, toInt(focus, "Range_LevelProgress"));
                 const int pos = std::clamp(toInt(focus, "RangePosition_LevelProgress"), 0, range);
                 bar->setProgressRange(range);
@@ -691,8 +679,7 @@ namespace MWGui
             {
                 padding = 10;
                 spacing = 8;
-                width = tooltipWidth > 0 ? tooltipWidth
-                                         : (Settings::gui().mControllerMenus ? winRect.width : 300);
+                width = tooltipWidth > 0 ? tooltipWidth : (Settings::gui().mControllerMenus ? winRect.width : 300);
                 y = padding;
 
                 const std::string imageTexture = focus->isUserString("ImageTexture_BirthSignImage")
@@ -781,21 +768,19 @@ namespace MWGui
                     : (focus->isUserString("ImageTexture_SkillNoProgressImage")
                             ? std::string(focus->getUserString("ImageTexture_SkillNoProgressImage"))
                             : std::string());
-                nameText = getText(layout == "SkillNoProgressToolTip" ? "Caption_SkillNoProgressName"
-                                                                      : "Caption_SkillName");
+                nameText
+                    = getText(layout == "SkillNoProgressToolTip" ? "Caption_SkillNoProgressName" : "Caption_SkillName");
                 descriptionText = getText(layout == "SkillNoProgressToolTip" ? "Caption_SkillNoProgressDescription"
                                                                              : "Caption_SkillDescription");
-                attributeText = getText(layout == "SkillNoProgressToolTip" ? "Caption_SkillNoProgressAttribute"
-                                                                           : "Caption_SkillAttribute");
+                attributeText = getText(
+                    layout == "SkillNoProgressToolTip" ? "Caption_SkillNoProgressAttribute" : "Caption_SkillAttribute");
                 int nameLeft = padding;
                 if (!iconPath.empty())
                 {
                     MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                        MyGUI::IntCoord(padding, y, iconSize, iconSize),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                        MyGUI::IntCoord(padding, y, iconSize, iconSize), MyGUI::Align::Left | MyGUI::Align::Top);
                     icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                        VFS::Path::toNormalized(iconPath),
-                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                        VFS::Path::toNormalized(iconPath), *MWBase::Environment::get().getResourceSystem()->getVFS()));
                     nameLeft = padding + iconSize + spacing;
                 }
 
@@ -803,8 +788,7 @@ namespace MWGui
                 if (!nameText.empty())
                 {
                     MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                        MyGUI::IntCoord(nameLeft, y, textWidth, lineHeight),
-                        MyGUI::Align::Left | MyGUI::Align::Top);
+                        MyGUI::IntCoord(nameLeft, y, textWidth, lineHeight), MyGUI::Align::Left | MyGUI::Align::Top);
                     name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
                     name->setCaption(nameText);
                 }
@@ -818,8 +802,7 @@ namespace MWGui
                     attr->setCaption(attributeText);
                 }
 
-                const int topBlockHeight = std::max(iconSize,
-                    attributeText.empty() ? lineHeight : lineHeight * 2);
+                const int topBlockHeight = std::max(iconSize, attributeText.empty() ? lineHeight : lineHeight * 2);
                 y += topBlockHeight + spacing;
 
                 if (!descriptionText.empty())
@@ -842,20 +825,18 @@ namespace MWGui
 
             if (layout == "SkillToolTip")
             {
-                const std::string showProgress
-                    = focus->isUserString("Visible_SkillProgressVBox")
+                const std::string showProgress = focus->isUserString("Visible_SkillProgressVBox")
                     ? std::string(focus->getUserString("Visible_SkillProgressVBox"))
                     : std::string();
-                const std::string showMaxed
-                    = focus->isUserString("Visible_SkillMaxed")
+                const std::string showMaxed = focus->isUserString("Visible_SkillMaxed")
                     ? std::string(focus->getUserString("Visible_SkillMaxed"))
                     : std::string();
 
                 y += spacing;
                 if (showMaxed == "true")
                 {
-                    const std::string maxedText = MyGUI::LanguageManager::getInstance().replaceTags(
-                        "#{sSkillMaxReached}");
+                    const std::string maxedText
+                        = MyGUI::LanguageManager::getInstance().replaceTags("#{sSkillMaxReached}");
                     MyGUI::TextBox* maxed = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("SandText",
                         MyGUI::IntCoord(padding, y, std::max(0, width - padding * 2), lineHeight),
                         MyGUI::Align::Center | MyGUI::Align::Top);
@@ -865,8 +846,8 @@ namespace MWGui
                 }
                 else if (showProgress == "true")
                 {
-                    const std::string progressLabel = MyGUI::LanguageManager::getInstance().replaceTags(
-                        "#{sSkillProgress}");
+                    const std::string progressLabel
+                        = MyGUI::LanguageManager::getInstance().replaceTags("#{sSkillProgress}");
                     MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
                         MyGUI::IntCoord(padding, y, std::max(0, width - padding * 2), lineHeight),
                         MyGUI::Align::Center | MyGUI::Align::Top);
@@ -877,8 +858,7 @@ namespace MWGui
                     const int barWidth = std::min(200, std::max(0, width - padding * 2));
                     const int barLeft = (width - barWidth) / 2;
                     MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>("MW_Progress_Red",
-                        MyGUI::IntCoord(barLeft, y, barWidth, barHeight),
-                        MyGUI::Align::Center | MyGUI::Align::Top);
+                        MyGUI::IntCoord(barLeft, y, barWidth, barHeight), MyGUI::Align::Center | MyGUI::Align::Top);
                     const int range = std::max(1, toInt(focus, "Range_SkillProgress"));
                     const int pos = std::clamp(toInt(focus, "RangePosition_SkillProgress"), 0, range);
                     bar->setProgressRange(range);
@@ -912,15 +892,15 @@ namespace MWGui
             if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
             {
                 const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
-                tooltipPosition = MyGUI::IntPoint(focusRect.left + focusRect.width / 2,
-                    focusRect.top + focusRect.height / 2);
+                tooltipPosition
+                    = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
             }
             position(tooltipPosition, statsSize, viewSize);
             setCoord(tooltipPosition.left, tooltipPosition.top, statsSize.width, statsSize.height);
             return true;
         };
-        auto renderMagicEffectLayoutTooltip = [&](MyGUI::Widget* focus, const MyGUI::IntCoord& winRect,
-                                                      int tooltipWidth) -> bool {
+        auto renderMagicEffectLayoutTooltip
+            = [&](MyGUI::Widget* focus, const MyGUI::IntCoord& winRect, int tooltipWidth) -> bool {
             if (!focus || !focus->isUserString("ToolTipLayout"))
                 return false;
             if (focus->getUserString("ToolTipLayout") != "MagicEffectToolTip")
@@ -935,8 +915,7 @@ namespace MWGui
             auto getText = [&](const char* key) -> std::string {
                 if (!focus->isUserString(key))
                     return {};
-                return MyGUI::LanguageManager::getInstance().replaceTags(
-                    std::string(focus->getUserString(key)));
+                return MyGUI::LanguageManager::getInstance().replaceTags(std::string(focus->getUserString(key)));
             };
 
             const std::string nameText = getText("Caption_MagicEffectName");
@@ -958,8 +937,7 @@ namespace MWGui
                 const VFS::Path::Normalized iconPath
                     = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(iconTexture), vfs);
                 MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                    MyGUI::IntCoord(padding, y, iconSize, iconSize),
-                    MyGUI::Align::Left | MyGUI::Align::Top);
+                    MyGUI::IntCoord(padding, y, iconSize, iconSize), MyGUI::Align::Left | MyGUI::Align::Top);
                 icon->setImageTexture(iconPath);
                 textLeft = padding + iconSize + spacing;
             }
@@ -970,8 +948,7 @@ namespace MWGui
             if (!nameText.empty())
             {
                 MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                    MyGUI::IntCoord(textLeft, textY, textWidth, lineHeight),
-                    MyGUI::Align::Left | MyGUI::Align::Top);
+                    MyGUI::IntCoord(textLeft, textY, textWidth, lineHeight), MyGUI::Align::Left | MyGUI::Align::Top);
                 name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
                 name->setCaption(nameText);
                 textY += lineHeight;
@@ -980,8 +957,7 @@ namespace MWGui
             if (!schoolText.empty())
             {
                 MyGUI::TextBox* school = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("SandText",
-                    MyGUI::IntCoord(textLeft, textY, textWidth, lineHeight),
-                    MyGUI::Align::Left | MyGUI::Align::Top);
+                    MyGUI::IntCoord(textLeft, textY, textWidth, lineHeight), MyGUI::Align::Left | MyGUI::Align::Top);
                 school->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
                 school->setCaption(schoolText);
                 textY += lineHeight;
@@ -1023,8 +999,8 @@ namespace MWGui
             if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
             {
                 const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
-                tooltipPosition = MyGUI::IntPoint(focusRect.left + focusRect.width / 2,
-                    focusRect.top + focusRect.height / 2);
+                tooltipPosition
+                    = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
             }
             position(tooltipPosition, tipSize, viewSize);
             setCoord(tooltipPosition.left, tooltipPosition.top, tipSize.width, tipSize.height);
@@ -1169,10 +1145,9 @@ namespace MWGui
             int right = winRect.width - padding;
 
             auto addValueWithIcon = [&](const std::string& caption, std::string_view iconTexture,
-                                    const std::string& textName, const std::string& iconName) {
+                                        const std::string& textName, const std::string& iconName) {
                 MyGUI::TextBox* text = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                    MyGUI::IntCoord(0, textTop, 0, textHeight),
-                    MyGUI::Align::VStretch | MyGUI::Align::Right, textName);
+                    MyGUI::IntCoord(0, textTop, 0, textHeight), MyGUI::Align::VStretch | MyGUI::Align::Right, textName);
                 text->setTextAlign(MyGUI::Align::Right | MyGUI::Align::VCenter);
                 text->setCaption(caption);
                 const int textWidth = std::max(iconSize, text->getTextSize().width);
@@ -1201,8 +1176,8 @@ namespace MWGui
             const int nameRight = std::max(padding, weightText->getLeft() - padding * 2);
             const int nameWidth = std::max(0, nameRight - padding);
             MyGUI::TextBox* nameText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                MyGUI::IntCoord(padding, textTop, nameWidth, textHeight),
-                MyGUI::Align::VStretch | MyGUI::Align::Left, "CollapsedName");
+                MyGUI::IntCoord(padding, textTop, nameWidth, textHeight), MyGUI::Align::VStretch | MyGUI::Align::Left,
+                "CollapsedName");
             nameText->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
             nameText->setCaption(collapsedInfo.caption);
 
@@ -1212,8 +1187,7 @@ namespace MWGui
             {
                 std::ostringstream stats;
                 if (hasDamage)
-                    stats << "( " << damageInfo.mLabel << " " << damageInfo.mMin << " - " << damageInfo.mMax
-                          << " )";
+                    stats << "( " << damageInfo.mLabel << " " << damageInfo.mMin << " - " << damageInfo.mMax << " )";
                 const int statsLeft = padding;
                 const int statsWidth = std::max(0, winRect.width - padding * 2);
                 MyGUI::TextBox* statsText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
@@ -1269,9 +1243,9 @@ namespace MWGui
                         MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
                             MyGUI::IntCoord(padding, iconTop, iconSize, iconSize),
                             MyGUI::Align::VCenter | MyGUI::Align::Left);
-                        icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                            VFS::Path::toNormalized(iconTexture),
-                            *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                        icon->setImageTexture(
+                            Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(iconTexture),
+                                *MWBase::Environment::get().getResourceSystem()->getVFS()));
                         nameLeft = padding + iconSize + spacing;
                     }
 
@@ -1319,8 +1293,8 @@ namespace MWGui
             if (controllerMenu && !winMgr->getCursorVisible())
             {
                 const MyGUI::IntCoord focusRect = effectWidget->getAbsoluteCoord();
-                tooltipPosition = MyGUI::IntPoint(focusRect.left + focusRect.width / 2,
-                    focusRect.top + focusRect.height / 2);
+                tooltipPosition
+                    = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
             }
 
             position(tooltipPosition, tooltipSize, viewSize);
@@ -1393,8 +1367,7 @@ namespace MWGui
                     tooltipSize = createToolTip(info, checkOwned(), 0, false);
                 }
                 else
-                    tooltipSize
-                        = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), true, false, 0, false);
+                    tooltipSize = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), true, false, 0, false);
 
                 MyGUI::IntPoint tooltipPosition = MyGUI::InputManager::getInstance().getMousePosition();
                 position(tooltipPosition, tooltipSize, viewSize);
@@ -1422,8 +1395,8 @@ namespace MWGui
                     if (controllerActive && !suppressControllerBar)
                     {
                         if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            showEmptyControllerBar(activeWindow->mMainWidget->getAbsoluteCoord(),
-                                activeWindow->mMainWidget->getWidth());
+                            showEmptyControllerBar(
+                                activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
                     }
                     return;
                 }
@@ -1596,8 +1569,7 @@ namespace MWGui
 
                 // special handling for markers on the local map: the tooltip should only be visible
                 // if the marker is not hidden due to the fog of war.
-                const bool forceCollapsedLayout
-                    = focus->isUserString("ForceCollapsedTooltip")
+                const bool forceCollapsedLayout = focus->isUserString("ForceCollapsedTooltip")
                     && focus->getUserString("ForceCollapsedTooltip") == "true";
 
                 if (type == "MapMarker")
@@ -1607,8 +1579,7 @@ namespace MWGui
                     if (!data.isPositionExplored())
                         return;
 
-                    if (controllerForceCollapsed
-                        && renderCollapsedTextBar(data.caption, tooltipWinRect, tooltipWidth))
+                    if (controllerForceCollapsed && renderCollapsedTextBar(data.caption, tooltipWinRect, tooltipWidth))
                         return;
 
                     ToolTipInfo info;
@@ -1624,8 +1595,8 @@ namespace MWGui
 
                     allowFocusBar = true;
                     if (!controllerForceCollapsed)
-                        tooltipSize
-                            = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), false, checkOwned(), tooltipWidth, true);
+                        tooltipSize = getToolTipViaPtr(
+                            mFocusObject.getCellRef().getCount(), false, checkOwned(), tooltipWidth, true);
                 }
                 else if (type == "ItemModelIndex")
                 {
@@ -1635,9 +1606,8 @@ namespace MWGui
                     bool isAllowedToUse = pair.second->allowedToUseItems();
                     allowFocusBar = true;
                     if (!controllerForceCollapsed)
-                        tooltipSize = getToolTipViaPtr(
-                            static_cast<int>(pair.second->getItem(pair.first).mCount), false, !isAllowedToUse,
-                            tooltipWidth, true);
+                        tooltipSize = getToolTipViaPtr(static_cast<int>(pair.second->getItem(pair.first).mCount), false,
+                            !isAllowedToUse, tooltipWidth, true);
                 }
                 else if (type == "ToolTipInfo")
                 {
@@ -1656,8 +1626,8 @@ namespace MWGui
                     {
                         allowFocusBar = true;
                         if (!controllerForceCollapsed)
-                            tooltipSize
-                                = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), false, false, tooltipWidth, true);
+                            tooltipSize = getToolTipViaPtr(
+                                mFocusObject.getCellRef().getCount(), false, false, tooltipWidth, true);
                     }
                 }
                 else if (type == "Spell")
@@ -1705,9 +1675,9 @@ namespace MWGui
                                 MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
                                     MyGUI::IntCoord(padding, iconTop, iconSize, iconSize),
                                     MyGUI::Align::VCenter | MyGUI::Align::Left);
-                                icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                    VFS::Path::toNormalized(iconTexture),
-                                    *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                                icon->setImageTexture(
+                                    Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(iconTexture),
+                                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
                                 icon->setColour(MyGUI::Colour::White);
                                 icon->setAlpha(1.0f);
                                 icon->setInheritsAlpha(false);
@@ -1718,8 +1688,8 @@ namespace MWGui
                             if (spell->mData.mType == ESM::Spell::ST_Spell)
                             {
                                 const int cost = MWMechanics::calcSpellCost(*spell);
-                                const int chance
-                                    = static_cast<int>(MWMechanics::getSpellSuccessChance(spell, MWMechanics::getPlayer()));
+                                const int chance = static_cast<int>(
+                                    MWMechanics::getSpellSuccessChance(spell, MWMechanics::getPlayer()));
                                 costChance = std::format("{}/{}", cost, chance);
                             }
 
@@ -1764,8 +1734,8 @@ namespace MWGui
                                 if (!id.empty())
                                 {
                                     const auto& school = store->get<ESM::Skill>().find(id)->mSchool;
-                                    schoolText = "#{sSchool}: "
-                                        + MyGUI::TextIterator::toTagsString(school->mName).asUTF8();
+                                    schoolText
+                                        = "#{sSchool}: " + MyGUI::TextIterator::toTagsString(school->mName).asUTF8();
                                 }
                             }
 
@@ -1790,11 +1760,10 @@ namespace MWGui
 
                                 const ESM::MagicEffect* magicEffect
                                     = store->get<ESM::MagicEffect>().find(spellEffect.mData.mEffectID);
-                                const ESM::Attribute* attribute
-                                    = store->get<ESM::Attribute>().search(
-                                        ESM::Attribute::indexToRefId(spellEffect.mData.mAttribute));
-                                const ESM::Skill* skill
-                                    = store->get<ESM::Skill>().search(ESM::Skill::indexToRefId(spellEffect.mData.mSkill));
+                                const ESM::Attribute* attribute = store->get<ESM::Attribute>().search(
+                                    ESM::Attribute::indexToRefId(spellEffect.mData.mAttribute));
+                                const ESM::Skill* skill = store->get<ESM::Skill>().search(
+                                    ESM::Skill::indexToRefId(spellEffect.mData.mSkill));
                                 if (!magicEffect)
                                     continue;
 
@@ -1805,9 +1774,12 @@ namespace MWGui
                                 std::string_view ft = windowManager->getGameSettingString("sfeet", {});
                                 std::string_view lvl = windowManager->getGameSettingString("sLevel", {});
                                 std::string_view lvls = windowManager->getGameSettingString("sLevels", {});
-                                std::string to = " " + std::string{ windowManager->getGameSettingString("sTo", {}) } + " ";
-                                std::string sec = " " + std::string{ windowManager->getGameSettingString("ssecond", {}) };
-                                std::string secs = " " + std::string{ windowManager->getGameSettingString("sseconds", {}) };
+                                std::string to
+                                    = " " + std::string{ windowManager->getGameSettingString("sTo", {}) } + " ";
+                                std::string sec
+                                    = " " + std::string{ windowManager->getGameSettingString("ssecond", {}) };
+                                std::string secs
+                                    = " " + std::string{ windowManager->getGameSettingString("sseconds", {}) };
 
                                 effectText = MWMechanics::getMagicEffectString(*magicEffect, attribute, skill);
 
@@ -1820,7 +1792,8 @@ namespace MWGui
                                 const bool isConstant = (spell->mData.mType == ESM::Spell::ST_Ability);
                                 if ((magnMin || magnMax))
                                 {
-                                    ESM::MagicEffect::MagnitudeDisplayType displayType = magicEffect->getMagnitudeDisplayType();
+                                    ESM::MagicEffect::MagnitudeDisplayType displayType
+                                        = magicEffect->getMagnitudeDisplayType();
                                     if (displayType == ESM::MagicEffect::MDT_TimesInt)
                                     {
                                         std::stringstream formatter;
@@ -1858,86 +1831,89 @@ namespace MWGui
                                                 effectText += pt;
                                             else
                                                 effectText += pts;
-                        }
-                    }
-                }
-                else if (type == "ActiveEffect")
-                {
-                    const bool controllerMenu = Settings::gui().mControllerMenus;
-                    const bool collapsed = controllerMenu && (!winMgr->getControllerTooltipEnabled() || controllerMap);
+                                        }
+                                    }
+                                }
+                                else if (type == "ActiveEffect")
+                                {
+                                    const bool controllerMenu = Settings::gui().mControllerMenus;
+                                    const bool collapsed
+                                        = controllerMenu && (!winMgr->getControllerTooltipEnabled() || controllerMap);
 
-                    const std::string nameRaw = focus->isUserString("ActiveEffectName")
-                        ? std::string(focus->getUserString("ActiveEffectName"))
-                        : std::string();
-                    const std::string iconTexture = focus->isUserString("ActiveEffectIcon")
-                        ? std::string(focus->getUserString("ActiveEffectIcon"))
-                        : std::string();
-                    const std::string textRaw = focus->isUserString("ActiveEffectText")
-                        ? std::string(focus->getUserString("ActiveEffectText"))
-                        : std::string();
+                                    const std::string nameRaw = focus->isUserString("ActiveEffectName")
+                                        ? std::string(focus->getUserString("ActiveEffectName"))
+                                        : std::string();
+                                    const std::string iconTexture = focus->isUserString("ActiveEffectIcon")
+                                        ? std::string(focus->getUserString("ActiveEffectIcon"))
+                                        : std::string();
+                                    const std::string textRaw = focus->isUserString("ActiveEffectText")
+                                        ? std::string(focus->getUserString("ActiveEffectText"))
+                                        : std::string();
 
-                    const std::string nameText = MyGUI::LanguageManager::getInstance().replaceTags(nameRaw);
+                                    const std::string nameText
+                                        = MyGUI::LanguageManager::getInstance().replaceTags(nameRaw);
 
-                    if (controllerMenu)
-                    {
-                        const int padding = 8;
-                        const int spacing = 4;
-                        const int iconSize = 16;
-                        const int width = tooltipWidth > 0 ? tooltipWidth : tooltipWinRect.width;
+                                    if (controllerMenu)
+                                    {
+                                        const int padding = 8;
+                                        const int spacing = 4;
+                                        const int iconSize = 16;
+                                        const int width = tooltipWidth > 0 ? tooltipWidth : tooltipWinRect.width;
 
-                        if (collapsed)
-                        {
-                            const int height = 28;
-                            const int textHeight = height - 8;
-                            const int textTop = 4;
+                                        if (collapsed)
+                                        {
+                                            const int height = 28;
+                                            const int textHeight = height - 8;
+                                            const int textTop = 4;
 
-                            mDynamicToolTipBox->setVisible(true);
-                            mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
+                                            mDynamicToolTipBox->setVisible(true);
+                                            mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
 
-                            int nameLeft = padding;
-                            if (!iconTexture.empty())
-                            {
-                                const int iconTop = (height - iconSize) / 2;
-                                MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                                    MyGUI::IntCoord(padding, iconTop, iconSize, iconSize),
-                                    MyGUI::Align::VCenter | MyGUI::Align::Left);
-                                icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                    VFS::Path::toNormalized(iconTexture),
-                                    *MWBase::Environment::get().getResourceSystem()->getVFS()));
-                                nameLeft = padding + iconSize + spacing;
-                            }
+                                            int nameLeft = padding;
+                                            if (!iconTexture.empty())
+                                            {
+                                                const int iconTop = (height - iconSize) / 2;
+                                                MyGUI::ImageBox* icon
+                                                    = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
+                                                        MyGUI::IntCoord(padding, iconTop, iconSize, iconSize),
+                                                        MyGUI::Align::VCenter | MyGUI::Align::Left);
+                                                icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
+                                                    VFS::Path::toNormalized(iconTexture),
+                                                    *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                                                nameLeft = padding + iconSize + spacing;
+                                            }
 
-                            const int rightPadding = padding;
-                            const int nameWidth = std::max(0, width - nameLeft - rightPadding);
+                                            const int rightPadding = padding;
+                                            const int nameWidth = std::max(0, width - nameLeft - rightPadding);
 
-                            MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                                MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
-                                MyGUI::Align::Left | MyGUI::Align::VCenter);
-                            name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
-                            name->setCaption(nameText.empty() ? nameRaw : nameText);
+                                            MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(
+                                                "NormalText", MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
+                                                MyGUI::Align::Left | MyGUI::Align::VCenter);
+                                            name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
+                                            name->setCaption(nameText.empty() ? nameRaw : nameText);
 
-                            tooltipSize = MyGUI::IntSize(width, height);
-                        }
-                        else
-                        {
-                            ToolTipInfo info;
-                            info.caption = nameRaw;
-                            info.icon = iconTexture;
-                            info.imageSize = 16;
-                            info.text = textRaw;
-                            tooltipSize = createToolTip(info, false, tooltipWidth, true);
-                        }
-                    }
-                    else
-                    {
-                        ToolTipInfo info;
-                        info.caption = nameRaw;
-                        info.icon = iconTexture;
-                        info.imageSize = 16;
-                        info.text = textRaw;
-                        tooltipSize = createToolTip(info, false, 0, false);
-                    }
-                }
+                                            tooltipSize = MyGUI::IntSize(width, height);
+                                        }
+                                        else
+                                        {
+                                            ToolTipInfo info;
+                                            info.caption = nameRaw;
+                                            info.icon = iconTexture;
+                                            info.imageSize = 16;
+                                            info.text = textRaw;
+                                            tooltipSize = createToolTip(info, false, tooltipWidth, true);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        ToolTipInfo info;
+                                        info.caption = nameRaw;
+                                        info.icon = iconTexture;
+                                        info.imageSize = 16;
+                                        info.text = textRaw;
+                                        tooltipSize = createToolTip(info, false, 0, false);
+                                    }
+                                }
 
                                 if (!isConstant)
                                 {
@@ -1945,7 +1921,8 @@ namespace MWGui
                                     if (!(magicEffect->mData.mFlags & ESM::MagicEffect::AppliedOnce))
                                         effectDuration = std::max(1, effectDuration);
 
-                                    if (effectDuration > 0 && !(magicEffect->mData.mFlags & ESM::MagicEffect::NoDuration))
+                                    if (effectDuration > 0
+                                        && !(magicEffect->mData.mFlags & ESM::MagicEffect::NoDuration))
                                     {
                                         effectText += ' ';
                                         effectText += windowManager->getGameSettingString("sfor", {});
@@ -1978,9 +1955,9 @@ namespace MWGui
                                 MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
                                     MyGUI::IntCoord(effectLeft, iconTop, iconSize, iconSize),
                                     MyGUI::Align::Left | MyGUI::Align::Top);
-                                icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                    VFS::Path::toNormalized(effectIcon),
-                                    *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                                icon->setImageTexture(
+                                    Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effectIcon),
+                                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
                                 effectLeft += iconSize + spacing;
                             }
 
@@ -2137,8 +2114,8 @@ namespace MWGui
                         getWidget(imageWidget, imageWidgetName);
                         if (auto* image = dynamic_cast<MyGUI::ImageBox*>(imageWidget))
                         {
-                            image->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                VFS::Path::toNormalized(texture), *vfs));
+                            image->setImageTexture(
+                                Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(texture), *vfs));
                         }
                     }
                 }
@@ -2175,8 +2152,8 @@ namespace MWGui
         {
             if (!mFocusObject.isEmpty())
             {
-            MyGUI::IntSize tooltipSize
-                = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), true, checkOwned(), 0, false);
+                MyGUI::IntSize tooltipSize
+                    = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), true, checkOwned(), 0, false);
 
                 const int left = viewSize.width / 2 - tooltipSize.width / 2;
                 const int top = std::max(0, int(mFocusToolTipY * viewSize.height - tooltipSize.height - 20));
@@ -2263,8 +2240,7 @@ namespace MWGui
         return !mm->isAllowedToUse(ptr, mFocusObject, victim);
     }
 
-    MyGUI::IntSize ToolTips::createToolTip(
-        const MWGui::ToolTipInfo& info, bool isOwned, int forcedWidth, bool menuMode)
+    MyGUI::IntSize ToolTips::createToolTip(const MWGui::ToolTipInfo& info, bool isOwned, int forcedWidth, bool menuMode)
     {
         mDynamicToolTipBox->setVisible(true);
 
@@ -2314,8 +2290,7 @@ namespace MWGui
         const MyGUI::IntPoint padding(8, 8);
 
         // Only use menu mode formatting when menuMode is true
-        const int forcedContentWidth
-            = (menuMode && forcedWidth > 0) ? std::max(0, forcedWidth - padding.left * 2) : 0;
+        const int forcedContentWidth = (menuMode && forcedWidth > 0) ? std::max(0, forcedWidth - padding.left * 2) : 0;
         const int contentLeft = (forcedContentWidth > 0) ? padding.left : 0;
         const int contentWidth = (forcedContentWidth > 0) ? forcedContentWidth : 300;
 
@@ -2324,14 +2299,15 @@ namespace MWGui
 
         const int maximumWidth = (!menuMode)
             ? (MyGUI::RenderManager::getInstance().getViewSize().width - imageCaptionHPadding * 2)
-            : ((forcedContentWidth > 0) ? forcedContentWidth
-                                        : MyGUI::RenderManager::getInstance().getViewSize().width - imageCaptionHPadding * 2);
+            : ((forcedContentWidth > 0)
+                    ? forcedContentWidth
+                    : MyGUI::RenderManager::getInstance().getViewSize().width - imageCaptionHPadding * 2);
 
         const VFS::Path::Normalized realImage = Misc::ResourceHelpers::correctIconPath(
             VFS::Path::toNormalized(image), *MWBase::Environment::get().getResourceSystem()->getVFS());
 
-        Gui::EditBox* captionWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>(
-            "NormalText", MyGUI::IntCoord(0, 0, (!menuMode) ? 300 : contentWidth, 300), MyGUI::Align::Left | MyGUI::Align::Top,
+        Gui::EditBox* captionWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("NormalText",
+            MyGUI::IntCoord(0, 0, (!menuMode) ? 300 : contentWidth, 300), MyGUI::Align::Left | MyGUI::Align::Top,
             "ToolTipCaption");
         captionWidget->setEditStatic(true);
         captionWidget->setNeedKeyFocus(false);
@@ -2365,7 +2341,8 @@ namespace MWGui
         for (const std::string& note : info.notes)
         {
             MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("MarkerButton",
-                MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, totalSize.height + padding.top, 8, 8), MyGUI::Align::Default);
+                MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, totalSize.height + padding.top, 8, 8),
+                MyGUI::Align::Default);
             icon->setColour(MyGUI::Colour(1.0f, 0.3f, 0.3f));
             Gui::EditBox* edit = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
                 MyGUI::IntCoord((!menuMode) ? (8 + 4) : (contentLeft + 8 + 4), totalSize.height + padding.top,
@@ -2386,7 +2363,8 @@ namespace MWGui
         if (!info.effects.empty())
         {
             MyGUI::Widget* effectArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
-                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height, (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
+                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height,
+                    (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
             MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
@@ -2401,7 +2379,7 @@ namespace MWGui
             flag |= info.isIngredient ? Widgets::MWEffectList::EF_Constant : 0;
             const bool centerEffects = menuMode ? true : (info.isPotion || info.isIngredient);
             effectsWidget->createEffectWidgets(effectItems, effectArea, coord, centerEffects, flag);
-            
+
             totalSize.height += coord.top - 6;
             totalSize.width = std::max(totalSize.width, coord.width);
         }
@@ -2409,7 +2387,8 @@ namespace MWGui
         if (enchant)
         {
             MyGUI::Widget* enchantArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
-                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height, (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
+                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height,
+                    (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
             MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
@@ -2423,7 +2402,7 @@ namespace MWGui
                 = (enchant->mData.mType == ESM::Enchantment::ConstantEffect) ? Widgets::MWEffectList::EF_Constant : 0;
             const bool centerEnchantEffects = false;
             enchantWidget->createEffectWidgets(enchantEffectItems, enchantArea, coord, centerEnchantEffects, flag);
-            
+
             totalSize.height += coord.top - 6;
             totalSize.width = std::max(totalSize.width, coord.width);
 
@@ -2469,7 +2448,8 @@ namespace MWGui
         if (!extra.empty())
         {
             extraWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
-                MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, totalSize.height + 12, (!menuMode) ? 300 : contentWidth, 300 - totalSize.height),
+                MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, totalSize.height + 12, (!menuMode) ? 300 : contentWidth,
+                    300 - totalSize.height),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top), "ToolTipExtraText");
 
             extraWidget->setEditStatic(true);
@@ -2512,8 +2492,8 @@ namespace MWGui
             captionWidget->setPosition(captionWidget->getPosition() + padding);
         }
 
-        textWidget->setPosition(textWidget->getPosition()
-            + MyGUI::IntPoint(0, padding.top)); // only apply vertical padding
+        textWidget->setPosition(
+            textWidget->getPosition() + MyGUI::IntPoint(0, padding.top)); // only apply vertical padding
 
         if (menuMode)
         {
@@ -2867,8 +2847,7 @@ namespace MWGui
         const std::string::size_type slashPos = icon.rfind('\\');
         if (slashPos != std::string::npos)
             icon.insert(slashPos + 1, "b_");
-        VFS::Path::Normalized iconPath
-            = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(icon), vfs);
+        VFS::Path::Normalized iconPath = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(icon), vfs);
         if (!vfs.exists(iconPath))
             iconPath = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effect->mIcon), vfs);
 

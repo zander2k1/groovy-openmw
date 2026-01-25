@@ -603,9 +603,8 @@ namespace MWInput
                     && !isCharGenMouseAllowed(winMgr->getMode()) && !mapWindowActive
                     && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
                 {
-                    const float deadzone = (mLeftStickDpadButton == kLeftStickDpadNone)
-                        ? kLeftStickDpadDeadzone
-                        : kLeftStickDpadReleaseDeadzone;
+                    const float deadzone = (mLeftStickDpadButton == kLeftStickDpadNone) ? kLeftStickDpadDeadzone
+                                                                                        : kLeftStickDpadReleaseDeadzone;
                     const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY, deadzone);
                     if (nextButton != mLeftStickDpadButton)
                     {

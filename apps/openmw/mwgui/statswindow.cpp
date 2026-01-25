@@ -312,8 +312,7 @@ namespace MWGui
             {
                 const std::string label = std::string(tooltipWidget->getUserString("Caption_AttributeName"));
                 tooltipWidget->setUserString("CollapsedLabel", label);
-                tooltipWidget->setUserString(
-                    "CollapsedValue", std::to_string(static_cast<int>(value.getModified())));
+                tooltipWidget->setUserString("CollapsedValue", std::to_string(static_cast<int>(value.getModified())));
             }
         }
     }
@@ -332,11 +331,11 @@ namespace MWGui
         // health, magicka, fatigue tooltip
         MyGUI::Widget* w;
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
-        auto setCollapsedPair = [&](const char* labelWidgetName, MyGUI::Widget* tooltipWidget, const std::string& text) {
+        auto setCollapsedPair = [&](const char* labelWidgetName, MyGUI::Widget* tooltipWidget,
+                                    const std::string& text) {
             MyGUI::TextBox* labelWidget = nullptr;
             getWidget(labelWidget, labelWidgetName);
-            const std::string label
-                = labelWidget ? labelWidget->getCaption().asUTF8() : std::string(labelWidgetName);
+            const std::string label = labelWidget ? labelWidget->getCaption().asUTF8() : std::string(labelWidgetName);
             tooltipWidget->setUserString("CollapsedLabel", label);
             tooltipWidget->setUserString("CollapsedValue", text);
         };
@@ -499,8 +498,7 @@ namespace MWGui
                 valueWidget->setUserString("UserData^Hidden_SkillProgressVBox", "true");
             }
 
-            const std::string label
-                = nameWidget->isUserString("Caption_SkillName")
+            const std::string label = nameWidget->isUserString("Caption_SkillName")
                 ? std::string(nameWidget->getUserString("Caption_SkillName"))
                 : nameWidget->getCaption().asUTF8();
             nameWidget->setUserString("CollapsedLabel", label);
@@ -952,8 +950,8 @@ namespace MWGui
                 "Caption_TextOneLine", "Your fame rating in the world of Morrowind.");
         }
 
-        const std::string bountyLabel = std::string(
-            MWBase::Environment::get().getWindowManager()->getGameSettingString("sBounty", "Bounty"));
+        const std::string bountyLabel
+            = std::string(MWBase::Environment::get().getWindowManager()->getGameSettingString("sBounty", "Bounty"));
         const std::string bountyValue = MyGUI::utility::toString(static_cast<int>(mBounty));
         const auto bountyWidgets = addValueItem(bountyLabel, bountyValue, "normal", coord1, coord2);
         const std::string bountyCollapsedLabel = "#{fontcolourhtml=header}" + bountyLabel + "#{fontcolourhtml=normal}";
@@ -1068,8 +1066,7 @@ namespace MWGui
             const MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
-            window->setCoord(
-                coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
+            window->setCoord(coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
 
             if (active)
                 onWindowResize(window);

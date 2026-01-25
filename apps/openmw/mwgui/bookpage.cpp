@@ -739,7 +739,6 @@ namespace MWGui
         return std::make_shared<TypesetBookImpl::Typesetter>(pageWidth, pageHeight);
     }
 
-
     namespace
     {
         struct RenderXform

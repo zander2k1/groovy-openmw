@@ -1554,5 +1554,17 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <source>Navigation Repeat Speed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Speed multiplier for the gamepad cursor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gamepad Cursor Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Styled Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

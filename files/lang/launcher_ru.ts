@@ -1550,5 +1550,17 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <source>Navigation Repeat Speed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Speed multiplier for the gamepad cursor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gamepad Cursor Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Styled Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

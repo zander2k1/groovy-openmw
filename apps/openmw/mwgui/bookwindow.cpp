@@ -232,8 +232,6 @@ namespace MWGui
         return &mControllerButtons;
     }
 
-    
-
     bool BookWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)

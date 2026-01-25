@@ -7,7 +7,6 @@
 #include <MyGUI_InputManager.h>
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_Window.h>
-#include <MyGUI_RenderManager.h>
 
 #include <components/misc/rng.hpp>
 #include <components/misc/strings/format.hpp>
@@ -248,8 +247,7 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->getInventoryWindow()->getTradeModel()->updateBorrowed();
             MWBase::Environment::get().getWindowManager()->getInventoryWindow()->updateItemView();
             mItemView->update();
-            if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
-                && mItemView->getItemCount() <= 0)
+            if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty() && mItemView->getItemCount() <= 0)
                 setControllerTabsActive(true);
             updateOffer();
             mUpdateNextFrame = false;
@@ -823,8 +821,7 @@ namespace MWGui
                 {
                     MyGUI::Widget* widget = mControllerTabWidgets[mControllerTabIndex];
                     onFilterChanged(widget);
-                    MWBase::Environment::get().getWindowManager()->playSound(
-                        ESM::RefId::stringRefId("Menu Click"));
+                    MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                     return true;
                 }
             }
@@ -902,13 +899,12 @@ namespace MWGui
         WindowBase::setActiveControllerWindow(active);
     }
 
-void TradeWindow::updateItemView()
-{
-    mItemView->update();
-    if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
-        && mItemView->getItemCount() <= 0)
-        setControllerTabsActive(true);
-}
+    void TradeWindow::updateItemView()
+    {
+        mItemView->update();
+        if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty() && mItemView->getItemCount() <= 0)
+            setControllerTabsActive(true);
+    }
 
     void TradeWindow::itemAdded(const MWWorld::ConstPtr& item, int count)
     {

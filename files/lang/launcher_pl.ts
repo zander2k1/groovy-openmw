@@ -1565,5 +1565,17 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <source>Navigation Repeat Speed</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Speed multiplier for the gamepad cursor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gamepad Cursor Speed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Styled Dialog</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

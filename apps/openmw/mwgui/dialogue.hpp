@@ -241,7 +241,6 @@ namespace MWGui
         int mControllerChoice = -1;
 
         void updateTopicFormat();
-
     };
 }
 #endif

@@ -4,8 +4,8 @@
 
 #include <MyGUI_FactoryManager.h>
 #include <MyGUI_Gui.h>
-#include <MyGUI_InputManager.h>
 #include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_ScrollView.h>
 
 #include <components/settings/values.hpp>

@@ -5,8 +5,8 @@
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_InputManager.h>
-#include <MyGUI_ScrollView.h>
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_ScrollView.h>
 #include <MyGUI_UString.h>
 #include <MyGUI_Widget.h>
 #include <MyGUI_Window.h>
@@ -451,8 +451,8 @@ namespace MWGui
 
         const MyGUI::IntCoord focusCoord = focus->getAbsoluteCoord();
         MyGUI::Widget* highlightParent = mControllerFocusHighlight->getParent();
-        const MyGUI::IntCoord baseCoord = highlightParent ? highlightParent->getAbsoluteCoord()
-                                                          : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord baseCoord
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
         mControllerFocusHighlight->setCoord(
             focusCoord.left - baseCoord.left, focusCoord.top - baseCoord.top, focusCoord.width, focusCoord.height);
         mControllerFocusHighlight->setVisible(true);

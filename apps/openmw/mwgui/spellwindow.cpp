@@ -387,8 +387,7 @@ namespace MWGui
             MyGUI::IntCoord coord = getFixedWindowCoord(viewSize);
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
-            window->setCoord(
-                coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
+            window->setCoord(coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
 
             MWBase::Environment::get().getWindowManager()->setControllerTooltipVisible(
                 active && Settings::gui().mControllerTooltips);
@@ -437,8 +436,7 @@ namespace MWGui
                     iconCoord.height = baseSize;
                     icon->setCoord(iconCoord);
                 }
-                MyGUI::Widget* hitbox = mEffectBox->createWidget<MyGUI::Widget>(
-                    {}, iconCoord, MyGUI::Align::Default);
+                MyGUI::Widget* hitbox = mEffectBox->createWidget<MyGUI::Widget>({}, iconCoord, MyGUI::Align::Default);
                 hitbox->setNeedMouseFocus(true);
                 hitbox->setNeedKeyFocus(true);
                 hitbox->setDepth(icon->getDepth() + 1);
@@ -514,11 +512,7 @@ namespace MWGui
             const int focusSize = 18;
             const int growX = (focusSize - baseCoord.width) / 2;
             const int growY = (focusSize - baseCoord.height) / 2;
-            const MyGUI::IntCoord focusCoord(
-                baseCoord.left - growX,
-                baseCoord.top - growY,
-                focusSize,
-                focusSize);
+            const MyGUI::IntCoord focusCoord(baseCoord.left - growX, baseCoord.top - growY, focusSize, focusSize);
             mEffectIcons[i]->setCoord(focusCoord);
         }
 

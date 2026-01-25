@@ -52,9 +52,9 @@ namespace MWGui
         {
             const ESM::MagicEffect* effect = store->get<ESM::MagicEffect>().find(effectId);
 
-        float remainingDuration = 0;
-        float totalDuration = 0;
-        float displayDuration = -1.f;
+            float remainingDuration = 0;
+            float totalDuration = 0;
+            float displayDuration = -1.f;
 
             std::string sourcesDescription;
 

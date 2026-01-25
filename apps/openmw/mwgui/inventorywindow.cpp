@@ -159,8 +159,7 @@ namespace MWGui
         const int paneGap = 4;
         const MyGUI::IntCoord client = mMainWidget->getClientCoord();
         const int paneHeight = std::max(0, client.height - bottomGap);
-        const int leftPaneWidth
-            = std::max(0, static_cast<int>((paneHeight - mArmorRating->getHeight()) * aspect));
+        const int leftPaneWidth = std::max(0, static_cast<int>((paneHeight - mArmorRating->getHeight()) * aspect));
         const int rightPaneWidth = std::max(0, client.width - rightGap - leftPaneWidth - paneGap);
 
         mLeftPane->setCoord(0, 0, leftPaneWidth, paneHeight);
@@ -899,8 +898,7 @@ namespace MWGui
             mDragAndDrop->update();
             mItemView->update();
             notifyContentChanged();
-            if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
-                && mItemView->getItemCount() <= 0)
+            if (Settings::gui().mControllerMenus && !mControllerTabWidgets.empty() && mItemView->getItemCount() <= 0)
                 setControllerTabsActive(true);
             mUpdateNextFrame = false;
         }
@@ -1167,8 +1165,7 @@ namespace MWGui
                 {
                     MyGUI::Widget* widget = mControllerTabWidgets[mControllerTabIndex];
                     onFilterChanged(widget);
-                    MWBase::Environment::get().getWindowManager()->playSound(
-                        ESM::RefId::stringRefId("Menu Click"));
+                    MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
                     return true;
                 }
             }

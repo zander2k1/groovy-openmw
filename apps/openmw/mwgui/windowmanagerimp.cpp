@@ -118,9 +118,9 @@
 #include "scrollwindow.hpp"
 #include "settingswindow.hpp"
 #include "spellbuyingwindow.hpp"
+#include "spellcreationdialog.hpp"
 #include "spellview.hpp"
 #include "spellwindow.hpp"
-#include "spellcreationdialog.hpp"
 #include "statswindow.hpp"
 #include "textinput.hpp"
 #include "tradewindow.hpp"
@@ -757,9 +757,7 @@ namespace MWGui
                 const size_t winCount = mGuiModeStates[GM_Inventory].mWindows.size();
                 const size_t activeIndex
                     = winCount > 0 ? std::clamp<size_t>(mActiveControllerWindows[GM_Inventory], 0, winCount - 1) : 0;
-                const auto canShow = [this](GuiWindow wnd) {
-                    return (mAllowed & wnd) && !(mForceHidden & wnd);
-                };
+                const auto canShow = [this](GuiWindow wnd) { return (mAllowed & wnd) && !(mForceHidden & wnd); };
 
                 mMap->setVisible(false);
                 mInventoryWindow->setVisible(false);

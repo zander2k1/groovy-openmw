@@ -5,8 +5,8 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
-#include <MyGUI_ScrollBar.h>
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_ScrollBar.h>
 #include <MyGUI_Widget.h>
 #include <MyGUI_Window.h>
 
@@ -816,8 +816,7 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
-            if (!mControllerEffectsFocusActive
-                && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
+            if (!mControllerEffectsFocusActive && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
             {
                 openVirtualKeyboard(mNameEdit);
                 return true;
@@ -912,8 +911,8 @@ namespace MWGui
 
         const MyGUI::IntCoord focusCoord = focus->getAbsoluteCoord();
         MyGUI::Widget* highlightParent = mControllerFocusHighlight->getParent();
-        const MyGUI::IntCoord baseCoord = highlightParent ? highlightParent->getAbsoluteCoord()
-                                                          : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord baseCoord
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
         mControllerFocusHighlight->setCoord(
             focusCoord.left - baseCoord.left, focusCoord.top - baseCoord.top, focusCoord.width, focusCoord.height);
         mControllerFocusHighlight->setVisible(true);
@@ -1191,9 +1190,8 @@ namespace MWGui
             MyGUI::Widget* highlight = nullptr;
             if (Settings::gui().mControllerMenus)
             {
-                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, size.height, effect->getRequestedWidth(), 24),
-                    MyGUI::Align::Default);
+                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>("ControllerHighlight",
+                    MyGUI::IntCoord(0, size.height, effect->getRequestedWidth(), 24), MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setDepth(1);
                 highlight->setVisible(false);
