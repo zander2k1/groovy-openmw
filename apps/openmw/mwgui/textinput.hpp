@@ -15,6 +15,7 @@ namespace MWGui
 
         void setNextButtonShow(bool shown);
         void setTextLabel(std::string_view label);
+        void setControllerOpensKeyboard(bool enable);
         void onOpen() override;
 
         bool exit() override { return false; }
@@ -32,6 +33,7 @@ namespace MWGui
 
     private:
         MyGUI::EditBox* mTextEdit;
+        bool mControllerOpensKeyboard = false;
     };
 }
 #endif

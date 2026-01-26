@@ -277,8 +277,8 @@ namespace MWInput
         mMouseWheel = wheelDelta;
 
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        mGuiCursorX = std::clamp<float>(mGuiCursorX, 0.f, viewSize.width - 1.f);
-        mGuiCursorY = std::clamp<float>(mGuiCursorY, 0.f, viewSize.height - 1.f);
+        mGuiCursorX = std::clamp<float>(mGuiCursorX, 0.f, static_cast<float>(viewSize.width) - 1.f);
+        mGuiCursorY = std::clamp<float>(mGuiCursorY, 0.f, static_cast<float>(viewSize.height) - 1.f);
 
         if (Settings::gui().mControllerMenus)
         {
@@ -290,8 +290,12 @@ namespace MWInput
                 if (mapWindow && mapWindow->isVisible())
                 {
                     const MyGUI::IntCoord rect = mapWindow->mMainWidget->getAbsoluteCoord();
-                    mGuiCursorX = std::clamp<float>(mGuiCursorX, rect.left, rect.left + rect.width - 1.f);
-                    mGuiCursorY = std::clamp<float>(mGuiCursorY, rect.top, rect.top + rect.height - 1.f);
+                    const float minX = static_cast<float>(rect.left);
+                    const float maxX = static_cast<float>(rect.left + rect.width) - 1.f;
+                    const float minY = static_cast<float>(rect.top);
+                    const float maxY = static_cast<float>(rect.top + rect.height) - 1.f;
+                    mGuiCursorX = std::clamp<float>(mGuiCursorX, minX, maxX);
+                    mGuiCursorY = std::clamp<float>(mGuiCursorY, minY, maxY);
                 }
             }
         }

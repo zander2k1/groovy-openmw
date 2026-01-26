@@ -36,7 +36,7 @@ namespace MWGui
     ReviewDialog::ReviewDialog()
         : WindowModal("openmw_chargen_review.layout")
         , mUpdateSkillArea(false)
-        , mControllerFocus(5)
+        , mControllerFocus(0)
     {
         // Centre dialog
         center();
@@ -122,7 +122,17 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
+            MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+            if (!highlightParent)
+                highlightParent = mMainWidget;
+            mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setDepth(1);
+            mControllerHighlight->setVisible(false);
+
             setControllerFocus(mButtons, mControllerFocus, true);
+            updateControllerHighlight();
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Done}";
@@ -539,6 +549,31 @@ namespace MWGui
                 MyGUI::IntPoint(0, static_cast<int>(mSkillView->getViewOffset().top + rel * 0.3)));
     }
 
+    void ReviewDialog::updateControllerHighlight()
+    {
+        if (!mControllerHighlight || !useControllerSelectionHighlight() || mButtons.empty())
+        {
+            if (mControllerHighlight)
+                mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focusWidget = mButtons[mControllerFocus];
+        if (!focusWidget)
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
+        const MyGUI::IntCoord parentRect
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
+        mControllerHighlight->setCoord(MyGUI::IntCoord(
+            focusRect.left - parentRect.left, focusRect.top - parentRect.top, focusRect.width, focusRect.height));
+        mControllerHighlight->setVisible(true);
+    }
+
     bool ReviewDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -579,12 +614,14 @@ namespace MWGui
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), -1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            updateControllerHighlight();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
         {
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), 1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            updateControllerHighlight();
         }
 
         return true;

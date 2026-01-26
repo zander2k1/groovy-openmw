@@ -73,6 +73,7 @@ namespace MWGui
 
         void onMouseWheel(MyGUI::Widget* sender, int rel);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        void updateControllerHighlight();
 
     private:
         void addSkills(const std::vector<ESM::RefId>& skills, const std::string& titleId,
@@ -105,6 +106,7 @@ namespace MWGui
         // 0 = Name, 1 = Race, 2 = Class, 3 = BirthSign, 4 = Back, 5 = OK
         std::vector<MyGUI::Button*> mButtons;
         size_t mControllerFocus = 0;
+        MyGUI::Widget* mControllerHighlight = nullptr;
     };
 }
 #endif

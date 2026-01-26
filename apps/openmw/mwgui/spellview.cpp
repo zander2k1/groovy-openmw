@@ -491,7 +491,6 @@ namespace MWGui
                     mScrollView->setViewOffset(MyGUI::IntPoint(0, -lineHeight * (line - 5)));
                 }
 
-                MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->restoreControllerTooltips();
 
                 MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);

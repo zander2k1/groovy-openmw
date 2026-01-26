@@ -28,8 +28,9 @@
 namespace
 {
     constexpr float kLeftStickAxisMax = 32768.0f;
-    constexpr float kLeftStickDpadDeadzone = 0.6f;
-    constexpr float kLeftStickDpadReleaseDeadzone = 0.4f;
+    constexpr float kGuiJoystickDeadzone = 0.6f;
+    constexpr float kLeftStickDpadDeadzone = kGuiJoystickDeadzone;
+    constexpr float kLeftStickDpadReleaseDeadzone = kGuiJoystickDeadzone;
     constexpr int kLeftStickDpadNone = -1;
     constexpr float kGuiTurboRepeatStartDelay = 1.f / 6.f;
     constexpr int kTriggerPressThreshold = 16000;
@@ -77,9 +78,26 @@ namespace
             || button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
     }
 
+    MyGUI::KeyCode dpadButtonToKey(int button)
+    {
+        switch (button)
+        {
+            case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                return MyGUI::KeyCode::ArrowUp;
+            case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                return MyGUI::KeyCode::ArrowDown;
+            case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                return MyGUI::KeyCode::ArrowLeft;
+            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                return MyGUI::KeyCode::ArrowRight;
+            default:
+                return MyGUI::KeyCode::None;
+        }
+    }
+
     bool isCharGenMouseAllowed(MWGui::GuiMode mode)
     {
-        return mode == MWGui::GM_ClassCreate;
+        return mode == MWGui::GM_Name;
     }
 
     bool isDialogueMode(MWGui::GuiMode mode)
@@ -165,8 +183,10 @@ namespace MWInput
         const bool settingsVisible = winMgr->isSettingsWindowVisible();
         const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible);
 
+        const bool allowJoystickDpadInMode
+            = !isCharGenMouseAllowed(winMgr->getMode()) || winMgr->isVirtualKeyboardVisible();
         if (Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad && winMgr->isGuiMode()
-            && !winMgr->isSettingsWindowVisible() && !isCharGenMouseAllowed(winMgr->getMode()))
+            && !winMgr->isSettingsWindowVisible() && allowJoystickDpadInMode)
         {
             if (MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow())
                 leftStickDpadActive = topWin->isVisible() && dynamic_cast<MWGui::MapWindow*>(topWin) == nullptr;
@@ -188,7 +208,7 @@ namespace MWInput
         }
 
         if (mGuiNavHeldFromAxis && Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad
-            && winMgr->isGuiMode() && !winMgr->isSettingsWindowVisible() && !isCharGenMouseAllowed(winMgr->getMode()))
+            && winMgr->isGuiMode() && !winMgr->isSettingsWindowVisible() && allowJoystickDpadInMode)
         {
             SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
             if (cntrl)
@@ -198,11 +218,15 @@ namespace MWInput
                 applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadReleaseDeadzone, xAxis, yAxis);
                 if (xAxis == 0.f && yAxis == 0.f)
                 {
+                    const int lastButton = mGuiNavHeldButton;
                     mLeftStickDpadButton = kLeftStickDpadNone;
                     mGuiNavHeldButton = kLeftStickDpadNone;
                     mGuiNavHoldTime = 0.f;
                     mGuiNavRepeatTime = 0.f;
                     mGuiNavHeldFromAxis = false;
+                    const MyGUI::KeyCode releaseKey = dpadButtonToKey(lastButton);
+                    if (releaseKey != MyGUI::KeyCode::None)
+                        winMgr->injectKeyRelease(releaseKey);
                 }
             }
         }
@@ -243,7 +267,7 @@ namespace MWInput
 
             if (winMgr->isGuiMode())
             {
-                applyRadialDeadzone(xAxis, yAxis, 0.6f, xAxis, yAxis);
+                applyRadialDeadzone(xAxis, yAxis, kGuiJoystickDeadzone, xAxis, yAxis);
                 const float joystickDeadZone = Settings::input().mJoystickDeadZone;
                 const float scrollDeadzone = joystickDeadZone > 0.2f ? joystickDeadZone : 0.2f;
                 if (std::abs(zAxis) < scrollDeadzone)
@@ -355,6 +379,14 @@ namespace MWInput
         mJoystickLastUsed = true;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode() && Settings::gui().mControllerMenus)
         {
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+                MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::ArrowUp);
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+                MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::ArrowDown);
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
+                MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::ArrowLeft);
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+                MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::ArrowRight);
             if (arg.button == SDL_CONTROLLER_BUTTON_Y)
             {
                 MWGui::WindowBase* activeWindow
@@ -599,8 +631,10 @@ namespace MWInput
 
                 const bool mapWindowActive = dynamic_cast<MWGui::MapWindow*>(topWin) != nullptr;
 
-                if (Settings::gui().mControllerJoystickDpad && !winMgr->isSettingsWindowVisible()
-                    && !isCharGenMouseAllowed(winMgr->getMode()) && !mapWindowActive
+                const bool allowJoystickDpad
+                    = !isCharGenMouseAllowed(winMgr->getMode()) || winMgr->isVirtualKeyboardVisible();
+                if (Settings::gui().mControllerJoystickDpad && !winMgr->isSettingsWindowVisible() && allowJoystickDpad
+                    && !mapWindowActive
                     && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
                 {
                     const float deadzone = (mLeftStickDpadButton == kLeftStickDpadNone) ? kLeftStickDpadDeadzone
@@ -608,7 +642,14 @@ namespace MWInput
                     const int nextButton = pickLeftStickDpadButton(mLeftStickX, mLeftStickY, deadzone);
                     if (nextButton != mLeftStickDpadButton)
                     {
+                        const int prevButton = mLeftStickDpadButton;
                         mLeftStickDpadButton = nextButton;
+                        if (prevButton != kLeftStickDpadNone)
+                        {
+                            const MyGUI::KeyCode releaseKey = dpadButtonToKey(prevButton);
+                            if (releaseKey != MyGUI::KeyCode::None)
+                                winMgr->injectKeyRelease(releaseKey);
+                        }
                         if (nextButton != kLeftStickDpadNone)
                         {
                             mGamepadGuiCursorEnabled = false;

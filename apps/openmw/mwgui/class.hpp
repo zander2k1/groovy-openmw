@@ -188,9 +188,13 @@ namespace MWGui
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
 
     private:
+        void updateControllerHighlight();
+
         MyGUI::TextBox *mSpecialization0, *mSpecialization1, *mSpecialization2;
 
         ESM::Class::Specialization mSpecializationId;
+        size_t mControllerFocus = 0;
+        MyGUI::Widget* mControllerHighlight = nullptr;
     };
 
     class SelectAttributeDialog : public WindowModal
@@ -258,8 +262,11 @@ namespace MWGui
         std::vector<Widgets::MWSkill*> mSkillButtons;
 
     private:
+        void updateControllerHighlight();
+
         ESM::RefId mSkillId;
         std::array<size_t, 3> mNumSkillsPerSpecialization{};
+        MyGUI::Widget* mControllerHighlight = nullptr;
 
         void selectNextColumn(int direction);
     };
@@ -285,6 +292,7 @@ namespace MWGui
 
     private:
         MyGUI::EditBox* mTextEdit;
+        void openVirtualKeyboard();
     };
 
     class CreateClassDialog : public WindowModal
@@ -302,6 +310,7 @@ namespace MWGui
         std::vector<ESM::RefId> getMajorSkills() const;
         std::vector<ESM::RefId> getMinorSkills() const;
         MyGUI::EditBox* getEditName() const { return mEditName; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
         void setNextButtonShow(bool shown);
 
@@ -336,9 +345,27 @@ namespace MWGui
 
         void update();
 
+        void buildControllerItems();
+        void setControllerFocusIndex(size_t newIndex);
+        void moveControllerFocusVertical(int delta);
+        void moveControllerFocusHorizontal(int delta);
+        void updateControllerFocusHighlight();
+        void setControllerItemSelected(MyGUI::Widget* widget, bool selected);
+        void openVirtualKeyboard(MyGUI::EditBox* edit);
+
     private:
+        struct ControllerItem
+        {
+            MyGUI::Widget* mWidget = nullptr;
+            int mColumn = 0;
+            int mRow = 0;
+        };
+
         MyGUI::EditBox* mEditName;
         MyGUI::TextBox* mSpecializationName;
+        MyGUI::Button* mDescriptionButton = nullptr;
+        MyGUI::Button* mBackButton = nullptr;
+        MyGUI::Button* mOkButton = nullptr;
         std::vector<MyGUI::Button*> mButtons;
         Widgets::MWAttributePtr mFavoriteAttribute0, mFavoriteAttribute1;
         std::array<Widgets::MWSkillPtr, 5> mMajorSkill;
@@ -357,7 +384,11 @@ namespace MWGui
         Widgets::MWSkillPtr mAffectedSkill;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
-        size_t mControllerFocus = 2;
+        std::vector<ControllerItem> mControllerItems;
+        size_t mControllerFocus = 0;
+        size_t mControllerNameIndex = 0;
+        int mControllerNameReturnColumn = 0;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
     };
 }
 #endif

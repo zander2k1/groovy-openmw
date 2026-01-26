@@ -50,6 +50,21 @@ namespace MWGui
         setText("LabelT", label);
     }
 
+    void TextInputDialog::setControllerOpensKeyboard(bool enable)
+    {
+        mControllerOpensKeyboard = enable;
+        if (mControllerOpensKeyboard)
+        {
+            mControllerButtons.mA = "#{Interface:ShowKeyboard}";
+            mControllerButtons.mB = "#{Interface:Done}";
+        }
+        else
+        {
+            mControllerButtons.mA = "#{Interface:OK}";
+            mControllerButtons.mB.clear();
+        }
+    }
+
     void TextInputDialog::onOpen()
     {
         WindowModal::onOpen();
@@ -91,6 +106,15 @@ namespace MWGui
     bool TextInputDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
+        {
+            if (mControllerOpensKeyboard)
+                MWBase::Environment::get().getWindowManager()->toggleVirtualKeyboard();
+            else
+                onOkClicked(nullptr);
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_B && mControllerOpensKeyboard)
         {
             onOkClicked(nullptr);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));

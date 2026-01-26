@@ -35,6 +35,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "alchemywindow.hpp"
+#include "class.hpp"
 #include "companionwindow.hpp"
 #include "confirmationdialog.hpp"
 #include "container.hpp"
@@ -68,6 +69,18 @@ namespace MWGui
             int mMax = 0;
             const char* mLabel = nullptr;
         };
+
+        bool isTooltipDisabled(MyGUI::Widget* widget)
+        {
+            for (MyGUI::Widget* current = widget; current; current = current->getParent())
+            {
+                if (current->isUserString("DisableTooltips") && current->getUserString("DisableTooltips") == "true")
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         WeaponDamageInfo getWeaponDamageInfo(const MWWorld::Ptr& ptr)
         {
@@ -171,6 +184,10 @@ namespace MWGui
             && (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion
                 || mode == GM_Levelup || mode == GM_Training || mode == GM_Repair || mode == GM_MerchantRepair
                 || controllerAlchemy || controllerEnchanting || controllerSpellCreation || controllerSpellBuying);
+        const bool controllerCharGen = Settings::gui().mControllerMenus
+            && (mode == GM_Name || mode == GM_Race || mode == GM_Birth || mode == GM_Class || mode == GM_ClassGenerate
+                || mode == GM_ClassPick || mode == GM_ClassCreate || mode == GM_Review);
+        const bool controllerClassCreate = Settings::gui().mControllerMenus && mode == GM_ClassCreate;
         if (Settings::gui().mControllerMenus && countDialogVisible && controllerInventory)
         {
             WindowBase* tooltipWindow = nullptr;
@@ -201,6 +218,7 @@ namespace MWGui
         const bool controllerCollapsed = controllerInventory && !winMgr->getControllerTooltipEnabled();
         const bool controllerForceCollapsed
             = controllerCollapsed || controllerMap || (countDialogVisible && controllerInventory);
+        const bool controllerTooltipAnchor = controllerInventory || controllerCharGen;
         int controllerTooltipWidth = (controllerInventory || controllerMap)
             ? (activeControllerWindow ? activeControllerWindow->mMainWidget->getWidth() : viewSize.width)
             : 0;
@@ -213,6 +231,37 @@ namespace MWGui
             if (auto* invWindow = winMgr->getInventoryWindow())
             {
                 controllerWinRect = invWindow->mMainWidget->getAbsoluteCoord();
+                controllerTooltipWidth = controllerWinRect.width;
+            }
+        }
+        if (Settings::gui().mControllerMenus && controllerClassCreate)
+        {
+            if (auto* invWindow = winMgr->getInventoryWindow())
+            {
+                controllerWinRect = invWindow->mMainWidget->getAbsoluteCoord();
+                controllerTooltipWidth = controllerWinRect.width;
+            }
+        }
+        if (controllerTooltipAnchor && !controllerInventory && !controllerClassCreate)
+        {
+            if (!activeControllerWindow)
+            {
+                int bestWidth = -1;
+                for (WindowBase* window : winMgr->getGuiModeWindows(mode))
+                {
+                    if (!window || !window->isVisible())
+                        continue;
+                    const int width = window->mMainWidget->getWidth();
+                    if (width > bestWidth)
+                    {
+                        bestWidth = width;
+                        activeControllerWindow = window;
+                    }
+                }
+            }
+            if (activeControllerWindow)
+            {
+                controllerWinRect = activeControllerWindow->mMainWidget->getAbsoluteCoord();
                 controllerTooltipWidth = controllerWinRect.width;
             }
         }
@@ -255,7 +304,6 @@ namespace MWGui
                 case GM_Class:
                 case GM_ClassPick:
                 case GM_ClassGenerate:
-                case GM_ClassCreate:
                 case GM_Travel:
                 case GM_Jail:
                     return true;
@@ -270,6 +318,16 @@ namespace MWGui
                 return true;
             return false;
         }();
+        auto getOwningWindow = [](MyGUI::Widget* widget) -> MyGUI::Window* {
+            while (widget != nullptr)
+            {
+                if (auto* window = widget->castType<MyGUI::Window>(false))
+                    return window;
+                widget = widget->getParent();
+            }
+            return nullptr;
+        };
+
         auto toInt = [](const MyGUI::Widget* widget, const std::string& key) {
             if (!widget || !widget->isUserString(key))
                 return 0;
@@ -281,16 +339,6 @@ namespace MWGui
             {
                 return 0;
             }
-        };
-
-        auto getOwningWindow = [](MyGUI::Widget* widget) -> MyGUI::Window* {
-            while (widget != nullptr)
-            {
-                if (auto* window = widget->castType<MyGUI::Window>(false))
-                    return window;
-                widget = widget->getParent();
-            }
-            return nullptr;
         };
 
         auto renderDialogueCollapsedBar = [&](DialogueWindow* dialogueWindow) -> bool {
@@ -383,6 +431,16 @@ namespace MWGui
             {
                 addLabelValue(std::string(focus->getUserString("CollapsedLabel")),
                     std::string(focus->getUserString("CollapsedValue")));
+            }
+            else if (layout == "SpecializationToolTip")
+            {
+                CollapsedRow row;
+                if (focus->isUserString("CollapsedValue"))
+                    row.mLabel = std::string(focus->getUserString("CollapsedValue"));
+                if (row.mLabel.empty() && focus->isUserString("Caption_Caption"))
+                    row.mLabel = std::string(focus->getUserString("Caption_Caption"));
+                row.mLabelOnly = true;
+                rows.push_back(std::move(row));
             }
             else if (layout == "AttributeToolTip" || layout == "SkillToolTip" || layout == "SkillNoProgressToolTip")
             {
@@ -926,12 +984,13 @@ namespace MWGui
             const int height = y + padding;
             const MyGUI::IntSize statsSize(width, height);
 
-            if (controllerInventory || trainingMode)
+            if (controllerTooltipAnchor || trainingMode)
             {
+                const MyGUI::IntCoord anchorRect = trainingMode ? controllerWinRect : winRect;
                 const int anchorHeight = 28;
                 const int anchorPadding = 4;
-                const int posY = std::max(0, winRect.top - anchorHeight - anchorPadding);
-                setCoord(winRect.left, posY, statsSize.width, statsSize.height);
+                const int posY = std::max(0, anchorRect.top - anchorHeight - anchorPadding);
+                setCoord(anchorRect.left, posY, statsSize.width, statsSize.height);
                 return true;
             }
 
@@ -1033,7 +1092,7 @@ namespace MWGui
             const int height = y + padding;
             const MyGUI::IntSize tipSize(width, height);
 
-            if (controllerInventory)
+            if (controllerTooltipAnchor)
             {
                 const int anchorHeight = 28;
                 const int anchorPadding = 4;
@@ -1062,7 +1121,7 @@ namespace MWGui
             setCoord(winRect.left, posY, width, height);
         };
         auto showEmptyControllerBarForActive = [&](WindowBase* activeWindow) {
-            if (controllerInventory)
+            if (controllerInventory || controllerTooltipAnchor)
             {
                 const int width = controllerTooltipWidth > 0 ? controllerTooltipWidth : controllerWinRect.width;
                 showEmptyControllerBar(controllerWinRect, width);
@@ -1160,6 +1219,8 @@ namespace MWGui
                 return repairWindow->getControllerFocusTooltipWidget();
             if (auto* merchantRepairWindow = dynamic_cast<MerchantRepair*>(activeWindow))
                 return merchantRepairWindow->getControllerFocusTooltipWidget();
+            if (auto* createClassDialog = dynamic_cast<CreateClassDialog*>(activeWindow))
+                return createClassDialog->getControllerFocusTooltipWidget();
             return nullptr;
         };
         auto tryUseControllerItemViewTooltip = [&](WindowBase* activeWindow) -> bool {
@@ -1340,7 +1401,7 @@ namespace MWGui
                 tooltipSize = createToolTip(info, false, 0, false);
             }
 
-            if (controllerInventory)
+            if (controllerTooltipAnchor)
             {
                 const int anchorHeight = 28;
                 const int anchorPadding = 4;
@@ -1384,7 +1445,8 @@ namespace MWGui
             {
                 mRemainingDelay = 0.f;
             }
-            else if (!winMgr->getCursorVisible() && !winMgr->getControllerTooltipVisible())
+            else if (!winMgr->getCursorVisible() && !winMgr->getControllerTooltipVisible()
+                && !(controllerActive && controllerTooltipAnchor && !winMgr->getControllerTooltipEnabled()))
             {
                 if (controllerActive && !suppressControllerBar)
                 {
@@ -1521,6 +1583,20 @@ namespace MWGui
                     }
                 }
 
+                if (controllerActive && focus->isUserString("ForceEmptyTooltipBar")
+                    && focus->getUserString("ForceEmptyTooltipBar") == "true")
+                {
+                    if (!suppressControllerBar)
+                        showEmptyControllerBarForActive(activeControllerWindow);
+                    return;
+                }
+
+                if (isTooltipDisabled(focus))
+                {
+                    mDynamicToolTipBox->setVisible(false);
+                    return;
+                }
+
                 MyGUI::IntSize tooltipSize;
                 bool allowFocusBar = false;
 
@@ -1609,8 +1685,8 @@ namespace MWGui
                 int tooltipWidth = controllerTooltipWidth;
                 if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible())
                 {
-                    if (winMgr->getMode() != GM_Repair && winMgr->getMode() != GM_MerchantRepair
-                        && winMgr->getMode() != GM_Training)
+                    if (!controllerTooltipAnchor && winMgr->getMode() != GM_Repair
+                        && winMgr->getMode() != GM_MerchantRepair && winMgr->getMode() != GM_Training)
                     {
                         if (MyGUI::Window* owner = getOwningWindow(focus))
                         {
@@ -2077,7 +2153,9 @@ namespace MWGui
                         if (renderCollapsedLayoutTooltip(true, focus, tooltipWinRect, tooltipWidth))
                             return;
                     }
-                    if (renderCollapsedLayoutTooltip(controllerForceCollapsed, focus, tooltipWinRect, tooltipWidth))
+                    const bool controllerLayoutCollapsed = controllerForceCollapsed
+                        || (controllerActive && controllerTooltipAnchor && !winMgr->getControllerTooltipEnabled());
+                    if (renderCollapsedLayoutTooltip(controllerLayoutCollapsed, focus, tooltipWinRect, tooltipWidth))
                         return;
                     if (renderStatsLayoutTooltip(focus, tooltipWinRect, tooltipWidth))
                         return;
@@ -2184,7 +2262,7 @@ namespace MWGui
                     && renderCollapsedFocusBar(tooltipWinRect))
                     return;
 
-                if (controllerInventory)
+                if (controllerTooltipAnchor)
                 {
                     const int anchorHeight = 28;
                     const int anchorPadding = 4;
