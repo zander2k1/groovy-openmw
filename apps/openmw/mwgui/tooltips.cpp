@@ -157,24 +157,50 @@ namespace MWGui
         }
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const GuiMode mode = winMgr->getMode();
         bool guiMode = winMgr->isGuiMode();
+        CountDialog* countDialog = winMgr->getCountDialog();
+        const bool countDialogVisible = countDialog && countDialog->isVisible();
         WindowBase* activeControllerWindow
             = Settings::gui().mControllerMenus ? winMgr->getActiveControllerWindow() : nullptr;
-        const bool controllerAlchemy = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Alchemy;
-        const bool controllerEnchanting = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Enchanting;
-        const bool controllerSpellCreation = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellCreation;
-        const bool controllerSpellBuying = Settings::gui().mControllerMenus && winMgr->getMode() == GM_SpellBuying;
+        const bool controllerAlchemy = Settings::gui().mControllerMenus && mode == GM_Alchemy;
+        const bool controllerEnchanting = Settings::gui().mControllerMenus && mode == GM_Enchanting;
+        const bool controllerSpellCreation = Settings::gui().mControllerMenus && mode == GM_SpellCreation;
+        const bool controllerSpellBuying = Settings::gui().mControllerMenus && mode == GM_SpellBuying;
         const bool controllerInventory = Settings::gui().mControllerMenus
-            && (winMgr->getMode() == GM_Inventory || winMgr->getMode() == GM_Container || winMgr->getMode() == GM_Barter
-                || winMgr->getMode() == GM_Companion || winMgr->getMode() == GM_Levelup
-                || winMgr->getMode() == GM_Training || winMgr->getMode() == GM_Repair
-                || winMgr->getMode() == GM_MerchantRepair || controllerAlchemy || controllerEnchanting
-                || controllerSpellCreation || controllerSpellBuying);
-        const bool trainingMode = winMgr->getMode() == GM_Training;
-        const bool controllerMap = Settings::gui().mControllerMenus && winMgr->getMode() == GM_Inventory
+            && (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion
+                || mode == GM_Levelup || mode == GM_Training || mode == GM_Repair || mode == GM_MerchantRepair
+                || controllerAlchemy || controllerEnchanting || controllerSpellCreation || controllerSpellBuying);
+        if (Settings::gui().mControllerMenus && countDialogVisible && controllerInventory)
+        {
+            WindowBase* tooltipWindow = nullptr;
+            if (mode == GM_Inventory)
+                tooltipWindow = winMgr->getInventoryWindow();
+            else if (mode == GM_Barter)
+                tooltipWindow = winMgr->getTradeWindow();
+            if (!tooltipWindow)
+            {
+                for (WindowBase* window : winMgr->getGuiModeWindows(mode))
+                {
+                    if (!window || !window->isVisible())
+                        continue;
+                    if (dynamic_cast<InventoryWindow*>(window) || dynamic_cast<TradeWindow*>(window)
+                        || dynamic_cast<ContainerWindow*>(window) || dynamic_cast<CompanionWindow*>(window))
+                    {
+                        tooltipWindow = window;
+                        break;
+                    }
+                }
+            }
+            if (tooltipWindow)
+                activeControllerWindow = tooltipWindow;
+        }
+        const bool trainingMode = mode == GM_Training;
+        const bool controllerMap = Settings::gui().mControllerMenus && mode == GM_Inventory
             && dynamic_cast<MapWindow*>(activeControllerWindow);
         const bool controllerCollapsed = controllerInventory && !winMgr->getControllerTooltipEnabled();
-        const bool controllerForceCollapsed = controllerCollapsed || controllerMap;
+        const bool controllerForceCollapsed
+            = controllerCollapsed || controllerMap || (countDialogVisible && controllerInventory);
         int controllerTooltipWidth = (controllerInventory || controllerMap)
             ? (activeControllerWindow ? activeControllerWindow->mMainWidget->getWidth() : viewSize.width)
             : 0;
@@ -238,8 +264,6 @@ namespace MWGui
             }
 
             if (winMgr->isInteractiveMessageBoxActive())
-                return true;
-            if (CountDialog* countDialog = winMgr->getCountDialog(); countDialog && countDialog->isVisible())
                 return true;
             if (ConfirmationDialog* confirmDialog = winMgr->getConfirmationDialog();
                 confirmDialog && confirmDialog->isVisible())
@@ -1364,9 +1388,9 @@ namespace MWGui
             {
                 if (controllerActive && !suppressControllerBar)
                 {
-                    if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                        showEmptyControllerBar(
-                            activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
+                    if (activeControllerWindow)
+                        showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
+                            activeControllerWindow->mMainWidget->getWidth());
                 }
                 return;
             }
@@ -1379,9 +1403,9 @@ namespace MWGui
                 {
                     if (controllerActive && !suppressControllerBar)
                     {
-                        if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            showEmptyControllerBar(
-                                activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
+                        if (activeControllerWindow)
+                            showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
+                                activeControllerWindow->mMainWidget->getWidth());
                     }
                     return;
                 }
@@ -1428,14 +1452,14 @@ namespace MWGui
                 {
                     if (controllerActive && !suppressControllerBar)
                     {
-                        if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            showEmptyControllerBar(
-                                activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
+                        if (activeControllerWindow)
+                            showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
+                                activeControllerWindow->mMainWidget->getWidth());
                     }
                     return;
                 }
 
-                if (auto* spellWindow = dynamic_cast<SpellWindow*>(winMgr->getActiveControllerWindow()))
+                if (auto* spellWindow = dynamic_cast<SpellWindow*>(activeControllerWindow))
                 {
                     MyGUI::Widget* effectWidget = nullptr;
                     if (controllerActive && !winMgr->getCursorVisible())
@@ -1448,16 +1472,16 @@ namespace MWGui
                 }
 
                 MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getMouseFocusWidget();
-                if (auto* spellWindow = dynamic_cast<SpellWindow*>(winMgr->getActiveControllerWindow()))
+                if (auto* spellWindow = dynamic_cast<SpellWindow*>(activeControllerWindow))
                 {
                     if (MyGUI::Widget* effect = spellWindow->getEffectWidgetAt(mousePos))
                         focus = effect;
                 }
                 if (controllerActive && !winMgr->getCursorVisible())
                 {
-                    if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
+                    if (activeControllerWindow)
                     {
-                        if (MyGUI::Widget* controllerFocus = getControllerFocusWidget(activeWindow))
+                        if (MyGUI::Widget* controllerFocus = getControllerFocusWidget(activeControllerWindow))
                             focus = controllerFocus;
                     }
                 }
@@ -1469,7 +1493,7 @@ namespace MWGui
                         {
                             ItemStack item;
                             bool allowedToUse = true;
-                            if (getControllerFocusedItem(winMgr->getActiveControllerWindow(), item, allowedToUse))
+                            if (getControllerFocusedItem(activeControllerWindow, item, allowedToUse))
                             {
                                 mFocusObject = item.mBase;
                                 if (renderCollapsedFocusBar(controllerWinRect))
@@ -1478,21 +1502,20 @@ namespace MWGui
                         }
                         else if (winMgr->getControllerTooltipVisible())
                         {
-                            if (tryUseControllerItemViewTooltip(winMgr->getActiveControllerWindow()))
+                            if (tryUseControllerItemViewTooltip(activeControllerWindow))
                                 return;
                         }
                     }
                     else if (controllerActive)
                     {
-                        if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            focus = getControllerFocusWidget(activeWindow);
+                        if (activeControllerWindow)
+                            focus = getControllerFocusWidget(activeControllerWindow);
                     }
                     if (focus == nullptr)
                     {
                         if (controllerActive && !suppressControllerBar)
                         {
-                            if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBarForActive(activeWindow);
+                            showEmptyControllerBarForActive(activeControllerWindow);
                         }
                         return;
                     }
@@ -1515,7 +1538,7 @@ namespace MWGui
                         {
                             ItemStack item;
                             bool allowedToUse = true;
-                            if (getControllerFocusedItem(winMgr->getActiveControllerWindow(), item, allowedToUse))
+                            if (getControllerFocusedItem(activeControllerWindow, item, allowedToUse))
                             {
                                 mFocusObject = item.mBase;
                                 if (renderCollapsedFocusBar(controllerWinRect))
@@ -1524,21 +1547,20 @@ namespace MWGui
                         }
                         else if (winMgr->getControllerTooltipVisible())
                         {
-                            if (tryUseControllerItemViewTooltip(winMgr->getActiveControllerWindow()))
+                            if (tryUseControllerItemViewTooltip(activeControllerWindow))
                                 return;
                         }
                     }
                     else if (controllerActive)
                     {
-                        if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            focus = getControllerFocusWidget(activeWindow);
+                        if (activeControllerWindow)
+                            focus = getControllerFocusWidget(activeControllerWindow);
                     }
                     if (!focus)
                     {
                         if (controllerActive && !suppressControllerBar)
                         {
-                            if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBarForActive(activeWindow);
+                            showEmptyControllerBarForActive(activeControllerWindow);
                         }
                         return;
                     }
@@ -1554,7 +1576,7 @@ namespace MWGui
                         {
                             ItemStack item;
                             bool allowedToUse = true;
-                            if (getControllerFocusedItem(winMgr->getActiveControllerWindow(), item, allowedToUse))
+                            if (getControllerFocusedItem(activeControllerWindow, item, allowedToUse))
                             {
                                 mFocusObject = item.mBase;
                                 if (renderCollapsedFocusBar(controllerWinRect))
@@ -1563,21 +1585,20 @@ namespace MWGui
                         }
                         else if (winMgr->getControllerTooltipVisible())
                         {
-                            if (tryUseControllerItemViewTooltip(winMgr->getActiveControllerWindow()))
+                            if (tryUseControllerItemViewTooltip(activeControllerWindow))
                                 return;
                         }
                     }
                     else if (controllerActive)
                     {
-                        if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                            focus = getControllerFocusWidget(activeWindow);
+                        if (activeControllerWindow)
+                            focus = getControllerFocusWidget(activeControllerWindow);
                     }
                     if (focus == nullptr || focus->getUserString("ToolTipType").empty())
                     {
                         if (controllerActive && !suppressControllerBar)
                         {
-                            if (WindowBase* activeWindow = winMgr->getActiveControllerWindow())
-                                showEmptyControllerBarForActive(activeWindow);
+                            showEmptyControllerBarForActive(activeControllerWindow);
                         }
                         return;
                     }

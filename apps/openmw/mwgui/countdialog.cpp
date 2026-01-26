@@ -36,6 +36,7 @@ namespace MWGui
     void CountDialog::openCountDialog(const std::string& item, const std::string& message, const int maxCount)
     {
         setVisible(true);
+        resetControllerNavHold();
 
         mLabelText->setCaptionWithReplacing(message);
 
@@ -97,6 +98,14 @@ namespace MWGui
         mItemEdit->setValue(static_cast<int>(position + 1));
     }
 
+    void CountDialog::resetControllerNavHold()
+    {
+        mNavButton = -1;
+        mNavActive = false;
+        mNavStartTime = {};
+        mLastNavEventTime = {};
+    }
+
     bool CountDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -107,10 +116,29 @@ namespace MWGui
             setCount(1);
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             setCount(static_cast<int>(mSlider->getScrollRange()));
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
-            MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
-            MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowUp, 0, false);
+        else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+        {
+            const int direction = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? 1 : -1;
+            const size_t maxCount = mSlider->getScrollRange();
+            const bool allowFastStep = maxCount > 500;
+            const auto now = std::chrono::steady_clock::now();
+            const auto gap = std::chrono::milliseconds(350);
+
+            if (!mNavActive || mNavButton != static_cast<int>(arg.button) || (now - mLastNavEventTime) > gap)
+            {
+                mNavActive = true;
+                mNavButton = static_cast<int>(arg.button);
+                mNavStartTime = now;
+            }
+
+            mLastNavEventTime = now;
+
+            int step = 1;
+            if (allowFastStep && (now - mNavStartTime) >= std::chrono::seconds(5))
+                step = 10;
+
+            setCount(mItemEdit->getValue() + direction * step);
+        }
 
         return true;
     }

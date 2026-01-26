@@ -1,6 +1,8 @@
 #ifndef MWGUI_COUNTDIALOG_H
 #define MWGUI_COUNTDIALOG_H
 
+#include <chrono>
+
 #include "windowbase.hpp"
 
 namespace Gui
@@ -29,6 +31,10 @@ namespace MWGui
         MyGUI::TextBox* mLabelText;
         MyGUI::Button* mOkButton;
         MyGUI::Button* mCancelButton;
+        int mNavButton = -1;
+        bool mNavActive = false;
+        std::chrono::steady_clock::time_point mNavStartTime{};
+        std::chrono::steady_clock::time_point mLastNavEventTime{};
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onOkButtonClicked(MyGUI::Widget* sender);
@@ -36,6 +42,7 @@ namespace MWGui
         void onSliderMoved(MyGUI::ScrollBar* sender, size_t position);
         void onEnterKeyPressed(MyGUI::EditBox* sender);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        void resetControllerNavHold();
     };
 
 }
