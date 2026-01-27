@@ -461,6 +461,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         scalingSpinBox->setValue(Settings::gui().mScalingFactor);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
+        loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
         populateVirtualKeyboardLanguageComboBox();
         const QString languageSetting = QString::fromStdString(Settings::gui().mVirtualKeyboardLanguage);
@@ -672,6 +673,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
+        saveSettingBool(*enableFallbackFontsCheckBox, Settings::gui().mEnableFallbackFonts);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);
         Settings::gui().mVirtualKeyboardLanguage.set(
             virtualKeyboardLanguageComboBox->currentData().toString().toStdString());

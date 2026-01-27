@@ -42,6 +42,7 @@ namespace MWGui
         std::string_view getWindowIdForLua() const override { return "Alchemy"; }
         MyGUI::EditBox* getNameEdit() const { return mNameEdit; }
         ItemView* getItemView() const { return mItemView; }
+        bool isControllerItemViewFocused() const { return mControllerItemViewFocus; }
 
     private:
         static const float sCountChangeInitialPause; // in seconds
@@ -109,6 +110,7 @@ namespace MWGui
 
         void onIncreaseButtonTriggered();
         void onDecreaseButtonTriggered();
+        void onBrewCountSelected(MyGUI::Widget* sender, std::size_t count);
 
         void onSelectedItem(int index);
 

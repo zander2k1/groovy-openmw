@@ -36,6 +36,7 @@
 
 #include <MyGUI_Macros.h>
 
+#include "countdialog.hpp"
 #include "inventoryitemmodel.hpp"
 #include "itemview.hpp"
 #include "itemwidget.hpp"
@@ -219,7 +220,18 @@ namespace MWGui
                     mAlchemy->removeIngredient(i);
             }
 
+        const size_t selectedIndex = mFilterValue->getIndexSelected();
+        std::string selectedFilter;
+        if (selectedIndex != MyGUI::ITEM_NONE && selectedIndex < mFilterValue->getItemCount())
+            selectedFilter = mFilterValue->getItemNameAt(selectedIndex);
+
         updateFilters();
+        if (!selectedFilter.empty())
+        {
+            const size_t restoreIndex = mFilterValue->findItemIndexWith(selectedFilter);
+            if (restoreIndex != MyGUI::ITEM_NONE)
+                mFilterValue->setIndexSelected(restoreIndex);
+        }
         update();
     }
 
@@ -620,6 +632,11 @@ namespace MWGui
             mBrewCountEdit->setValue(currentCount - 1);
     }
 
+    void AlchemyWindow::onBrewCountSelected(MyGUI::Widget* /*sender*/, std::size_t count)
+    {
+        mBrewCountEdit->setValue(static_cast<int>(count));
+    }
+
     void AlchemyWindow::filterListButtonHandler(const SDL_ControllerButtonEvent& arg)
     {
         const bool hasItems = mItemView && mItemView->getItemCount() > 0;
@@ -825,7 +842,14 @@ namespace MWGui
             }
             if (focus == mBrewCountEdit)
             {
-                openVirtualKeyboard(mBrewCountEdit);
+                CountDialog* dialog = MWBase::Environment::get().getWindowManager()->getCountDialog();
+                dialog->openCountDialog("Quantity", "Quantity", 100, this);
+                dialog->setCount(std::clamp(mBrewCountEdit->getValue(), 1, 100));
+                dialog->eventOkClicked.clear();
+                dialog->eventOkClicked += MyGUI::newDelegate(this, &AlchemyWindow::onBrewCountSelected);
+                mControllerItemViewFocus = false;
+                mItemView->setActiveControllerWindow(false);
+                updateControllerFocusHighlight();
                 return true;
             }
             if (focus == mFilterType)

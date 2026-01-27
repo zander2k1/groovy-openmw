@@ -70,8 +70,10 @@ namespace MWGui
 
         std::vector<MyGUI::Button*> mButtons;
         size_t mControllerFocus = 0;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
 
         void adjustAction(MyGUI::Widget* action, int& totalHeight);
+        void updateControllerFocusHighlight();
 
         void onCancel(MyGUI::Widget* sender);
         void onPersuade(MyGUI::Widget* sender);

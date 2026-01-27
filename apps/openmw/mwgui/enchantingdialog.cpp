@@ -212,7 +212,7 @@ namespace MWGui
             mEnchanting.setSelfEnchanting(false);
             mEnchanting.setEnchanter(ptr);
             mBuyButton->setCaptionWithReplacing("#{sBuy}");
-            mControllerButtons.mY = "#{Interface:Buy}";
+            mControllerButtons.mX = "#{Interface:Buy}";
             mChanceLayout->setVisible(false);
             mPtr = ptr;
             setSoulGem(MWWorld::Ptr());
@@ -224,7 +224,7 @@ namespace MWGui
             mEnchanting.setSelfEnchanting(true);
             mEnchanting.setEnchanter(MWMechanics::getPlayer());
             mBuyButton->setCaptionWithReplacing("#{sCreate}");
-            mControllerButtons.mY = "#{Interface:Create}";
+            mControllerButtons.mX = "#{Interface:Create}";
             mChanceLayout->setVisible(Settings::game().mShowEnchantChance);
             mPtr = MWMechanics::getPlayer();
             setSoulGem(ptr);
@@ -289,6 +289,7 @@ namespace MWGui
     {
         mItemSelectionDialog->setVisible(false);
         setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
 
         setItem(item);
         MWBase::Environment::get().getWindowManager()->playSound(item.getClass().getDownSoundId(item));
@@ -302,6 +303,7 @@ namespace MWGui
     {
         mItemSelectionDialog->setVisible(false);
         setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
         if (Settings::gui().mControllerMenus)
             setControllerFocusWidget(mItemBox);
     }
@@ -310,6 +312,7 @@ namespace MWGui
     {
         mItemSelectionDialog->setVisible(false);
         setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
 
         mEnchanting.setSoulGem(item);
         if (mEnchanting.getGemCharge() == 0)
@@ -329,6 +332,7 @@ namespace MWGui
     {
         mItemSelectionDialog->setVisible(false);
         setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
         if (Settings::gui().mControllerMenus)
             setControllerFocusWidget(mSoulBox);
     }

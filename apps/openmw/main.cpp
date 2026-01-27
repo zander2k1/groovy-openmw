@@ -5,6 +5,7 @@
 #include <components/misc/osgpluginchecker.hpp>
 #include <components/misc/rng.hpp>
 #include <components/platform/platform.hpp>
+#include <components/settings/values.hpp>
 #include <components/version/version.hpp>
 
 #include "mwgui/debugwindow.hpp"
@@ -152,7 +153,13 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
     engine.setSaveGameFile(variables["load-savegame"].as<Files::MaybeQuotedPath>().u8string());
 
     // other settings
-    Fallback::Map::init(variables["fallback"].as<Fallback::FallbackMap>().mMap);
+    auto fallbackMap = variables["fallback"].as<Fallback::FallbackMap>().mMap;
+    if (!Settings::gui().mEnableFallbackFonts)
+    {
+        fallbackMap.erase("Fonts_Font_0");
+        fallbackMap.erase("Fonts_Font_1");
+    }
+    Fallback::Map::init(fallbackMap);
     engine.setSoundUsage(!variables["no-sound"].as<bool>());
     engine.setActivationDistanceOverride(variables["activate-dist"].as<int>());
     engine.enableFontExport(variables["export-fonts"].as<bool>());

@@ -16,8 +16,10 @@ namespace MWGui
     {
     public:
         CountDialog();
-        void openCountDialog(const std::string& item, const std::string& message, const int maxCount);
+        void openCountDialog(const std::string& item, const std::string& message, const int maxCount,
+            WindowBase* tooltipSourceWindow = nullptr);
         void setCount(int count);
+        WindowBase* getTooltipSourceWindow() const { return mTooltipSourceWindow; }
 
         /** Event : Ok button was clicked.\n
             signature : void method(MyGUI::Widget* sender, std::size_t count)\n
@@ -31,6 +33,7 @@ namespace MWGui
         MyGUI::TextBox* mLabelText;
         MyGUI::Button* mOkButton;
         MyGUI::Button* mCancelButton;
+        WindowBase* mTooltipSourceWindow = nullptr;
         int mNavButton = -1;
         bool mNavActive = false;
         std::chrono::steady_clock::time_point mNavStartTime{};

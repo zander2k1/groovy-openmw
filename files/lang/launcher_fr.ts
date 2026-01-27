@@ -1351,6 +1351,14 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Taille des polices</translation>
     </message>
     <message>
+        <source>Use fallback font settings from openmw.cfg (Fonts_Font_0/Fonts_Font_1).</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Enable fallback fonts</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>Show Projectile Damage</source>
         <translation>Afficher les dommages des projectiles</translation>
     </message>

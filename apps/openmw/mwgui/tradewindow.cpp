@@ -408,7 +408,7 @@ namespace MWGui
             std::string message = "#{sQuanityMenuMessage02}";
             std::string name{ object.getClass().getName(object) };
             name += MWGui::ToolTips::getSoulString(object.getCellRef());
-            dialog->openCountDialog(name, message, static_cast<int>(count));
+            dialog->openCountDialog(name, message, static_cast<int>(count), this);
             dialog->eventOkClicked.clear();
             dialog->eventOkClicked += MyGUI::newDelegate(this, &TradeWindow::sellItem);
             mItemToSell = mSortModel->mapToSource(index);
@@ -792,6 +792,25 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
+            if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            {
+                if (mControllerTabWidgets.empty())
+                    return true;
+
+                const int delta = (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER) ? 1 : -1;
+                const int prevIndex = mControllerTabsActive ? mControllerTabIndex : getSelectedTabIndex();
+                const int newIndex
+                    = static_cast<int>(wrap(static_cast<size_t>(prevIndex), mControllerTabWidgets.size(), delta));
+                mControllerTabIndex = newIndex;
+
+                if (MyGUI::Widget* widget = mControllerTabWidgets[newIndex])
+                    onFilterChanged(widget);
+
+                if (mControllerTabsActive)
+                    updateControllerTabFocus(prevIndex, newIndex);
+
+                return true;
+            }
             if (mControllerTabsActive)
             {
                 if (mControllerTabWidgets.empty())

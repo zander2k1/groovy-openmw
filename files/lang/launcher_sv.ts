@@ -1359,6 +1359,14 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <translation>Fontstorlek</translation>
     </message>
     <message>
+        <source>Use fallback font settings from openmw.cfg (Fonts_Font_0/Fonts_Font_1).</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Enable fallback fonts</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>Show Projectile Damage</source>
         <translation>Visa projektilskada</translation>
     </message>

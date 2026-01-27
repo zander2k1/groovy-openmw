@@ -1923,7 +1923,11 @@ namespace MWGui
 
     bool WindowManager::isInteractiveMessageBoxActive() const
     {
-        return mMessageBoxManager && mMessageBoxManager->isInteractiveMessageBox();
+        if (!mMessageBoxManager)
+            return false;
+
+        const InteractiveMessageBox* box = mMessageBoxManager->getInteractiveMessageBox();
+        return box && box->isVisible();
     }
 
     MWGui::GuiMode WindowManager::getMode() const
@@ -2358,6 +2362,9 @@ namespace MWGui
         }
         else
             mKeyboardNavigation->setModalWindow(mCurrentModals.back()->mMainWidget);
+
+        // Ensure HUD visibility and input mode are restored after closing modal popups.
+        updateVisible();
     }
 
     void WindowManager::onVideoKeyPressed(MyGUI::Widget* /*sender*/, MyGUI::KeyCode key, MyGUI::Char value)

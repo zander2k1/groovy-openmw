@@ -248,6 +248,10 @@ namespace Gui
     {
         std::string defaultFont{ Fallback::Map::getString("Fonts_Font_0") };
         std::string scrollFont{ Fallback::Map::getString("Fonts_Font_2") };
+        if (defaultFont.empty())
+            defaultFont = "CenturyGothicPaneuropeanSemiBold";
+        if (scrollFont.empty())
+            scrollFont = "DemonicLetters";
         loadFont(defaultFont, "DefaultFont");
         loadFont("CenturyGothicPaneuropeanBold", "DialogueBoldFont");
         loadFont(scrollFont, "ScrollFont");

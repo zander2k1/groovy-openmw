@@ -878,11 +878,10 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             mControllerButtons = {};
-            mControllerButtons.mA = "#{Interface:World}";
+            mControllerButtons.mA = "Move";
             mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mX = "#{Interface:Center}";
-            mControllerButtons.mL2 = "#{sStats}";
-            mControllerButtons.mR2 = "#{Interface:Inventory}";
+            mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
+            mControllerButtons.mY = "#{Interface:Center}";
         }
     }
 
@@ -1283,6 +1282,7 @@ namespace MWGui
         mLocalMap->setVisible(!global);
 
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
+        mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
         MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
 
         if (Settings::gui().mControllerMenus)
@@ -1458,12 +1458,12 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-        else if (arg.button == SDL_CONTROLLER_BUTTON_A)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
         {
             onWorldButtonClicked(mButton);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X || arg.button == SDL_CONTROLLER_BUTTON_Y)
+        else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
             centerView();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));

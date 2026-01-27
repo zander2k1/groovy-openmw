@@ -1097,6 +1097,14 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation>Размер шрифтов</translation>
     </message>
     <message>
+        <source>Use fallback font settings from openmw.cfg (Fonts_Font_0/Fonts_Font_1).</source>
+        <translation></translation>
+    </message>
+    <message>
+        <source>Enable fallback fonts</source>
+        <translation></translation>
+    </message>
+    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Включить возможность масштабирования на локальной и глобальной картах.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>

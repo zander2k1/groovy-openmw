@@ -286,6 +286,8 @@ namespace MWGui
         {
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:OK}";
+            if (buttons.size() > 1)
+                mControllerButtons.mB = "#{Interface:Back}";
 
             // If we have more than one button, we need to set the focus to the first one.
             if (mButtons.size() > 1)
@@ -464,6 +466,11 @@ namespace MWGui
         {
             if (mButtons.size() == 1)
                 buttonActivated(mButtons[0]);
+            else
+            {
+                mButtonPressed = -1;
+                mMarkedToDelete = true;
+            }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
         {

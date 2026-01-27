@@ -91,6 +91,18 @@ namespace MWGui
         mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:Back}";
+
+        if (Settings::gui().mControllerMenus)
+        {
+            MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+            if (!highlightParent)
+                highlightParent = mMainWidget;
+            mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerFocusHighlight->setNeedMouseFocus(false);
+            mControllerFocusHighlight->setDepth(1);
+            mControllerFocusHighlight->setVisible(false);
+        }
     }
 
     void PersuasionDialog::adjustAction(MyGUI::Widget* action, int& totalHeight)
@@ -163,6 +175,12 @@ namespace MWGui
 
             for (size_t i = 0; i < mButtons.size(); i++)
                 mButtons[i]->setStateSelected(i == 0);
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons[mControllerFocus]);
+            updateControllerFocusHighlight();
+        }
+        else if (mControllerFocusHighlight)
+        {
+            mControllerFocusHighlight->setVisible(false);
         }
 
         WindowModal::onOpen();
@@ -171,6 +189,39 @@ namespace MWGui
     MyGUI::Widget* PersuasionDialog::getDefaultKeyFocus()
     {
         return mAdmireButton;
+    }
+
+    void PersuasionDialog::updateControllerFocusHighlight()
+    {
+        if (!mControllerFocusHighlight || !Settings::gui().mControllerMenus)
+            return;
+
+        if (mButtons.empty() || mControllerFocus >= mButtons.size())
+        {
+            mControllerFocusHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focus = mButtons[mControllerFocus];
+        if (!focus)
+        {
+            mControllerFocusHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::IntCoord focusCoord = focus->getAbsoluteCoord();
+        if (mActionsBox)
+        {
+            const MyGUI::IntCoord boxCoord = mActionsBox->getAbsoluteCoord();
+            focusCoord.left = boxCoord.left;
+            focusCoord.width = boxCoord.width;
+        }
+        MyGUI::Widget* highlightParent = mControllerFocusHighlight->getParent();
+        const MyGUI::IntCoord baseCoord
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        mControllerFocusHighlight->setCoord(
+            focusCoord.left - baseCoord.left, focusCoord.top - baseCoord.top, focusCoord.width, focusCoord.height);
+        mControllerFocusHighlight->setVisible(true);
     }
 
     bool PersuasionDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -187,12 +238,16 @@ namespace MWGui
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), -1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons[mControllerFocus]);
+            updateControllerFocusHighlight();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), 1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtons[mControllerFocus]);
+            updateControllerFocusHighlight();
         }
 
         return true;

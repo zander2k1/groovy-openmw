@@ -33,10 +33,12 @@ namespace MWGui
         mControllerButtons.mB = "#{Interface:Cancel}";
     }
 
-    void CountDialog::openCountDialog(const std::string& item, const std::string& message, const int maxCount)
+    void CountDialog::openCountDialog(
+        const std::string& item, const std::string& message, const int maxCount, WindowBase* tooltipSourceWindow)
     {
         setVisible(true);
         resetControllerNavHold();
+        mTooltipSourceWindow = tooltipSourceWindow;
 
         mLabelText->setCaptionWithReplacing(message);
 
@@ -49,14 +51,14 @@ namespace MWGui
         setCoord(viewSize.width / 2 - width / 2, viewSize.height / 2 - mMainWidget->getHeight() / 2, width,
             mMainWidget->getHeight());
 
-        // by default, the text edit field has the focus of the keyboard
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemEdit);
-
         mSlider->setScrollPosition(maxCount - 1);
 
         mItemEdit->setMinValue(1);
         mItemEdit->setMaxValue(maxCount);
         mItemEdit->setValue(maxCount);
+        mItemEdit->setEditStatic(true);
+        mItemEdit->setNeedKeyFocus(false);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nullptr);
     }
 
     void CountDialog::setCount(int count)

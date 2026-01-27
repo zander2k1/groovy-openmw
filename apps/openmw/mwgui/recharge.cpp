@@ -5,6 +5,7 @@
 #include <components/widgets/box.hpp>
 
 #include <components/esm3/loadcrea.hpp>
+#include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -43,7 +44,8 @@ namespace MWGui
 
         mControllerButtons.mA = "#{OMWEngine:RechargeSelect}";
         mControllerButtons.mB = "#{Interface:Cancel}";
-        mControllerButtons.mY = "#{Interface:Soul}";
+        mControllerButtons.mX = "#{Interface:Soul}";
+        mControllerButtons.mY = "#{Interface:Info}";
     }
 
     void Recharge::onOpen()
@@ -113,11 +115,14 @@ namespace MWGui
         mItemSelectionDialog->setVisible(true);
         mItemSelectionDialog->openContainer(MWMechanics::getPlayer());
         mItemSelectionDialog->setFilter(SortFilterItemModel::Filter_OnlyChargedSoulstones);
+        setVisibleNoStateChange(false);
     }
 
     void Recharge::onItemSelected(MWWorld::Ptr item)
     {
         mItemSelectionDialog->setVisible(false);
+        setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
 
         mGemIcon->setItem(item);
         mGemIcon->setUserString("ToolTipType", "ItemPtr");
@@ -130,6 +135,8 @@ namespace MWGui
     void Recharge::onItemCancel()
     {
         mItemSelectionDialog->setVisible(false);
+        setVisibleNoStateChange(true);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
     }
 
     void Recharge::onItemClicked(MyGUI::Widget* /*sender*/, const MWWorld::Ptr& item)
@@ -141,9 +148,23 @@ namespace MWGui
         updateView();
     }
 
+    MyGUI::Widget* Recharge::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus || !mBox)
+            return nullptr;
+
+        if (MyGUI::Widget* focus = mBox->getControllerFocusWidget())
+            return focus;
+
+        if (mGemIcon && mGemIcon->getVisible())
+            return mGemIcon;
+
+        return nullptr;
+    }
+
     bool Recharge::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
-        if ((arg.button == SDL_CONTROLLER_BUTTON_A && !mGemBox->getVisible()) || arg.button == SDL_CONTROLLER_BUTTON_Y)
+        if ((arg.button == SDL_CONTROLLER_BUTTON_A && !mGemBox->getVisible()) || arg.button == SDL_CONTROLLER_BUTTON_X)
         {
             onSelectItem(mGemIcon);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));

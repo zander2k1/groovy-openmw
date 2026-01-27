@@ -695,8 +695,8 @@ namespace MWInput
                     }
                 }
 
-                // Deadzone check
-                if (std::abs(arg.value) < 2000)
+                // Deadzone check (skip for map GUI so fine movement is possible)
+                if (!mapWindowActive && std::abs(arg.value) < 2000)
                     return !mGamepadGuiCursorEnabled;
 
                 if (mGamepadGuiCursorEnabled
