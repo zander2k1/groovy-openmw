@@ -207,8 +207,7 @@ namespace MWInput
         if (!cntrl)
             return;
 
-        auto sendAxis = [&](SDL_GameControllerAxis axis)
-        {
+        auto sendAxis = [&](SDL_GameControllerAxis axis) {
             SDL_ControllerAxisEvent event{};
             event.type = SDL_CONTROLLERAXISMOTION;
             event.which = mLastControllerDeviceId;

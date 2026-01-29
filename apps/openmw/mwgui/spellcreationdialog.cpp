@@ -826,8 +826,7 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
-            if (!mControllerEffectsFocusActive
-                && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
+            if (!mControllerEffectsFocusActive && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
                 return true;
             if (mControllerEffectsFocusActive && isControllerEffectsAtTop())
             {

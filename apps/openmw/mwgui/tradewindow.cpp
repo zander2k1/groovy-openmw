@@ -847,8 +847,8 @@ namespace MWGui
                 {
                     int delta = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? 1 : -1;
                     int prev = mControllerTabIndex;
-                    mControllerTabIndex
-                        = wrap(static_cast<size_t>(mControllerTabIndex), mControllerTabWidgets.size(), delta);
+                    mControllerTabIndex = static_cast<int>(
+                        wrap(static_cast<size_t>(mControllerTabIndex), mControllerTabWidgets.size(), delta));
                     updateControllerTabFocus(prev, mControllerTabIndex);
                     return true;
                 }

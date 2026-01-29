@@ -1460,8 +1460,7 @@ namespace MWGui
         const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
         const int width = highlightParent ? highlightParent->getWidth() : focusRect.width;
         const int left = highlightParent ? 0 : (focusRect.left - parentRect.left);
-        mControllerHighlight->setCoord(
-            MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
+        mControllerHighlight->setCoord(MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
         mControllerHighlight->setVisible(true);
     }
 
@@ -1660,8 +1659,7 @@ namespace MWGui
         const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
         const int width = highlightParent ? highlightParent->getWidth() : focusRect.width;
         const int left = highlightParent ? 0 : (focusRect.left - parentRect.left);
-        mControllerHighlight->setCoord(
-            MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
+        mControllerHighlight->setCoord(MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
         mControllerHighlight->setVisible(true);
     }
 

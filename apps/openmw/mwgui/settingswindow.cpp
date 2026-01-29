@@ -605,7 +605,8 @@ namespace MWGui
             const std::vector<std::string> secondaryLayouts = getKeyboardLayouts(vfs, secondaryKeyboardLanguage);
             std::string secondaryLayout = Settings::gui().mVirtualKeyboardLayoutSecondary;
             if (secondaryLayout.empty()
-                || std::find(secondaryLayouts.begin(), secondaryLayouts.end(), secondaryLayout) == secondaryLayouts.end())
+                || std::find(secondaryLayouts.begin(), secondaryLayouts.end(), secondaryLayout)
+                    == secondaryLayouts.end())
                 secondaryLayout = secondaryLayouts.front();
             Settings::gui().mVirtualKeyboardLayoutSecondary.set(secondaryLayout);
             selectComboByData(mKeyboardSecondaryLayout, secondaryLayout);

@@ -213,8 +213,10 @@ namespace MWGui
                     if (!mPickClassDialog)
                     {
                         mPickClassDialog = std::make_unique<PickClassDialog>();
-                        mPickClassDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogDone);
-                        mPickClassDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogBack);
+                        mPickClassDialog->eventDone
+                            += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogDone);
+                        mPickClassDialog->eventBack
+                            += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogBack);
                     }
                     mPickClassDialog->setNextButtonShow(mCreationStage >= CSE_ClassChosen);
                     mPickClassDialog->setClassId(mPlayerClass.mId);

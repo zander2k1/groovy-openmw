@@ -579,7 +579,7 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
     </message>
     <message>
         <source>Automatic</source>
-        <translation type="unfinished">Automatisk</translation>
+        <translation type="obsolete">Automatisk</translation>
     </message>
 </context>
 <context>
@@ -1505,22 +1505,6 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
     <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Controls the strength of the Doppler effect. Zero means it is completely disabled.&lt;/p&gt;&lt;p&gt;The Doppler effect increases or decreases the pitch of sounds relative to the velocity of the sound source and the listener.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kontrollerar styrkan på dopplereffekten. Noll innebär helt inaktiverat.&lt;/p&gt;&lt;p&gt;Dopplereffekten höjer eller sänker tonhöjden på ljud i förhållande till ljudkällans hastighet och lyssnaren.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>Select the language used for the virtual keyboard layout.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Virtual Keyboard Language</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select the keyboard layout used by the virtual keyboard.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Virtual Keyboard Layout</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>General</source>

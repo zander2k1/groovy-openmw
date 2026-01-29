@@ -705,9 +705,8 @@ namespace MWGui
     void VirtualKeyboard::centerInMenuArea()
     {
         const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        int availableHeight = viewSize.height;
         MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();
-        availableHeight = windowManager->getControllerMenuHeight();
+        const int availableHeight = windowManager->getControllerMenuHeight();
 
         MyGUI::IntCoord coord = mMainWidget->getCoord();
         coord.left = (viewSize.width - coord.width) / 2;
@@ -818,8 +817,8 @@ namespace MWGui
         MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
         const MyGUI::IntCoord baseCoord
             = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
-        mControllerHighlight->setCoord(buttonCoord.left - baseCoord.left, buttonCoord.top - baseCoord.top,
-            buttonCoord.width, buttonCoord.height);
+        mControllerHighlight->setCoord(
+            buttonCoord.left - baseCoord.left, buttonCoord.top - baseCoord.top, buttonCoord.width, buttonCoord.height);
         mControllerHighlight->setVisible(true);
     }
 
