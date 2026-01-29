@@ -297,7 +297,11 @@ namespace MWGui
     void InventoryWindow::onBackgroundSelected()
     {
         if (mDragAndDrop->mIsOnDragAndDrop)
+        {
+            if (!mTradeModel)
+                return;
             mDragAndDrop->drop(mTradeModel, mItemView);
+        }
     }
 
     int InventoryWindow::getSelectedTabIndex() const
@@ -391,11 +395,22 @@ namespace MWGui
 
     void InventoryWindow::onItemSelected(int index)
     {
-        onItemSelectedFromSourceModel(mSortModel->mapToSource(index));
+        if (!mSortModel || !mTradeModel)
+            return;
+        if (index < 0 || static_cast<size_t>(index) >= mSortModel->getItemCount())
+            return;
+        const int sourceIndex = mSortModel->mapToSource(index);
+        if (sourceIndex < 0)
+            return;
+        onItemSelectedFromSourceModel(sourceIndex);
     }
 
     void InventoryWindow::onItemSelectedFromSourceModel(int index)
     {
+        if (!mTradeModel)
+            return;
+        if (index < 0 || static_cast<size_t>(index) >= mTradeModel->getItemCount())
+            return;
         if (mDragAndDrop->mIsOnDragAndDrop)
         {
             mDragAndDrop->drop(mTradeModel, mItemView);
@@ -508,6 +523,8 @@ namespace MWGui
 
     void InventoryWindow::ensureSelectedItemUnequipped(int count)
     {
+        if (!mTradeModel || mSelectedItem < 0 || static_cast<size_t>(mSelectedItem) >= mTradeModel->getItemCount())
+            return;
         const ItemStack& item = mTradeModel->getItem(mSelectedItem);
         if (item.mType == ItemStack::Type_Equipped)
         {
@@ -532,7 +549,10 @@ namespace MWGui
                 }
 
                 if (newIndex == -1)
-                    throw std::runtime_error("Can't find restacked item");
+                {
+                    mSelectedItem = -1;
+                    return;
+                }
 
                 mSelectedItem = newIndex;
             }
@@ -874,7 +894,8 @@ namespace MWGui
 
         int capacity = static_cast<int>(player.getClass().getCapacity(player));
         float encumbrance = player.getClass().getEncumbrance(player);
-        mTradeModel->adjustEncumbrance(encumbrance);
+        if (mTradeModel)
+            mTradeModel->adjustEncumbrance(encumbrance);
         mEncumbranceBar->setValue(static_cast<int>(std::ceil(encumbrance)), capacity);
     }
 

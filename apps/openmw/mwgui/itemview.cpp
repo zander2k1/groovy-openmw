@@ -105,8 +105,14 @@ namespace MWGui
         while (mScrollView->getChildCount())
             MyGUI::Gui::getInstance().destroyWidget(mScrollView->getChildAt(0));
 
+        mItemCount = 0;
+
         if (!mModel)
+        {
+            if (mControllerFocus >= 0)
+                mControllerFocus = -1;
             return;
+        }
 
         mModel->update();
 
@@ -144,8 +150,9 @@ namespace MWGui
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
         if (Settings::gui().mControllerMenus)
         {
-            updateControllerFocus(mControllerFocus, 0);
-            mControllerFocus = 0;
+            const int newFocus = (mItemCount > 0) ? 0 : -1;
+            updateControllerFocus(mControllerFocus, newFocus);
+            mControllerFocus = newFocus;
         }
     }
 
@@ -232,7 +239,7 @@ namespace MWGui
 
     void ItemView::onControllerButton(const unsigned char button)
     {
-        if (!mItemCount)
+        if (!mItemCount || !mScrollView->getChildCount())
             return;
 
         int prevFocus = mControllerFocus;
@@ -244,7 +251,11 @@ namespace MWGui
                 // Select the focused item, if any.
                 if (mControllerFocus >= 0 && mControllerFocus < mItemCount)
                 {
+                    if (!mScrollView->getChildCount())
+                        return;
                     MyGUI::Widget* dragArea = mScrollView->getChildAt(0);
+                    if (!dragArea || dragArea->getChildCount() <= static_cast<size_t>(mControllerFocus))
+                        return;
                     onSelectedItem(dragArea->getChildAt(mControllerFocus));
                 }
                 break;
@@ -292,19 +303,25 @@ namespace MWGui
         else
             winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
 
-        if (!mItemCount)
+        if (!mItemCount || !mScrollView->getChildCount())
             return;
 
         MyGUI::Widget* dragArea = mScrollView->getChildAt(0);
+        if (!dragArea)
+            return;
 
-        if (prevFocus >= 0 && prevFocus < mItemCount)
+        const int safeCount = std::min(mItemCount, static_cast<int>(dragArea->getChildCount()));
+        if (safeCount <= 0)
+            return;
+
+        if (prevFocus >= 0 && prevFocus < safeCount)
         {
             ItemWidget* prev = static_cast<ItemWidget*>(dragArea->getChildAt(prevFocus));
             if (prev)
                 prev->setControllerFocus(false);
         }
 
-        if (mControllerActiveWindow && newFocus >= 0 && newFocus < mItemCount)
+        if (mControllerActiveWindow && newFocus >= 0 && newFocus < safeCount)
         {
             ItemWidget* focused = static_cast<ItemWidget*>(dragArea->getChildAt(newFocus));
             if (focused)

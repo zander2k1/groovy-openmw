@@ -71,6 +71,9 @@ namespace MWGui
         mControllerButtons.mR1 = "#{Interface:Next}";
         mControllerButtons.mB = "#{Interface:Close}";
 
+        mTakeButton->setEnabled(false);
+        mTakeButton->setVisible(false);
+
         center();
     }
 
@@ -120,7 +123,7 @@ namespace MWGui
     void BookWindow::setTakeButtonShow(bool show)
     {
         mTakeButtonShow = show;
-        mTakeButton->setVisible(mTakeButtonShow && mTakeButtonAllowed);
+        mTakeButton->setVisible(false);
     }
 
     void BookWindow::onKeyButtonPressed(MyGUI::Widget* /*sender*/, MyGUI::KeyCode key, MyGUI::Char character)
@@ -134,7 +137,7 @@ namespace MWGui
     void BookWindow::setInventoryAllowed(bool allowed)
     {
         mTakeButtonAllowed = allowed;
-        mTakeButton->setVisible(mTakeButtonShow && mTakeButtonAllowed);
+        mTakeButton->setVisible(false);
     }
 
     void BookWindow::onCloseButtonClicked(MyGUI::Widget* /*sender*/)
@@ -167,16 +170,8 @@ namespace MWGui
         mLeftPageNumber->setCaption(MyGUI::utility::toString(mCurrentPage * 2 + 1));
         mRightPageNumber->setCaption(MyGUI::utility::toString(mCurrentPage * 2 + 2));
 
-        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-        bool nextPageVisible = (mCurrentPage + 1) * 2 < mPages.size();
-        mNextPageButton->setVisible(nextPageVisible);
-        bool prevPageVisible = mCurrentPage != 0;
-        mPrevPageButton->setVisible(prevPageVisible);
-
-        if (focus == mNextPageButton && !nextPageVisible && prevPageVisible)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mPrevPageButton);
-        else if (focus == mPrevPageButton && !prevPageVisible && nextPageVisible)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNextPageButton);
+        mNextPageButton->setVisible(false);
+        mPrevPageButton->setVisible(false);
 
         if (mPages.empty())
             return;
@@ -225,7 +220,7 @@ namespace MWGui
 
     ControllerButtons* BookWindow::getControllerButtons()
     {
-        if (mTakeButton->getVisible())
+        if (mTakeButtonShow && mTakeButtonAllowed)
             mControllerButtons.mA = "#{Interface:Take}";
         else
             mControllerButtons.mA.clear();
@@ -236,7 +231,7 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
-            if (mTakeButton->getVisible())
+            if (mTakeButtonShow && mTakeButtonAllowed)
                 onTakeButtonClicked(mTakeButton);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)

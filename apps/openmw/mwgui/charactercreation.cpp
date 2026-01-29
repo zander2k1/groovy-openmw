@@ -164,63 +164,80 @@ namespace MWGui
             {
                 case GM_Name:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mNameDialog));
-                    mNameDialog = std::make_unique<TextInputDialog>();
+                    if (!mNameDialog)
+                    {
+                        mNameDialog = std::make_unique<TextInputDialog>();
+                        mNameDialog->setControllerOpensKeyboard(true);
+                        mNameDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onNameDialogDone);
+                        mNameDialog->setTextInput(mPlayerName);
+                    }
                     mNameDialog->setTextLabel(
                         MWBase::Environment::get().getWindowManager()->getGameSettingString("sName", "Name"));
-                    mNameDialog->setTextInput(mPlayerName);
                     mNameDialog->setNextButtonShow(mCreationStage >= CSE_NameChosen);
-                    mNameDialog->setControllerOpensKeyboard(true);
-                    mNameDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onNameDialogDone);
-                    mNameDialog->setVisible(true);
+                    if (!mNameDialog->isVisible())
+                        mNameDialog->setVisible(true);
                     break;
                 }
                 case GM_Race:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mRaceDialog));
-                    mRaceDialog = std::make_unique<RaceDialog>(mParent, mResourceSystem);
+                    if (!mRaceDialog)
+                    {
+                        mRaceDialog = std::make_unique<RaceDialog>(mParent, mResourceSystem);
+                        mRaceDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onRaceDialogDone);
+                        mRaceDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onRaceDialogBack);
+                    }
                     mRaceDialog->setNextButtonShow(mCreationStage >= CSE_RaceChosen);
                     mRaceDialog->setRaceId(mPlayerRaceId);
-                    mRaceDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onRaceDialogDone);
-                    mRaceDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onRaceDialogBack);
-                    mRaceDialog->setVisible(true);
+                    if (!mRaceDialog->isVisible())
+                        mRaceDialog->setVisible(true);
                     if (mCreationStage < CSE_NameChosen)
                         mCreationStage = CSE_NameChosen;
                     break;
                 }
                 case GM_Class:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mClassChoiceDialog));
-                    mClassChoiceDialog = std::make_unique<ClassChoiceDialog>();
-                    mClassChoiceDialog->eventButtonSelected
-                        += MyGUI::newDelegate(this, &CharacterCreation::onClassChoice);
-                    mClassChoiceDialog->setVisible(true);
+                    if (!mClassChoiceDialog)
+                    {
+                        mClassChoiceDialog = std::make_unique<ClassChoiceDialog>();
+                        mClassChoiceDialog->eventButtonSelected
+                            += MyGUI::newDelegate(this, &CharacterCreation::onClassChoice);
+                    }
+                    if (!mClassChoiceDialog->isVisible())
+                        mClassChoiceDialog->setVisible(true);
                     if (mCreationStage < CSE_RaceChosen)
                         mCreationStage = CSE_RaceChosen;
                     break;
                 }
                 case GM_ClassPick:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mPickClassDialog));
-                    mPickClassDialog = std::make_unique<PickClassDialog>();
+                    if (!mPickClassDialog)
+                    {
+                        mPickClassDialog = std::make_unique<PickClassDialog>();
+                        mPickClassDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogDone);
+                        mPickClassDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogBack);
+                    }
                     mPickClassDialog->setNextButtonShow(mCreationStage >= CSE_ClassChosen);
                     mPickClassDialog->setClassId(mPlayerClass.mId);
-                    mPickClassDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogDone);
-                    mPickClassDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onPickClassDialogBack);
-                    mPickClassDialog->setVisible(true);
+                    if (!mPickClassDialog->isVisible())
+                        mPickClassDialog->setVisible(true);
                     if (mCreationStage < CSE_RaceChosen)
                         mCreationStage = CSE_RaceChosen;
                     break;
                 }
                 case GM_Birth:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mBirthSignDialog));
-                    mBirthSignDialog = std::make_unique<BirthDialog>();
+                    if (!mBirthSignDialog)
+                    {
+                        mBirthSignDialog = std::make_unique<BirthDialog>();
+                        mBirthSignDialog->eventDone
+                            += MyGUI::newDelegate(this, &CharacterCreation::onBirthSignDialogDone);
+                        mBirthSignDialog->eventBack
+                            += MyGUI::newDelegate(this, &CharacterCreation::onBirthSignDialogBack);
+                    }
                     mBirthSignDialog->setNextButtonShow(mCreationStage >= CSE_BirthSignChosen);
                     mBirthSignDialog->setBirthId(mPlayerBirthSignId);
-                    mBirthSignDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onBirthSignDialogDone);
-                    mBirthSignDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onBirthSignDialogBack);
-                    mBirthSignDialog->setVisible(true);
+                    if (!mBirthSignDialog->isVisible())
+                        mBirthSignDialog->setVisible(true);
                     if (mCreationStage < CSE_ClassChosen)
                         mCreationStage = CSE_ClassChosen;
                     break;
@@ -255,8 +272,14 @@ namespace MWGui
                 }
                 case GM_Review:
                 {
-                    MWBase::Environment::get().getWindowManager()->removeDialog(std::move(mReviewDialog));
-                    mReviewDialog = std::make_unique<ReviewDialog>();
+                    if (!mReviewDialog)
+                    {
+                        mReviewDialog = std::make_unique<ReviewDialog>();
+                        mReviewDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onReviewDialogDone);
+                        mReviewDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onReviewDialogBack);
+                        mReviewDialog->eventActivateDialog
+                            += MyGUI::newDelegate(this, &CharacterCreation::onReviewActivateDialog);
+                    }
 
                     MWBase::World* world = MWBase::Environment::get().getWorld();
 
@@ -287,11 +310,8 @@ namespace MWGui
                     }
                     mReviewDialog->configureSkills(mPlayerMajorSkills, mPlayerMinorSkills);
 
-                    mReviewDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onReviewDialogDone);
-                    mReviewDialog->eventBack += MyGUI::newDelegate(this, &CharacterCreation::onReviewDialogBack);
-                    mReviewDialog->eventActivateDialog
-                        += MyGUI::newDelegate(this, &CharacterCreation::onReviewActivateDialog);
-                    mReviewDialog->setVisible(true);
+                    if (!mReviewDialog->isVisible())
+                        mReviewDialog->setVisible(true);
                     if (mCreationStage < CSE_BirthSignChosen)
                         mCreationStage = CSE_BirthSignChosen;
                     break;

@@ -781,7 +781,27 @@
                     <UserString key="Caption_Text" value="#{OMWEngine:SecondaryLanguageTooltip}"/>
                 </Widget>
                 <Widget type="ComboBox" skin="MW_ComboBox" position="262 52 250 24" align="Left Top" name="SecondaryLanguage" />
-                <Widget type="HBox" position="4 84 500 32">
+                <!-- Primary Keyboard Language -->
+                <Widget type="TextBox" skin="NormalText" position="4 84 250 18" align="Left Top">
+                    <Property key="Caption" value="#{OMWEngine:PrimaryKeyboardLanguage}"/>
+                </Widget>
+                <Widget type="ComboBox" skin="MW_ComboBox" position="4 108 250 24" align="Left Top" name="KeyboardPrimaryLanguage" />
+                <!-- Secondary Keyboard Language -->
+                <Widget type="TextBox" skin="NormalText" position="262 84 250 18" align="Left Top">
+                    <Property key="Caption" value="#{OMWEngine:SecondaryKeyboardLanguage}"/>
+                </Widget>
+                <Widget type="ComboBox" skin="MW_ComboBox" position="262 108 250 24" align="Left Top" name="KeyboardSecondaryLanguage" />
+                <!-- Primary Keyboard Layout -->
+                <Widget type="TextBox" skin="NormalText" position="4 140 250 18" align="Left Top">
+                    <Property key="Caption" value="#{OMWEngine:PrimaryKeyboardLayout}"/>
+                </Widget>
+                <Widget type="ComboBox" skin="MW_ComboBox" position="4 164 250 24" align="Left Top" name="KeyboardPrimaryLayout" />
+                <!-- Secondary Keyboard Layout -->
+                <Widget type="TextBox" skin="NormalText" position="262 140 250 18" align="Left Top" name="KeyboardSecondaryLayoutLabel">
+                    <Property key="Caption" value="#{OMWEngine:SecondaryKeyboardLayout}"/>
+                </Widget>
+                <Widget type="ComboBox" skin="MW_ComboBox" position="262 164 250 24" align="Left Top" name="KeyboardSecondaryLayout" />
+                <Widget type="HBox" position="4 196 500 32">
                     <Widget type="AutoSizedButton" skin="MW_Button" name="GmstOverridesL10nButton">
                         <UserString key="SettingCategory" value="General"/>
                         <UserString key="SettingName" value="gmst overrides l10n"/>

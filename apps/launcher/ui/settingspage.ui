@@ -1476,32 +1476,6 @@
                </property>
               </widget>
              </item>
-             <item row="9" column="0">
-              <widget class="QLabel" name="virtualKeyboardLanguageLabel">
-               <property name="toolTip">
-                <string>Select the language used for the virtual keyboard layout.</string>
-               </property>
-               <property name="text">
-                <string>Virtual Keyboard Language</string>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="1">
-              <widget class="QComboBox" name="virtualKeyboardLanguageComboBox"/>
-             </item>
-             <item row="10" column="0">
-              <widget class="QLabel" name="virtualKeyboardLayoutLabel">
-               <property name="toolTip">
-                <string>Select the keyboard layout used by the virtual keyboard.</string>
-               </property>
-               <property name="text">
-                <string>Virtual Keyboard Layout</string>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="1">
-              <widget class="QComboBox" name="virtualKeyboardLayoutComboBox"/>
-             </item>
             </layout>
            </item>
            <item>

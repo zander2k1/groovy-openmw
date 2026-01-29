@@ -11,8 +11,10 @@
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_LanguageManager.h>
+#include <MyGUI_Button.h>
 #include <MyGUI_ProgressBar.h>
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_TextBox.h>
 #include <MyGUI_TextIterator.h>
 #include <MyGUI_UString.h>
 #include <MyGUI_Window.h>
@@ -471,8 +473,17 @@ namespace MWGui
                 CollapsedRow row;
                 if (focus->isUserString("CollapsedValue"))
                     row.mLabel = std::string(focus->getUserString("CollapsedValue"));
+                if (row.mLabel.empty() && focus->isUserString("CollapsedLabel"))
+                    row.mLabel = std::string(focus->getUserString("CollapsedLabel"));
                 if (row.mLabel.empty() && focus->isUserString("Caption_Caption"))
                     row.mLabel = std::string(focus->getUserString("Caption_Caption"));
+                if (row.mLabel.empty())
+                {
+                    if (auto* text = focus->castType<MyGUI::TextBox>(false))
+                        row.mLabel = text->getCaption();
+                    else if (auto* button = focus->castType<MyGUI::Button>(false))
+                        row.mLabel = button->getCaption();
+                }
                 row.mLabelOnly = true;
                 rows.push_back(std::move(row));
             }
@@ -1259,6 +1270,12 @@ namespace MWGui
                 return merchantRepairWindow->getControllerFocusTooltipWidget();
             if (auto* createClassDialog = dynamic_cast<CreateClassDialog*>(activeWindow))
                 return createClassDialog->getControllerFocusTooltipWidget();
+            if (auto* selectAttributeDialog = dynamic_cast<SelectAttributeDialog*>(activeWindow))
+                return selectAttributeDialog->getControllerFocusTooltipWidget();
+            if (auto* selectSpecializationDialog = dynamic_cast<SelectSpecializationDialog*>(activeWindow))
+                return selectSpecializationDialog->getControllerFocusTooltipWidget();
+            if (auto* selectSkillDialog = dynamic_cast<SelectSkillDialog*>(activeWindow))
+                return selectSkillDialog->getControllerFocusTooltipWidget();
             if (auto* rechargeWindow = dynamic_cast<Recharge*>(activeWindow))
                 return rechargeWindow->getControllerFocusTooltipWidget();
             return nullptr;

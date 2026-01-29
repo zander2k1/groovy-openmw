@@ -1,6 +1,8 @@
 #include "settingswindow.hpp"
 
+#include <algorithm>
 #include <array>
+#include <memory>
 
 #include <unicode/locid.h>
 
@@ -18,6 +20,7 @@
 #include <components/debug/debuglog.hpp>
 #include <components/files/configurationmanager.hpp>
 #include <components/l10n/manager.hpp>
+#include <components/l10n/messagebundles.hpp>
 #include <components/lua_ui/scriptsettings.hpp>
 #include <components/misc/constants.hpp>
 #include <components/misc/display.hpp>
@@ -60,6 +63,92 @@ namespace
 
         Log(Debug::Warning) << "Warning: Invalid texture filtering options: " << mipFilter << ", " << magFilter;
         return "#{OMWEngine:TextureFilteringOther}";
+    }
+
+    struct KeyboardFileInfo
+    {
+        std::string mBaseName;
+        std::string mLanguageName;
+    };
+
+    std::string getMessageOrEmpty(const L10n::MessageBundles& bundles, std::string_view key)
+    {
+        std::string value = bundles.formatMessage(key, {}, {});
+        if (value == key)
+            return {};
+        return value;
+    }
+
+    std::unique_ptr<L10n::MessageBundles> loadKeyboardBundles(const VFS::Manager* vfs, std::string_view baseName)
+    {
+        if (!vfs || baseName.empty())
+            return {};
+
+        VFS::Path::Normalized path("mygui");
+        path /= "Keyboard";
+        std::string fileName(baseName);
+        if (!Misc::StringUtils::ciEndsWith(fileName, ".yaml"))
+            fileName += ".yaml";
+        path /= fileName;
+        const Files::IStreamPtr stream = vfs->find(path);
+        if (!stream)
+            return {};
+
+        std::vector<icu::Locale> preferredLocales;
+        preferredLocales.emplace_back("keyboard");
+        icu::Locale fallbackLocale("en");
+        auto bundles = std::make_unique<L10n::MessageBundles>(preferredLocales, fallbackLocale);
+        bundles->load(*stream, preferredLocales.front());
+        return bundles;
+    }
+
+    std::vector<KeyboardFileInfo> listKeyboardFiles(const VFS::Manager* vfs)
+    {
+        std::vector<KeyboardFileInfo> files;
+        if (!vfs)
+            return files;
+
+        constexpr std::string_view keyboardPath = "mygui/Keyboard";
+        for (const auto& path : vfs->getRecursiveDirectoryIterator(keyboardPath))
+        {
+            if (path.extension() != "yaml")
+                continue;
+            KeyboardFileInfo info;
+            info.mBaseName = std::string(path.stem());
+            std::unique_ptr<L10n::MessageBundles> bundles = loadKeyboardBundles(vfs, info.mBaseName);
+            if (bundles)
+                info.mLanguageName = getMessageOrEmpty(*bundles, "languageName");
+            if (info.mLanguageName.empty())
+                info.mLanguageName = info.mBaseName;
+            files.push_back(std::move(info));
+        }
+
+        std::sort(files.begin(), files.end(), [](const KeyboardFileInfo& left, const KeyboardFileInfo& right) {
+            return Misc::StringUtils::ciLess(left.mBaseName, right.mBaseName);
+        });
+        return files;
+    }
+
+    std::vector<std::string> getKeyboardLayouts(const VFS::Manager* vfs, std::string_view languageCode)
+    {
+        std::vector<std::string> layouts;
+        std::unique_ptr<L10n::MessageBundles> bundles = loadKeyboardBundles(vfs, languageCode);
+        if (bundles)
+        {
+            std::string layoutList = getMessageOrEmpty(*bundles, "Layouts");
+            if (!layoutList.empty())
+            {
+                Misc::StringUtils::split(layoutList, layouts, ",");
+                for (std::string& name : layouts)
+                    Misc::StringUtils::trim(name);
+                layouts.erase(std::remove_if(
+                                  layouts.begin(), layouts.end(), [](const std::string& name) { return name.empty(); }),
+                    layouts.end());
+            }
+        }
+        if (layouts.empty())
+            layouts.push_back("qwerty");
+        return layouts;
     }
 
     MyGUI::UString lightingMethodToStr(SceneUtil::LightingMethod method)
@@ -282,6 +371,11 @@ namespace MWGui
         getWidget(mWaterRainRippleDetail, "WaterRainRippleDetail");
         getWidget(mPrimaryLanguage, "PrimaryLanguage");
         getWidget(mSecondaryLanguage, "SecondaryLanguage");
+        getWidget(mKeyboardPrimaryLanguage, "KeyboardPrimaryLanguage");
+        getWidget(mKeyboardSecondaryLanguage, "KeyboardSecondaryLanguage");
+        getWidget(mKeyboardPrimaryLayout, "KeyboardPrimaryLayout");
+        getWidget(mKeyboardSecondaryLayout, "KeyboardSecondaryLayout");
+        getWidget(mKeyboardSecondaryLayoutLabel, "KeyboardSecondaryLayoutLabel");
         getWidget(mGmstOverridesL10n, "GmstOverridesL10nButton");
         getWidget(mWindowModeHint, "WindowModeHint");
         getWidget(mLightingMethodButton, "LightingMethodButton");
@@ -343,6 +437,14 @@ namespace MWGui
             += MyGUI::newDelegate(this, &SettingsWindow::onPrimaryLanguageChanged);
         mSecondaryLanguage->eventComboChangePosition
             += MyGUI::newDelegate(this, &SettingsWindow::onSecondaryLanguageChanged);
+        mKeyboardPrimaryLanguage->eventComboChangePosition
+            += MyGUI::newDelegate(this, &SettingsWindow::onKeyboardPrimaryLanguageChanged);
+        mKeyboardSecondaryLanguage->eventComboChangePosition
+            += MyGUI::newDelegate(this, &SettingsWindow::onKeyboardSecondaryLanguageChanged);
+        mKeyboardPrimaryLayout->eventComboChangePosition
+            += MyGUI::newDelegate(this, &SettingsWindow::onKeyboardPrimaryLayoutChanged);
+        mKeyboardSecondaryLayout->eventComboChangePosition
+            += MyGUI::newDelegate(this, &SettingsWindow::onKeyboardSecondaryLayoutChanged);
         mGmstOverridesL10n->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SettingsWindow::onGmstOverridesL10nChanged);
 
@@ -460,6 +562,60 @@ namespace MWGui
 
             i++;
         }
+
+        populateKeyboardLanguageCombo(mKeyboardPrimaryLanguage, false);
+        populateKeyboardLanguageCombo(mKeyboardSecondaryLanguage, true);
+
+        std::string primaryKeyboardLanguage = Settings::gui().mVirtualKeyboardLanguage;
+        if (primaryKeyboardLanguage.empty())
+            primaryKeyboardLanguage = currentLocales[0];
+        Settings::gui().mVirtualKeyboardLanguage.set(primaryKeyboardLanguage);
+
+        auto selectComboByData = [](MyGUI::ComboBox* combo, const std::string& value) {
+            for (size_t index = 0; index < combo->getItemCount(); ++index)
+            {
+                if (*combo->getItemDataAt<std::string>(index) == value)
+                {
+                    combo->setIndexSelected(index);
+                    return;
+                }
+            }
+        };
+
+        selectComboByData(mKeyboardPrimaryLanguage, primaryKeyboardLanguage);
+
+        populateKeyboardLayoutCombo(primaryKeyboardLanguage, mKeyboardPrimaryLayout);
+        const std::vector<std::string> primaryLayouts = getKeyboardLayouts(vfs, primaryKeyboardLanguage);
+        std::string primaryLayout = Settings::gui().mVirtualKeyboardLayout;
+        if (primaryLayout.empty()
+            || std::find(primaryLayouts.begin(), primaryLayouts.end(), primaryLayout) == primaryLayouts.end())
+            primaryLayout = primaryLayouts.front();
+        Settings::gui().mVirtualKeyboardLayout.set(primaryLayout);
+        selectComboByData(mKeyboardPrimaryLayout, primaryLayout);
+
+        const std::string secondaryKeyboardLanguage = Settings::gui().mVirtualKeyboardLanguageSecondary;
+        if (!secondaryKeyboardLanguage.empty())
+            selectComboByData(mKeyboardSecondaryLanguage, secondaryKeyboardLanguage);
+        else
+            mKeyboardSecondaryLanguage->setIndexSelected(0);
+
+        if (!secondaryKeyboardLanguage.empty())
+        {
+            populateKeyboardLayoutCombo(secondaryKeyboardLanguage, mKeyboardSecondaryLayout);
+            const std::vector<std::string> secondaryLayouts = getKeyboardLayouts(vfs, secondaryKeyboardLanguage);
+            std::string secondaryLayout = Settings::gui().mVirtualKeyboardLayoutSecondary;
+            if (secondaryLayout.empty()
+                || std::find(secondaryLayouts.begin(), secondaryLayouts.end(), secondaryLayout) == secondaryLayouts.end())
+                secondaryLayout = secondaryLayouts.front();
+            Settings::gui().mVirtualKeyboardLayoutSecondary.set(secondaryLayout);
+            selectComboByData(mKeyboardSecondaryLayout, secondaryLayout);
+        }
+        else
+        {
+            Settings::gui().mVirtualKeyboardLayoutSecondary.set("");
+            mKeyboardSecondaryLayout->removeAllItems();
+        }
+        updateKeyboardSecondaryLayoutVisibility();
 
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:OK}";
@@ -595,6 +751,122 @@ namespace MWGui
             currentLocales.resize(1);
 
         Settings::general().mPreferredLocales.set(currentLocales);
+        if (langPriority == 0 && !currentLocales.empty())
+        {
+            const std::string& keyboardLanguage = currentLocales[0];
+            Settings::gui().mVirtualKeyboardLanguage.set(keyboardLanguage);
+            populateKeyboardLayoutCombo(keyboardLanguage, mKeyboardPrimaryLayout);
+            const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+            const std::vector<std::string> layouts = getKeyboardLayouts(vfs, keyboardLanguage);
+            const std::string& layout = layouts.front();
+            Settings::gui().mVirtualKeyboardLayout.set(layout);
+            for (size_t index = 0; index < mKeyboardPrimaryLanguage->getItemCount(); ++index)
+            {
+                if (*mKeyboardPrimaryLanguage->getItemDataAt<std::string>(index) == keyboardLanguage)
+                {
+                    mKeyboardPrimaryLanguage->setIndexSelected(index);
+                    break;
+                }
+            }
+            for (size_t index = 0; index < mKeyboardPrimaryLayout->getItemCount(); ++index)
+            {
+                if (*mKeyboardPrimaryLayout->getItemDataAt<std::string>(index) == layout)
+                {
+                    mKeyboardPrimaryLayout->setIndexSelected(index);
+                    break;
+                }
+            }
+        }
+    }
+
+    void SettingsWindow::onKeyboardPrimaryLanguageChanged(MyGUI::ComboBox* sender, size_t pos)
+    {
+        if (pos == MyGUI::ITEM_NONE)
+            return;
+
+        const auto& languageCode = *sender->getItemDataAt<std::string>(pos);
+        Settings::gui().mVirtualKeyboardLanguage.set(languageCode);
+        populateKeyboardLayoutCombo(languageCode, mKeyboardPrimaryLayout);
+        const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+        const std::vector<std::string> layouts = getKeyboardLayouts(vfs, languageCode);
+        const std::string& layout = layouts.front();
+        Settings::gui().mVirtualKeyboardLayout.set(layout);
+        mKeyboardPrimaryLayout->setIndexSelected(0);
+        apply();
+    }
+
+    void SettingsWindow::onKeyboardSecondaryLanguageChanged(MyGUI::ComboBox* sender, size_t pos)
+    {
+        if (pos == MyGUI::ITEM_NONE)
+            return;
+
+        const auto& languageCode = *sender->getItemDataAt<std::string>(pos);
+        Settings::gui().mVirtualKeyboardLanguageSecondary.set(languageCode);
+        if (languageCode.empty())
+        {
+            Settings::gui().mVirtualKeyboardLayoutSecondary.set("");
+            mKeyboardSecondaryLayout->removeAllItems();
+            updateKeyboardSecondaryLayoutVisibility();
+            apply();
+            return;
+        }
+        populateKeyboardLayoutCombo(languageCode, mKeyboardSecondaryLayout);
+        const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+        const std::vector<std::string> layouts = getKeyboardLayouts(vfs, languageCode);
+        const std::string& layout = layouts.front();
+        Settings::gui().mVirtualKeyboardLayoutSecondary.set(layout);
+        mKeyboardSecondaryLayout->setIndexSelected(0);
+        updateKeyboardSecondaryLayoutVisibility();
+        apply();
+    }
+
+    void SettingsWindow::onKeyboardPrimaryLayoutChanged(MyGUI::ComboBox* sender, size_t pos)
+    {
+        if (pos == MyGUI::ITEM_NONE)
+            return;
+
+        const auto& layout = *sender->getItemDataAt<std::string>(pos);
+        Settings::gui().mVirtualKeyboardLayout.set(layout);
+        apply();
+    }
+
+    void SettingsWindow::onKeyboardSecondaryLayoutChanged(MyGUI::ComboBox* sender, size_t pos)
+    {
+        if (pos == MyGUI::ITEM_NONE)
+            return;
+
+        const auto& layout = *sender->getItemDataAt<std::string>(pos);
+        Settings::gui().mVirtualKeyboardLayoutSecondary.set(layout);
+        apply();
+    }
+
+    void SettingsWindow::populateKeyboardLanguageCombo(MyGUI::ComboBox* combo, bool includeNone)
+    {
+        combo->removeAllItems();
+        if (includeNone)
+            combo->addItem(MyGUI::LanguageManager::getInstance().replaceTags("#{Interface:None}"), std::string());
+
+        const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+        const std::vector<KeyboardFileInfo> files = listKeyboardFiles(vfs);
+        for (const KeyboardFileInfo& file : files)
+            combo->addItem(file.mLanguageName, file.mBaseName);
+    }
+
+    void SettingsWindow::populateKeyboardLayoutCombo(std::string_view languageCode, MyGUI::ComboBox* combo)
+    {
+        combo->removeAllItems();
+
+        const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+        const std::vector<std::string> layouts = getKeyboardLayouts(vfs, languageCode);
+        for (const std::string& layout : layouts)
+            combo->addItem(layout, layout);
+    }
+
+    void SettingsWindow::updateKeyboardSecondaryLayoutVisibility()
+    {
+        const bool hasSecondary = !Settings::gui().mVirtualKeyboardLanguageSecondary.get().empty();
+        mKeyboardSecondaryLayout->setVisible(hasSecondary);
+        mKeyboardSecondaryLayoutLabel->setVisible(hasSecondary);
     }
 
     void SettingsWindow::onGmstOverridesL10nChanged(MyGUI::Widget*)

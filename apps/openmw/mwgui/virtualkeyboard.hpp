@@ -26,6 +26,7 @@ namespace MWGui
         void setTargetEdit(MyGUI::EditBox* edit);
         void clearTargetEdit();
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
         struct LayoutSpec
@@ -57,11 +58,14 @@ namespace MWGui
 
         MyGUI::EditBox* mInputBar = nullptr;
         MyGUI::EditBox* mTargetEdit = nullptr;
+        MyGUI::Widget* mControllerHighlight = nullptr;
         std::vector<KeySpec> mKeys;
         std::unordered_map<MyGUI::Widget*, size_t> mKeyLookup;
         std::vector<std::vector<size_t>> mNavRows;
         std::vector<size_t> mTextKeys;
         std::vector<LayoutSpec> mLayouts;
+        std::vector<size_t> mRowMemory;
+        std::vector<bool> mRowMemoryValid;
         size_t mNavRow = 0;
         size_t mNavCol = 0;
         size_t mLayoutIndex = 0;
@@ -69,6 +73,8 @@ namespace MWGui
         bool mShifted = false;
         float mCursorBlinkTimer = 0.f;
         bool mCursorBlinkVisible = true;
+        bool mUseSecondaryLayout = false;
+        bool mRightTriggerPressed = false;
         size_t mKeyShift = 0;
         size_t mKeyBackspace = 0;
         size_t mKeyDone = 0;
@@ -88,6 +94,8 @@ namespace MWGui
         void updateActionCaptions();
         void updateControllerButtons();
         void reloadLayout();
+        void toggleKeyboardLayout();
+        bool hasSecondaryLayout() const;
         void applyLayout();
         void ensureRowsVisible();
         void centerInMenuArea();
@@ -95,6 +103,7 @@ namespace MWGui
         void injectText(std::string_view text);
         void injectBackspace();
         void selectNav(size_t row, size_t col);
+        void updateControllerHighlight();
         size_t mapColumn(size_t fromRow, size_t toRow) const;
         bool isNavRowUsable(size_t row) const;
         size_t findNextNavRow(size_t startRow, int delta) const;

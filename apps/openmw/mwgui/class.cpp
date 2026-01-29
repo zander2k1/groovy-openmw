@@ -63,9 +63,23 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
+
+            if (useControllerSelectionHighlight())
+            {
+                MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+                if (!highlightParent)
+                    highlightParent = mMainWidget;
+                mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                mControllerHighlight->setNeedMouseFocus(false);
+                mControllerHighlight->setDepth(1);
+                mControllerHighlight->setVisible(false);
+                mControllerHighlight->setUserString("Hidden", "true");
+            }
         }
 
         center();
+        updateControllerHighlight();
     }
 
     void GenerateClassResultDialog::setClassId(const ESM::RefId& classId)
@@ -78,6 +92,7 @@ namespace MWGui
             MWBase::Environment::get().getESMStore()->get<ESM::Class>().find(mCurrentClassId)->mName);
 
         center();
+        updateControllerHighlight();
     }
 
     bool GenerateClassResultDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
@@ -99,9 +114,35 @@ namespace MWGui
             mOkButtonFocus = !mOkButtonFocus;
             mOkButton->setStateSelected(mOkButtonFocus);
             mBackButton->setStateSelected(!mOkButtonFocus);
+            updateControllerHighlight();
         }
 
         return true;
+    }
+
+    void GenerateClassResultDialog::updateControllerHighlight()
+    {
+        if (!mControllerHighlight || !useControllerSelectionHighlight())
+        {
+            if (mControllerHighlight)
+                mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focusWidget = mOkButtonFocus ? static_cast<MyGUI::Widget*>(mOkButton) : mBackButton;
+        if (!focusWidget)
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
+        const MyGUI::IntCoord parentRect
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
+        mControllerHighlight->setCoord(MyGUI::IntCoord(
+            focusRect.left - parentRect.left, focusRect.top - parentRect.top, focusRect.width, focusRect.height));
+        mControllerHighlight->setVisible(true);
     }
 
     // widget controls
@@ -126,6 +167,7 @@ namespace MWGui
         center();
 
         getWidget(mSpecializationName, "SpecializationName");
+        mSpecializationName->setUserString("ForceCollapsedTooltip", "true");
 
         getWidget(mFavoriteAttribute[0], "FavoriteAttribute0");
         getWidget(mFavoriteAttribute[1], "FavoriteAttribute1");
@@ -161,7 +203,6 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
-            mControllerButtons.mLStick = "#{Interface:Mouse}";
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
         }
@@ -198,14 +239,16 @@ namespace MWGui
         updateClasses();
         updateStats();
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mClassList);
-
-        // Show the current class by default
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-
-        const ESM::RefId& classId = player.get<ESM::NPC>()->mBase->mClass;
-
-        if (!classId.empty())
-            setClassId(classId);
+        const ESM::RefId acrobatId = ESM::RefId::stringRefId("Acrobat");
+        setClassId(acrobatId);
+        if (mClassList->getIndexSelected() == MyGUI::ITEM_NONE)
+        {
+            // Fallback to the player's current class if Acrobat is unavailable.
+            MWWorld::Ptr player = MWMechanics::getPlayer();
+            const ESM::RefId& classId = player.get<ESM::NPC>()->mBase->mClass;
+            if (!classId.empty())
+                setClassId(classId);
+        }
 
         updateControllerListHighlight(mClassList, mControllerHighlight);
     }
@@ -333,6 +376,7 @@ namespace MWGui
             ESM::Class::sGmstSpecializationIds[specialization], ESM::Class::sGmstSpecializationIds[specialization]);
         mSpecializationName->setCaption(MyGUI::UString(specName));
         ToolTips::createSpecializationToolTip(mSpecializationName, specName, specialization);
+        mSpecializationName->setUserString("CollapsedValue", std::string(specName));
 
         mFavoriteAttribute[0]->setAttributeId(ESM::Attribute::indexToRefId(currentClass->mData.mAttribute[0]));
         mFavoriteAttribute[1]->setAttributeId(ESM::Attribute::indexToRefId(currentClass->mData.mAttribute[1]));
@@ -405,6 +449,10 @@ namespace MWGui
             MyGUI::Widget* child = widget->getChildAt(i);
             if (!child->getVisible())
                 continue;
+            if (child->getUserString("Hidden") == "true")
+                continue;
+            if (child == mControllerHighlight)
+                continue;
 
             child->setPosition(child->getLeft(), pos);
             width = std::max(width, child->getWidth());
@@ -426,6 +474,19 @@ namespace MWGui
 
         mDisableGamepadCursor = Settings::gui().mControllerMenus;
         mControllerButtons.mA = "#{Interface:Select}";
+
+        if (useControllerSelectionHighlight())
+        {
+            MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+            if (!highlightParent)
+                highlightParent = mMainWidget;
+            mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setDepth(1);
+            mControllerHighlight->setVisible(false);
+            mControllerHighlight->setUserString("Hidden", "true");
+        }
     }
 
     void InfoBoxDialog::setText(const std::string& str)
@@ -469,6 +530,7 @@ namespace MWGui
 
             this->mButtons.push_back(button);
         }
+        updateControllerHighlight();
     }
 
     void InfoBoxDialog::onOpen()
@@ -480,6 +542,7 @@ namespace MWGui
         layoutVertically(mMainWidget, 4 + 6);
 
         center();
+        updateControllerHighlight();
     }
 
     void InfoBoxDialog::onButtonClicked(MyGUI::Widget* sender)
@@ -518,6 +581,7 @@ namespace MWGui
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), -1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            updateControllerHighlight();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
@@ -529,9 +593,36 @@ namespace MWGui
             setControllerFocus(mButtons, mControllerFocus, false);
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), 1);
             setControllerFocus(mButtons, mControllerFocus, true);
+            updateControllerHighlight();
         }
 
         return true;
+    }
+
+    void InfoBoxDialog::updateControllerHighlight()
+    {
+        if (!mControllerHighlight || !useControllerSelectionHighlight() || mButtons.empty())
+        {
+            if (mControllerHighlight)
+                mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        const size_t clamped = std::min(mControllerFocus, mButtons.size() - 1);
+        MyGUI::Button* focusButton = mButtons[clamped];
+        if (!focusButton)
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
+        const MyGUI::IntCoord parentRect
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord focusRect = focusButton->getAbsoluteCoord();
+        mControllerHighlight->setCoord(MyGUI::IntCoord(
+            focusRect.left - parentRect.left, focusRect.top - parentRect.top, focusRect.width, focusRect.height));
+        mControllerHighlight->setVisible(true);
     }
 
     /* ClassChoiceDialog */
@@ -564,6 +655,7 @@ namespace MWGui
         setText("SpecializationT",
             MWBase::Environment::get().getWindowManager()->getGameSettingString("sChooseClassMenu1", "Specialization"));
         getWidget(mSpecializationName, "SpecializationName");
+        mSpecializationName->setUserString("ForceCollapsedTooltip", "true");
         mSpecializationName->eventMouseButtonClick
             += MyGUI::newDelegate(this, &CreateClassDialog::onSpecializationClicked);
 
@@ -614,7 +706,8 @@ namespace MWGui
             mOkButton->setStateSelected(true);
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mY = "Class Description";
+            mControllerButtons.mY = "#{Interface:Info}";
+            mControllerButtons.mR1 = "Class Description";
             mControllerButtons.mLStick.clear();
 
             mDescriptionButton->setVisible(false);
@@ -835,6 +928,9 @@ namespace MWGui
             onBackClicked(mBackButton);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+        {
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
             onDescriptionClicked(mDescriptionButton);
         }
@@ -1273,12 +1369,21 @@ namespace MWGui
             ESM::Class::sGmstSpecializationIds[ESM::Class::Stealth], {}) };
 
         mSpecialization0->setCaption(combat);
+        mSpecialization0->setUserString("ForceCollapsedTooltip", "true");
+        mSpecialization0->setUserString("CollapsedLabel", combat);
+        mSpecialization0->setUserString("CollapsedValue", combat);
         mSpecialization0->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SelectSpecializationDialog::onSpecializationClicked);
         mSpecialization1->setCaption(magic);
+        mSpecialization1->setUserString("ForceCollapsedTooltip", "true");
+        mSpecialization1->setUserString("CollapsedLabel", magic);
+        mSpecialization1->setUserString("CollapsedValue", magic);
         mSpecialization1->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SelectSpecializationDialog::onSpecializationClicked);
         mSpecialization2->setCaption(stealth);
+        mSpecialization2->setUserString("ForceCollapsedTooltip", "true");
+        mSpecialization2->setUserString("CollapsedLabel", stealth);
+        mSpecialization2->setUserString("CollapsedValue", stealth);
         mSpecialization2->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SelectSpecializationDialog::onSpecializationClicked);
         mSpecializationId = ESM::Class::Combat;
@@ -1353,9 +1458,23 @@ namespace MWGui
         const MyGUI::IntCoord parentRect
             = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
         const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
-        mControllerHighlight->setCoord(MyGUI::IntCoord(
-            focusRect.left - parentRect.left, focusRect.top - parentRect.top, focusRect.width, focusRect.height));
+        const int width = highlightParent ? highlightParent->getWidth() : focusRect.width;
+        const int left = highlightParent ? 0 : (focusRect.left - parentRect.left);
+        mControllerHighlight->setCoord(
+            MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
         mControllerHighlight->setVisible(true);
+    }
+
+    MyGUI::Widget* SelectSpecializationDialog::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus)
+            return nullptr;
+        const std::array<MyGUI::TextBox*, 3> widgets{ mSpecialization0, mSpecialization1, mSpecialization2 };
+        const size_t clamped = std::min(mControllerFocus, widgets.size() - 1);
+        MyGUI::Widget* widget = widgets[clamped];
+        if (widget && widget->isUserString("ToolTipType"))
+            return widget;
+        return nullptr;
     }
 
     bool SelectSpecializationDialog::exit()
@@ -1417,6 +1536,8 @@ namespace MWGui
             widget->eventClicked += MyGUI::newDelegate(this, &SelectAttributeDialog::onAttributeClicked);
             ToolTips::createAttributeToolTip(widget, attribute.mId);
             widget->setUserString("ToolTipDynamic", "Stats");
+            widget->setUserString("CollapsedLabel", attribute.mName);
+            widget->setUserString("CollapsedValue", {});
             mAttributeButtons.emplace_back(widget);
         }
 
@@ -1434,8 +1555,21 @@ namespace MWGui
             if (mAttributeButtons.size() > 0)
                 mAttributeButtons[0]->setStateSelected(true);
 
-            mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+            mControllerButtons.mY = "#{Interface:Info}";
+
+            if (useControllerSelectionHighlight())
+            {
+                MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+                if (!highlightParent)
+                    highlightParent = mMainWidget;
+                mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                mControllerHighlight->setNeedMouseFocus(false);
+                mControllerHighlight->setDepth(1);
+                mControllerHighlight->setVisible(false);
+                updateControllerHighlight();
+            }
         }
     }
 
@@ -1482,7 +1616,53 @@ namespace MWGui
             mAttributeButtons[mControllerFocus]->setStateSelected(true);
         }
 
+        updateControllerHighlight();
         return true;
+    }
+
+    MyGUI::Widget* SelectAttributeDialog::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus || mAttributeButtons.empty())
+            return nullptr;
+        if (mControllerFocus >= mAttributeButtons.size())
+            return nullptr;
+        MyGUI::Widget* widget = mAttributeButtons[mControllerFocus];
+        if (widget && widget->isUserString("ToolTipType"))
+            return widget;
+        return nullptr;
+    }
+
+    void SelectAttributeDialog::updateControllerHighlight()
+    {
+        if (!mControllerHighlight || !useControllerSelectionHighlight() || mAttributeButtons.empty())
+        {
+            if (mControllerHighlight)
+                mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        if (mControllerFocus >= mAttributeButtons.size())
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focusWidget = mAttributeButtons[mControllerFocus];
+        if (!focusWidget)
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
+        const MyGUI::IntCoord parentRect
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        const MyGUI::IntCoord focusRect = focusWidget->getAbsoluteCoord();
+        const int width = highlightParent ? highlightParent->getWidth() : focusRect.width;
+        const int left = highlightParent ? 0 : (focusRect.left - parentRect.left);
+        mControllerHighlight->setCoord(
+            MyGUI::IntCoord(left, focusRect.top - parentRect.top, width, focusRect.height));
+        mControllerHighlight->setVisible(true);
     }
 
     /* SelectSkillDialog */
@@ -1516,6 +1696,8 @@ namespace MWGui
             skillWidget->eventClicked += MyGUI::newDelegate(this, &SelectSkillDialog::onSkillClicked);
             ToolTips::createSkillToolTip(skillWidget, skill.mId);
             skillWidget->setUserString("ToolTipDynamic", "Stats");
+            skillWidget->setUserString("CollapsedLabel", skill.mName);
+            skillWidget->setUserString("CollapsedValue", {});
             mSkillButtons.emplace_back(skillWidget);
             mNumSkillsPerSpecialization[skill.mData.mSpecialization]++;
         }
@@ -1538,6 +1720,7 @@ namespace MWGui
 
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+            mControllerButtons.mY = "#{Interface:Info}";
 
             MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
             if (!highlightParent)
@@ -1604,6 +1787,18 @@ namespace MWGui
 
         updateControllerHighlight();
         return true;
+    }
+
+    MyGUI::Widget* SelectSkillDialog::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus || mSkillButtons.empty())
+            return nullptr;
+        if (mControllerFocus >= mSkillButtons.size())
+            return nullptr;
+        MyGUI::Widget* widget = mSkillButtons[mControllerFocus];
+        if (widget && widget->isUserString("ToolTipType"))
+            return widget;
+        return nullptr;
     }
 
     void SelectSkillDialog::updateControllerHighlight()
