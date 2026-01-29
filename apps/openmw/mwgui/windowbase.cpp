@@ -6,7 +6,6 @@
 #include <MyGUI_RenderManager.h>
 
 #include "../mwbase/environment.hpp"
-#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include <components/settings/values.hpp>
@@ -196,8 +195,6 @@ void WindowModal::onClose()
 {
     MWBase::Environment::get().getWindowManager()->removeCurrentModal(this);
     MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
-    MWBase::Environment::get().getInputManager()->changeInputMode(
-        MWBase::Environment::get().getWindowManager()->isGuiMode());
 
     MyGUI::InputManager::getInstance().removeWidgetModal(mMainWidget);
 }

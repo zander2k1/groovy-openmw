@@ -1,11 +1,14 @@
 #include "textinput.hpp"
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_UString.h>
+
+#include <components/settings/values.hpp>
 
 #include <components/esm/refid.hpp>
 
@@ -15,6 +18,7 @@ namespace MWGui
     TextInputDialog::TextInputDialog()
         : WindowModal("openmw_text_input.layout")
     {
+        mDisableGamepadCursor = true;
         // Centre dialog
         center();
 
@@ -24,6 +28,8 @@ namespace MWGui
         MyGUI::Button* okButton;
         getWidget(okButton, "OKButton");
         okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &TextInputDialog::onOkClicked);
+        okButton->setEnabled(false);
+        okButton->setVisible(false);
 
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
@@ -70,6 +76,12 @@ namespace MWGui
         WindowModal::onOpen();
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
+        if (Settings::gui().mControllerMenus)
+        {
+            MWBase::Environment::get().getWindowManager()->setCursorActive(false);
+            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
+            MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);
+        }
     }
 
     // widget controls

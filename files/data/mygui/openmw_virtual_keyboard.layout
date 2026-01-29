@@ -69,8 +69,7 @@
                 <Property key="Padding" value="0"/>
                 <Property key="Spacing" value="4"/>
                 <Widget type="Spacer"/>
-                <Widget type="Button" skin="MW_Button" position="0 0 108 30" name="KeyShift"/>
-                <Widget type="Button" skin="MW_Button" position="0 0 146 30" name="KeyBackspace"/>
+                <Widget type="Button" skin="MW_Button" position="0 0 258 30" name="KeySpace"/>
                 <Widget type="Button" skin="MW_Button" position="0 0 108 30" name="KeyMore"/>
                 <Widget type="Spacer"/>
             </Widget>
@@ -79,7 +78,8 @@
                 <Property key="Padding" value="0"/>
                 <Property key="Spacing" value="4"/>
                 <Widget type="Spacer"/>
-                <Widget type="Button" skin="MW_Button" position="0 0 258 30" name="KeySpace"/>
+                <Widget type="Button" skin="MW_Button" position="0 0 108 30" name="KeyShift"/>
+                <Widget type="Button" skin="MW_Button" position="0 0 146 30" name="KeyBackspace"/>
                 <Widget type="Button" skin="MW_Button" position="0 0 108 30" name="KeyDone"/>
                 <Widget type="Spacer"/>
             </Widget>

@@ -108,6 +108,7 @@
 #include "levelupdialog.hpp"
 #include "loadingscreen.hpp"
 #include "mainmenu.hpp"
+#include "messagebox.hpp"
 #include "merchantrepair.hpp"
 #include "postprocessorhud.hpp"
 #include "quickkeysmenu.hpp"
@@ -829,6 +830,20 @@ namespace MWGui
     {
         if (!dialog)
             return;
+        // Prevent removed dialogs from being restored by the virtual keyboard.
+        if (auto* window = dynamic_cast<WindowBase*>(dialog.get()))
+        {
+            auto it = std::remove(mVirtualKeyboardHiddenWindows.begin(), mVirtualKeyboardHiddenWindows.end(), window);
+            if (it != mVirtualKeyboardHiddenWindows.end())
+                mVirtualKeyboardHiddenWindows.erase(it, mVirtualKeyboardHiddenWindows.end());
+        }
+        // If a modal was hidden via setVisibleNoStateChange, it may still be in the modal stack.
+        if (auto* modal = dynamic_cast<WindowModal*>(dialog.get()))
+        {
+            auto it = std::find(mCurrentModals.begin(), mCurrentModals.end(), modal);
+            if (it != mCurrentModals.end() && !modal->isVisible())
+                modal->onClose();
+        }
         dialog->setVisible(false);
         mGarbageDialogs.push_back(std::move(dialog));
         updateControllerButtonsOverlay();
@@ -1373,6 +1388,22 @@ namespace MWGui
 
     void WindowManager::setCursorVisible(bool visible)
     {
+        if (Settings::gui().mControllerMenus)
+        {
+            const GuiMode mode = getMode();
+            if (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion)
+            {
+                if (mode == GM_Inventory)
+                {
+                    if (dynamic_cast<MapWindow*>(getActiveControllerWindow()) != nullptr)
+                        visible = true;
+                    else
+                        visible = false;
+                }
+                else
+                    visible = false;
+            }
+        }
         mCursorVisible = visible;
     }
 
@@ -2339,6 +2370,7 @@ namespace MWGui
 
     void WindowManager::removeCurrentModal(WindowModal* input)
     {
+        const bool refreshUi = dynamic_cast<InteractiveMessageBox*>(input) != nullptr;
         if (!mCurrentModals.empty())
         {
             if (input == mCurrentModals.back())
@@ -2363,8 +2395,13 @@ namespace MWGui
         else
             mKeyboardNavigation->setModalWindow(mCurrentModals.back()->mMainWidget);
 
-        // Ensure HUD visibility and input mode are restored after closing modal popups.
-        updateVisible();
+        // Only refresh UI state for message boxes (prevents other modals from reappearing).
+        if (refreshUi)
+        {
+            updateVisible();
+            if (Settings::gui().mControllerMenus)
+                reapplyActiveControllerWindow();
+        }
     }
 
     void WindowManager::onVideoKeyPressed(MyGUI::Widget* /*sender*/, MyGUI::KeyCode key, MyGUI::Char value)

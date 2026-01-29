@@ -10,8 +10,6 @@
 #include <cctype>
 #include <memory>
 
-#include <SDL_keyboard.h>
-
 #include <unicode/locid.h>
 #include <unicode/unistr.h>
 
@@ -226,18 +224,6 @@ namespace MWGui
             return bundles;
         }
 
-        char getKeyboardChar(SDL_Scancode scancode)
-        {
-            SDL_Keycode keycode = SDL_GetKeyFromScancode(scancode);
-            if (keycode >= 32 && keycode <= 126)
-            {
-                char c = static_cast<char>(keycode);
-                if (c >= 'A' && c <= 'Z')
-                    c = static_cast<char>(c - ('A' - 'a'));
-                return c;
-            }
-            return 0;
-        }
     }
 
     VirtualKeyboard::VirtualKeyboard()
@@ -311,8 +297,20 @@ namespace MWGui
         mKeySpace = registerActionKey("KeySpace", Action::Space, "");
         mKeyDone = registerActionKey("KeyDone", Action::Done, "");
 
-        mNavRows[3] = { mKeyShift, mKeyBackspace, mKeyMore };
-        mNavRows[4] = { mKeySpace, mKeyDone };
+        mNavRows[3] = { mKeySpace, mKeyMore };
+        mNavRows[4] = { mKeyShift, mKeyBackspace, mKeyDone };
+
+        mRowMemory.assign(mNavRows.size(), 0);
+        mRowMemoryValid.assign(mNavRows.size(), false);
+
+        if (useControllerSelectionHighlight())
+        {
+            mControllerHighlight = mMainWidget->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerHighlight->setNeedMouseFocus(false);
+            mControllerHighlight->setDepth(1);
+            mControllerHighlight->setVisible(false);
+        }
 
         reloadLayout();
         ensureRowsVisible();
@@ -328,6 +326,9 @@ namespace MWGui
             mShifted = false;
             mCursorBlinkTimer = 0.f;
             mCursorBlinkVisible = true;
+            mUseSecondaryLayout = false;
+            mRightTriggerPressed = false;
+            std::fill(mRowMemoryValid.begin(), mRowMemoryValid.end(), false);
             reloadLayout();
             ensureRowsVisible();
             selectNav(0, 0);
@@ -474,28 +475,55 @@ namespace MWGui
         if (!Settings::gui().mControllerMenus)
             return;
 
-        mControllerButtons = {};
-        mControllerButtons.mDpad = "#{Interface:KeyboardMove}";
+        mControllerButtons.mDpad.clear();
         mControllerButtons.mA = "#{Interface:KeyboardSelect}";
         mControllerButtons.mB = "#{Interface:KeyboardBack}";
+        mControllerButtons.mX = "#{Interface:KeyboardDelete}";
+        mControllerButtons.mY = "#{Interface:KeyboardSpace}";
 
         if (mPage == 0)
         {
             mControllerButtons.mR1 = "#{Interface:KeyboardNext}";
+            mControllerButtons.mL1.clear();
         }
         else
         {
             mControllerButtons.mL1 = "#{Interface:KeyboardPrev}";
+            mControllerButtons.mR1.clear();
         }
 
+        if (hasSecondaryLayout())
+            mControllerButtons.mR2 = "#{Interface:KeyboardLanguage}";
+        else
+            mControllerButtons.mR2.clear();
+
         MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
+    }
+
+    bool VirtualKeyboard::hasSecondaryLayout() const
+    {
+        return !Settings::gui().mVirtualKeyboardLanguageSecondary.get().empty();
+    }
+
+    void VirtualKeyboard::toggleKeyboardLayout()
+    {
+        if (!hasSecondaryLayout())
+            return;
+        mUseSecondaryLayout = !mUseSecondaryLayout;
+        reloadLayout();
+        ensureRowsVisible();
+        selectNav(0, 0);
+        syncInputBar();
     }
 
     void VirtualKeyboard::reloadLayout()
     {
         mLayouts.clear();
+        if (!hasSecondaryLayout())
+            mUseSecondaryLayout = false;
 
-        const std::string requestedFile = Settings::gui().mVirtualKeyboardLanguage;
+        const std::string requestedFile = mUseSecondaryLayout ? Settings::gui().mVirtualKeyboardLanguageSecondary
+                                                              : Settings::gui().mVirtualKeyboardLanguage;
         const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
         const std::string fileBaseName = selectKeyboardFile(vfs, requestedFile, "en");
         std::unique_ptr<L10n::MessageBundles> customBundles = loadKeyboardBundles(fileBaseName);
@@ -562,7 +590,8 @@ namespace MWGui
         if (mLayouts.empty())
             mLayouts.push_back(LayoutSpec{ "qwerty", {}, {}, {}, {} });
 
-        const std::string wantedLayout = Settings::gui().mVirtualKeyboardLayout;
+        const std::string wantedLayout = mUseSecondaryLayout ? Settings::gui().mVirtualKeyboardLayoutSecondary
+                                                             : Settings::gui().mVirtualKeyboardLayout;
         mLayoutIndex = 0;
         if (!wantedLayout.empty())
         {
@@ -577,52 +606,7 @@ namespace MWGui
         }
         else if (!mLayouts.empty())
         {
-            struct RowMatch
-            {
-                std::array<SDL_Scancode, 11> mScancodes;
-            };
-            const std::array<RowMatch, 3> scancodeRows{ {
-                { { SDL_SCANCODE_Q, SDL_SCANCODE_W, SDL_SCANCODE_E, SDL_SCANCODE_R, SDL_SCANCODE_T, SDL_SCANCODE_Y,
-                    SDL_SCANCODE_U, SDL_SCANCODE_I, SDL_SCANCODE_O, SDL_SCANCODE_P, SDL_SCANCODE_LEFTBRACKET } },
-                { { SDL_SCANCODE_A, SDL_SCANCODE_S, SDL_SCANCODE_D, SDL_SCANCODE_F, SDL_SCANCODE_G, SDL_SCANCODE_H,
-                    SDL_SCANCODE_J, SDL_SCANCODE_K, SDL_SCANCODE_L, SDL_SCANCODE_SEMICOLON, SDL_SCANCODE_APOSTROPHE } },
-                { { SDL_SCANCODE_Z, SDL_SCANCODE_X, SDL_SCANCODE_C, SDL_SCANCODE_V, SDL_SCANCODE_B, SDL_SCANCODE_N,
-                    SDL_SCANCODE_M, SDL_SCANCODE_COMMA, SDL_SCANCODE_PERIOD, SDL_SCANCODE_SLASH,
-                    SDL_SCANCODE_BACKSLASH } },
-            } };
-
-            std::size_t bestIndex = 0;
-            std::size_t bestMatches = 0;
-            std::size_t bestSamples = 0;
-            for (std::size_t i = 0; i < mLayouts.size(); ++i)
-            {
-                std::size_t matches = 0;
-                std::size_t samples = 0;
-                for (std::size_t row = 0; row < 3; ++row)
-                {
-                    const std::vector<std::string> keys = splitKeyboardRow(mLayouts[i].mPage1Rows[row], 11);
-                    for (std::size_t col = 0; col < keys.size(); ++col)
-                    {
-                        const char layoutChar = (keys[col].size() == 1) ? keys[col][0] : 0;
-                        const char keyboardChar = getKeyboardChar(scancodeRows[row].mScancodes[col]);
-                        if (layoutChar == 0 || keyboardChar == 0)
-                            continue;
-                        ++samples;
-                        char normalizedLayout = layoutChar;
-                        if (normalizedLayout >= 'A' && normalizedLayout <= 'Z')
-                            normalizedLayout = static_cast<char>(normalizedLayout - ('A' - 'a'));
-                        if (normalizedLayout == keyboardChar)
-                            ++matches;
-                    }
-                }
-                if (matches > bestMatches || (matches == bestMatches && samples > bestSamples))
-                {
-                    bestIndex = i;
-                    bestMatches = matches;
-                    bestSamples = samples;
-                }
-            }
-            mLayoutIndex = bestIndex;
+            mLayoutIndex = 0;
         }
 
         mPage = 0;
@@ -802,6 +786,41 @@ namespace MWGui
                 return;
         }
         mKeys[index].mButton->setStateSelected(true);
+        updateControllerHighlight();
+    }
+
+    void VirtualKeyboard::updateControllerHighlight()
+    {
+        if (!mControllerHighlight)
+            return;
+
+        if (!Settings::gui().mControllerMenus || !Settings::gui().mControllerHighlightSelections)
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        if (mNavRow >= mNavRows.size() || mNavRows[mNavRow].empty())
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        const size_t index = mNavRows[mNavRow][mNavCol];
+        MyGUI::Button* button = mKeys[index].mButton;
+        if (!button || !button->getVisible() || !button->getEnabled())
+        {
+            mControllerHighlight->setVisible(false);
+            return;
+        }
+
+        const MyGUI::IntCoord buttonCoord = button->getAbsoluteCoord();
+        MyGUI::Widget* highlightParent = mControllerHighlight->getParent();
+        const MyGUI::IntCoord baseCoord
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        mControllerHighlight->setCoord(buttonCoord.left - baseCoord.left, buttonCoord.top - baseCoord.top,
+            buttonCoord.width, buttonCoord.height);
+        mControllerHighlight->setVisible(true);
     }
 
     size_t VirtualKeyboard::mapColumn(size_t fromRow, size_t toRow) const
@@ -856,8 +875,43 @@ namespace MWGui
         return startRow;
     }
 
+    bool VirtualKeyboard::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        if (arg.axis != SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            return false;
+        if (!hasSecondaryLayout())
+            return false;
+
+        const bool pressed = arg.value >= 32000;
+        if (pressed && !mRightTriggerPressed)
+        {
+            mRightTriggerPressed = true;
+            toggleKeyboardLayout();
+        }
+        else if (!pressed && arg.value <= 16000)
+        {
+            mRightTriggerPressed = false;
+        }
+
+        return true;
+    }
+
     bool VirtualKeyboard::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        auto rememberRow2 = [this]() {
+            if (mNavRow == 2 && mNavRow < mRowMemory.size())
+            {
+                mRowMemory[mNavRow] = mNavCol;
+                mRowMemoryValid[mNavRow] = true;
+            }
+        };
+        auto selectRow = [this](size_t targetRow, bool useMemory) {
+            size_t targetCol = mapColumn(mNavRow, targetRow);
+            if (useMemory && targetRow == 2 && targetRow < mRowMemory.size() && mRowMemoryValid[targetRow])
+                targetCol = mRowMemory[targetRow];
+            selectNav(targetRow, targetCol);
+        };
+
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
         {
             if (mNavCol > 0)
@@ -874,11 +928,23 @@ namespace MWGui
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             size_t targetRow = findNextNavRow(mNavRow, -1);
-            selectNav(targetRow, mapColumn(mNavRow, targetRow));
+            if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
+            {
+                const size_t currentIndex = mNavRows[mNavRow][mNavCol];
+                if (currentIndex == mKeyBackspace)
+                {
+                    selectNav(targetRow, 0);
+                    return true;
+                }
+            }
+            const bool useMemory = (mNavRow == 3 && targetRow == 2);
+            selectRow(targetRow, useMemory);
             return true;
         }
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
+            if (mNavRow == 2)
+                rememberRow2();
             if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
             {
                 const size_t currentIndex = mNavRows[mNavRow][mNavCol];
@@ -898,7 +964,33 @@ namespace MWGui
                 }
             }
             size_t targetRow = findNextNavRow(mNavRow, 1);
-            selectNav(targetRow, mapColumn(mNavRow, targetRow));
+            if (mNavRow == 2 && targetRow == 3)
+            {
+                // Prefer Space for columns 6-8 when moving from row 3 to the Space/More row.
+                if (mNavCol >= 5 && mNavCol <= 7)
+                    selectNav(targetRow, 0);
+                else
+                    selectRow(targetRow, false);
+            }
+            else if (mNavRow == 3 && targetRow == 4)
+            {
+                // When moving from Space/More to the action row, choose Shift for row-3 cols 1-3, otherwise Backspace.
+                if (mNavCol == 0 && mRowMemoryValid.size() > 2 && mRowMemoryValid[2])
+                {
+                    if (mRowMemory[2] <= 2)
+                        selectNav(targetRow, 0);
+                    else
+                        selectNav(targetRow, 1);
+                }
+                else
+                {
+                    selectRow(targetRow, false);
+                }
+            }
+            else
+            {
+                selectRow(targetRow, false);
+            }
             return true;
         }
         if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
@@ -919,6 +1011,18 @@ namespace MWGui
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
             MWBase::Environment::get().getWindowManager()->toggleVirtualKeyboard();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        {
+            injectBackspace();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+        {
+            injectText(" ");
+            mShifted = false;
+            updateKeyCaptions();
             return true;
         }
         return false;

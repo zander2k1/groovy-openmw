@@ -47,11 +47,13 @@ namespace MWGui
     private:
         void fitToText(MyGUI::TextBox* widget);
         void layoutVertically(MyGUI::Widget* widget, int margin);
+        void updateControllerHighlight();
         MyGUI::Widget* mTextBox;
         MyGUI::TextBox* mText;
         MyGUI::Widget* mButtonBar;
         std::vector<MyGUI::Button*> mButtons;
         size_t mControllerFocus = 0;
+        MyGUI::Widget* mControllerHighlight = nullptr;
     };
 
     // Lets the player choose between 3 ways of creating a class
@@ -98,10 +100,12 @@ namespace MWGui
         bool mOkButtonFocus = true;
 
     private:
+        void updateControllerHighlight();
         MyGUI::ImageBox* mClassImage;
         MyGUI::TextBox* mClassName;
         MyGUI::Button* mBackButton;
         MyGUI::Button* mOkButton;
+        MyGUI::Widget* mControllerHighlight = nullptr;
 
         ESM::RefId mCurrentClassId;
     };
@@ -182,6 +186,8 @@ namespace MWGui
         */
         EventHandle_Void eventItemSelected;
 
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
+
     protected:
         void onSpecializationClicked(MyGUI::Widget* sender);
         void onCancelClicked(MyGUI::Widget* sender);
@@ -220,6 +226,8 @@ namespace MWGui
         */
         EventHandle_Void eventItemSelected;
 
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
+
     protected:
         void onAttributeClicked(Widgets::MWAttributePtr sender);
         void onCancelClicked(MyGUI::Widget* sender);
@@ -228,7 +236,10 @@ namespace MWGui
         std::vector<Widgets::MWAttribute*> mAttributeButtons;
 
     private:
+        void updateControllerHighlight();
+
         ESM::RefId mAttributeId;
+        MyGUI::Widget* mControllerHighlight = nullptr;
     };
 
     class SelectSkillDialog : public WindowModal
@@ -253,6 +264,8 @@ namespace MWGui
             signature : void method()\n
         */
         EventHandle_Void eventItemSelected;
+
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     protected:
         void onSkillClicked(Widgets::MWSkillPtr sender);

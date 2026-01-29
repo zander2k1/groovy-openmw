@@ -32,6 +32,7 @@ namespace MWGui
 
         getWidget(mTakeButton, "TakeButton");
         mTakeButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ScrollWindow::onTakeButtonClicked);
+        mTakeButton->setVisible(false);
 
         adjustButton("CloseButton");
         adjustButton("TakeButton");
@@ -97,13 +98,13 @@ namespace MWGui
     void ScrollWindow::setTakeButtonShow(bool show)
     {
         mTakeButtonShow = show;
-        mTakeButton->setVisible(mTakeButtonShow && mTakeButtonAllowed);
+        mTakeButton->setVisible(false);
     }
 
     void ScrollWindow::setInventoryAllowed(bool allowed)
     {
         mTakeButtonAllowed = allowed;
-        mTakeButton->setVisible(mTakeButtonShow && mTakeButtonAllowed);
+        mTakeButton->setVisible(false);
     }
 
     void ScrollWindow::onCloseButtonClicked(MyGUI::Widget* /*sender*/)
@@ -130,7 +131,7 @@ namespace MWGui
 
     ControllerButtons* ScrollWindow::getControllerButtons()
     {
-        if (mTakeButton->getVisible())
+        if (canTake())
             mControllerButtons.mA = "#{Interface:Take}";
         else
             mControllerButtons.mA.clear();
@@ -141,7 +142,7 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
-            if (mTakeButton->getVisible())
+            if (canTake())
                 onTakeButtonClicked(mTakeButton);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
@@ -150,5 +151,10 @@ namespace MWGui
             return false; // Fall through to keyboard
 
         return true;
+    }
+
+    bool ScrollWindow::canTake() const
+    {
+        return mTakeButtonShow && mTakeButtonAllowed;
     }
 }

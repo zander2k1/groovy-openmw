@@ -175,6 +175,56 @@ namespace MWInput
         mBindingsManager->setJoystickDeadZone(Settings::input().mJoystickDeadZone);
     }
 
+    void ControllerManager::setGuiCursorEnabled(bool enabled)
+    {
+        if (mGuiCursorEnabled == enabled)
+            return;
+
+        mGuiCursorEnabled = enabled;
+        if (!enabled)
+        {
+            resetGuiNavState();
+            syncControllerAxisState();
+        }
+    }
+
+    void ControllerManager::resetGuiNavState()
+    {
+        mLeftStickX = 0;
+        mLeftStickY = 0;
+        mLeftStickDpadButton = kLeftStickDpadNone;
+        mGuiNavHeldButton = kLeftStickDpadNone;
+        mGuiNavHoldTime = 0.f;
+        mGuiNavRepeatTime = 0.f;
+        mGuiNavHeldFromAxis = false;
+    }
+
+    void ControllerManager::syncControllerAxisState()
+    {
+        if (mLastControllerDeviceId < 0)
+            return;
+        SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
+        if (!cntrl)
+            return;
+
+        auto sendAxis = [&](SDL_GameControllerAxis axis)
+        {
+            SDL_ControllerAxisEvent event{};
+            event.type = SDL_CONTROLLERAXISMOTION;
+            event.which = mLastControllerDeviceId;
+            event.axis = static_cast<Uint8>(axis);
+            event.value = SDL_GameControllerGetAxis(cntrl, axis);
+            mBindingsManager->controllerAxisMoved(mLastControllerDeviceId, event);
+        };
+
+        sendAxis(SDL_CONTROLLER_AXIS_LEFTX);
+        sendAxis(SDL_CONTROLLER_AXIS_LEFTY);
+        sendAxis(SDL_CONTROLLER_AXIS_RIGHTX);
+        sendAxis(SDL_CONTROLLER_AXIS_RIGHTY);
+        sendAxis(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        sendAxis(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+    }
+
     void ControllerManager::update(float dt)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
@@ -310,6 +360,7 @@ namespace MWInput
         if (!Settings::input().mEnableController || mBindingsManager->isDetectingBindingState())
             return;
 
+        mLastControllerDeviceId = deviceID;
         MWBase::Environment::get().getLuaManager()->inputEvent(
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
 
@@ -367,6 +418,7 @@ namespace MWInput
             return;
         }
 
+        mLastControllerDeviceId = deviceID;
         if (Settings::input().mEnableController)
         {
             MWBase::Environment::get().getLuaManager()->inputEvent(
@@ -439,6 +491,7 @@ namespace MWInput
         if (!Settings::input().mEnableController || MWBase::Environment::get().getInputManager()->controlsDisabled())
             return;
 
+        mLastControllerDeviceId = deviceID;
         mJoystickLastUsed = true;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
@@ -471,11 +524,6 @@ namespace MWInput
 
         if (Settings::gui().mControllerMenus)
         {
-            if (arg.button == SDL_CONTROLLER_BUTTON_BACK)
-            {
-                if (winMgr->toggleVirtualKeyboard())
-                    return true;
-            }
             // Block Start while the virtual keyboard is open.
             if (arg.button == SDL_CONTROLLER_BUTTON_START && winMgr->isVirtualKeyboardVisible())
                 return true;
@@ -585,6 +633,9 @@ namespace MWInput
         if (winMgr->isVirtualKeyboardVisible()
             && (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
         {
+            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+            if (topWin && topWin->isVisible() && topWin->onControllerThumbstickEvent(arg))
+                return true;
             return true;
         }
 

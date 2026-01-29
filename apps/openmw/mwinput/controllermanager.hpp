@@ -37,7 +37,7 @@ namespace MWInput
         void setJoystickLastUsed(bool enabled) { mJoystickLastUsed = enabled; }
         bool joystickLastUsed() const { return mJoystickLastUsed; }
 
-        void setGuiCursorEnabled(bool enabled) { mGuiCursorEnabled = enabled; }
+        void setGuiCursorEnabled(bool enabled);
 
         void setGamepadGuiCursorEnabled(bool enabled) { mGamepadGuiCursorEnabled = enabled; }
         bool gamepadGuiCursorEnabled() const { return mGamepadGuiCursorEnabled; }
@@ -78,6 +78,10 @@ namespace MWInput
         bool mGamepadMousePressed;
         bool mLeftTriggerPressed;
         bool mRightTriggerPressed;
+        int mLastControllerDeviceId = -1;
+
+        void resetGuiNavState();
+        void syncControllerAxisState();
     };
 }
 #endif

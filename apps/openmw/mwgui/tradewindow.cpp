@@ -387,13 +387,22 @@ namespace MWGui
 
     bool TradeWindow::exit()
     {
-        mTradeModel->abort();
-        MWBase::Environment::get().getWindowManager()->getInventoryWindow()->getTradeModel()->abort();
+        if (mTradeModel)
+            mTradeModel->abort();
+        if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+        {
+            if (auto* tradeModel = inv->getTradeModel())
+                tradeModel->abort();
+        }
         return true;
     }
 
     void TradeWindow::onItemSelected(int index)
     {
+        if (!mSortModel || !mTradeModel)
+            return;
+        if (index < 0 || static_cast<size_t>(index) >= mSortModel->getItemCount())
+            return;
         const ItemStack& item = mSortModel->getItem(index);
 
         MWWorld::Ptr object = item.mBase;
@@ -412,22 +421,31 @@ namespace MWGui
             dialog->eventOkClicked.clear();
             dialog->eventOkClicked += MyGUI::newDelegate(this, &TradeWindow::sellItem);
             mItemToSell = mSortModel->mapToSource(index);
+            if (mItemToSell < 0)
+                return;
         }
         else
         {
             mItemToSell = mSortModel->mapToSource(index);
+            if (mItemToSell < 0)
+                return;
             sellItem(nullptr, count);
         }
     }
 
     void TradeWindow::sellItem(MyGUI::Widget* /*sender*/, std::size_t count)
     {
+        if (!mTradeModel || mItemToSell < 0 || static_cast<size_t>(mItemToSell) >= mTradeModel->getItemCount())
+            return;
         const ItemStack& item = mTradeModel->getItem(mItemToSell);
         const ESM::RefId& sound = item.mBase.getClass().getUpSoundId(item.mBase);
         MWBase::Environment::get().getWindowManager()->playSound(sound);
 
-        TradeItemModel* playerTradeModel
-            = MWBase::Environment::get().getWindowManager()->getInventoryWindow()->getTradeModel();
+        TradeItemModel* playerTradeModel = nullptr;
+        if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            playerTradeModel = inv->getTradeModel();
+        if (!playerTradeModel)
+            return;
 
         if (item.mType == ItemStack::Type_Barter)
         {
@@ -450,8 +468,13 @@ namespace MWGui
 
     void TradeWindow::borrowItem(int index, size_t count)
     {
-        TradeItemModel* playerTradeModel
-            = MWBase::Environment::get().getWindowManager()->getInventoryWindow()->getTradeModel();
+        if (!mTradeModel || index < 0 || static_cast<size_t>(index) >= mTradeModel->getItemCount())
+            return;
+        TradeItemModel* playerTradeModel = nullptr;
+        if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            playerTradeModel = inv->getTradeModel();
+        if (!playerTradeModel)
+            return;
         mTradeModel->borrowItemToUs(index, playerTradeModel, count);
         mItemView->update();
         updateOffer();
@@ -459,8 +482,13 @@ namespace MWGui
 
     void TradeWindow::returnItem(int index, size_t count)
     {
-        TradeItemModel* playerTradeModel
-            = MWBase::Environment::get().getWindowManager()->getInventoryWindow()->getTradeModel();
+        if (!mTradeModel || index < 0 || static_cast<size_t>(index) >= mTradeModel->getItemCount())
+            return;
+        TradeItemModel* playerTradeModel = nullptr;
+        if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
+            playerTradeModel = inv->getTradeModel();
+        if (!playerTradeModel)
+            return;
         mTradeModel->returnItemBorrowedFromUs(index, playerTradeModel, count);
         mItemView->update();
         updateOffer();

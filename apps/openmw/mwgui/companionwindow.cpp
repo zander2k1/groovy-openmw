@@ -75,6 +75,10 @@ namespace MWGui
 
     void CompanionWindow::onItemSelected(int index)
     {
+        if (!mSortModel || !mModel)
+            return;
+        if (index < 0 || static_cast<size_t>(index) >= mSortModel->getItemCount())
+            return;
         if (mDragAndDrop->mIsOnDragAndDrop)
         {
             mDragAndDrop->drop(mModel, mItemView);
@@ -98,6 +102,8 @@ namespace MWGui
             count = 1;
 
         mSelectedItem = mSortModel->mapToSource(index);
+        if (mSelectedItem < 0)
+            return;
 
         if (count > 1 && !shift)
         {
@@ -126,11 +132,19 @@ namespace MWGui
 
     void CompanionWindow::dragItem(MyGUI::Widget* /*sender*/, std::size_t count)
     {
+        if (!mModel || !mSortModel)
+            return;
+        if (mSelectedItem < 0 || static_cast<size_t>(mSelectedItem) >= mModel->getItemCount())
+            return;
         mDragAndDrop->startDrag(mSelectedItem, mSortModel, mModel, mItemView, count);
     }
 
     void CompanionWindow::transferItem(MyGUI::Widget* /*sender*/, std::size_t count)
     {
+        if (!mModel)
+            return;
+        if (mSelectedItem < 0 || static_cast<size_t>(mSelectedItem) >= mModel->getItemCount())
+            return;
         mItemTransfer->apply(mModel->getItem(mSelectedItem), count, *mItemView);
     }
 
@@ -284,8 +298,11 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
+            if (!mSortModel)
+                return true;
             int index = mItemView->getControllerFocus();
-            if (index >= 0 && index < mItemView->getItemCount())
+            const size_t modelCount = mSortModel->getItemCount();
+            if (index >= 0 && static_cast<size_t>(index) < modelCount)
                 onItemSelected(index);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
