@@ -24,6 +24,7 @@ namespace Settings
         SettingValue<float> mMenuTransparency{ mIndex, "GUI", "menu transparency", makeClampSanitizerFloat(0, 1) };
         SettingValue<float> mTooltipDelay{ mIndex, "GUI", "tooltip delay", makeMaxSanitizerFloat(0) };
         SettingValue<bool> mStretchMenuBackground{ mIndex, "GUI", "stretch menu background" };
+        SettingValue<bool> mUnskippableIntroVideos{ mIndex, "GUI", "unskippable intro videos" };
         SettingValue<bool> mControllerMenus{ mIndex, "GUI", "controller menus" };
         SettingValue<bool> mControllerTooltips{ mIndex, "GUI", "controller tooltips" };
         SettingValue<bool> mControllerJoystickDpad{ mIndex, "GUI", "controller joystick dpad navigation" };

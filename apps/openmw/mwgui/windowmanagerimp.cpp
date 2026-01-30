@@ -1395,10 +1395,15 @@ namespace MWGui
             {
                 if (mode == GM_Inventory)
                 {
-                    if (dynamic_cast<MapWindow*>(getActiveControllerWindow()) != nullptr)
-                        visible = true;
-                    else
-                        visible = false;
+                    WindowBase* activeWindow = nullptr;
+                    auto it = mGuiModeStates.find(mode);
+                    if (it != mGuiModeStates.end() && !it->second.mWindows.empty())
+                    {
+                        const size_t index
+                            = std::clamp<size_t>(mActiveControllerWindows[mode], 0, it->second.mWindows.size() - 1);
+                        activeWindow = it->second.mWindows[index];
+                    }
+                    visible = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
                 }
                 else
                     visible = false;

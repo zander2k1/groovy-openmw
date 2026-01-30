@@ -79,6 +79,7 @@ namespace MWGui
         MyGUI::TextBox* mPriceText;
         MyGUI::Widget* mControllerFocusHighlight = nullptr;
         bool mControllerEffectsFocusActive = false;
+        bool mKeyboardWasVisible = false;
 
         MWMechanics::Enchanting mEnchanting;
         ESM::EffectList mEffectList;

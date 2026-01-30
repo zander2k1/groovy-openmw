@@ -468,12 +468,10 @@ namespace MWGui
 
     void TradeWindow::borrowItem(int index, size_t count)
     {
-        if (!mTradeModel || index < 0 || static_cast<size_t>(index) >= mTradeModel->getItemCount())
-            return;
         TradeItemModel* playerTradeModel = nullptr;
         if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
             playerTradeModel = inv->getTradeModel();
-        if (!playerTradeModel)
+        if (!playerTradeModel || index < 0 || static_cast<size_t>(index) >= playerTradeModel->getItemCount())
             return;
         mTradeModel->borrowItemToUs(index, playerTradeModel, count);
         mItemView->update();
@@ -482,12 +480,10 @@ namespace MWGui
 
     void TradeWindow::returnItem(int index, size_t count)
     {
-        if (!mTradeModel || index < 0 || static_cast<size_t>(index) >= mTradeModel->getItemCount())
-            return;
         TradeItemModel* playerTradeModel = nullptr;
         if (auto* inv = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
             playerTradeModel = inv->getTradeModel();
-        if (!playerTradeModel)
+        if (!playerTradeModel || index < 0 || static_cast<size_t>(index) >= playerTradeModel->getItemCount())
             return;
         mTradeModel->returnItemBorrowedFromUs(index, playerTradeModel, count);
         mItemView->update();

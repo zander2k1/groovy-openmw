@@ -137,7 +137,12 @@ namespace MWGui
 
             int step = 1;
             if (allowFastStep && (now - mNavStartTime) >= std::chrono::seconds(5))
-                step = 10;
+            {
+                if (maxCount > 1000)
+                    step = 50;
+                else
+                    step = 10;
+            }
 
             setCount(mItemEdit->getValue() + direction * step);
         }

@@ -210,6 +210,7 @@ namespace MWGui
 
         MyGUI::Widget* mControllerFocusHighlight = nullptr;
         bool mControllerEffectsFocusActive = false;
+        bool mKeyboardWasVisible = false;
     };
 
 }

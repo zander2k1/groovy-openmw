@@ -1333,35 +1333,6 @@
               </property>
              </widget>
             </item>
-            <item row="3" column="0">
-             <widget class="QLabel" name="gamepadCursorSpeedLabel">
-              <property name="toolTip">
-               <string>Speed multiplier for the gamepad cursor.</string>
-              </property>
-              <property name="text">
-               <string>Gamepad Cursor Speed</string>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="QDoubleSpinBox" name="gamepadCursorSpeedSpinBox">
-              <property name="decimals">
-               <number>2</number>
-              </property>
-              <property name="minimum">
-               <double>0.000000000000000</double>
-              </property>
-              <property name="maximum">
-               <double>10.000000000000000</double>
-              </property>
-              <property name="singleStep">
-               <double>0.100000000000000</double>
-              </property>
-              <property name="value">
-               <double>0.500000000000000</double>
-              </property>
-             </widget>
-            </item>
             <item row="1" column="0">
              <widget class="QLabel" name="scalingLabel">
               <property name="toolTip">
@@ -1450,15 +1421,25 @@
               </widget>
              </item>
              <item row="6" column="1">
-              <widget class="QCheckBox" name="stretchBackgroundCheckBox">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stretch menus, load screens, etc. to the window aspect ratio.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Stretch Menu Background</string>
-               </property>
-              </widget>
-             </item>
+             <widget class="QCheckBox" name="stretchBackgroundCheckBox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stretch menus, load screens, etc. to the window aspect ratio.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Stretch Menu Background</string>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="1">
+             <widget class="QCheckBox" name="unskippableIntroVideosCheckBox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Prevent skipping intro videos before the main menu.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Enable Unskippable Intro Videos</string>
+              </property>
+             </widget>
+            </item>
              <item row="0" column="0">
               <widget class="QLabel" name="showOwnedLabel">
                <property name="text">
@@ -1578,7 +1559,7 @@
              </widget>
             </item>
              <item row="5" column="0">
-              <layout class="QHBoxLayout" name="controllerMenuTurboLayout">
+             <layout class="QHBoxLayout" name="controllerMenuTurboLayout">
                <item>
                 <widget class="QLabel" name="controllerMenuTurboLabel">
                  <property name="enabled">
@@ -1611,8 +1592,82 @@
                  </property>
                 </widget>
                </item>
-              </layout>
-             </item>
+             </layout>
+            </item>
+            <item row="6" column="0">
+             <layout class="QHBoxLayout" name="gamepadCursorSpeedLayout">
+              <item>
+               <widget class="QLabel" name="gamepadCursorSpeedLabel">
+                <property name="toolTip">
+                 <string>Speed multiplier for the gamepad cursor.</string>
+                </property>
+                <property name="text">
+                 <string>Gamepad Cursor Speed</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QDoubleSpinBox" name="gamepadCursorSpeedSpinBox">
+                <property name="decimals">
+                 <number>2</number>
+                </property>
+                <property name="minimum">
+                 <double>0.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>0.500000000000000</double>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item row="7" column="0">
+             <layout class="QHBoxLayout" name="controllerIconStyleLayout">
+              <item>
+               <widget class="QLabel" name="controllerIconStyleLabel">
+                <property name="toolTip">
+                 <string>Choose which controller button icons to show.</string>
+                </property>
+                <property name="text">
+                 <string>Controller Icon Style</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="controllerIconStyleComboBox">
+                <property name="currentIndex">
+                 <number>0</number>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Automatic</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Steam</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Xbox</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>PlayStation</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
             </layout>
            </item>
            <item>

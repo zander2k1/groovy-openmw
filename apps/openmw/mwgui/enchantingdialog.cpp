@@ -123,6 +123,12 @@ namespace MWGui
         if (!Settings::gui().mControllerMenus)
             return;
 
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool keyboardVisible = winMgr->isVirtualKeyboardVisible();
+        if (mKeyboardWasVisible && !keyboardVisible)
+            setControllerFocusWidget(mName);
+        mKeyboardWasVisible = keyboardVisible;
+
         updateControllerFocusHighlight();
         updateEditStaticState();
     }
@@ -687,11 +693,6 @@ namespace MWGui
             onBuyButtonClicked(mBuyButton);
         else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
             onTypeButtonClicked(mTypeButton);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
-            onSelectItem(mItemBox);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
-            onSelectSoul(mSoulBox);
-
         return true;
     }
 }

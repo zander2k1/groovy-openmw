@@ -82,6 +82,32 @@ namespace
         return 0;
     }
 
+    int toIndexControllerIconStyle(const std::string& value)
+    {
+        if (value == "steam")
+            return 1;
+        if (value == "xbox")
+            return 2;
+        if (value == "playstation")
+            return 3;
+        return 0;
+    }
+
+    std::string fromIndexControllerIconStyle(int index)
+    {
+        switch (index)
+        {
+            case 1:
+                return "steam";
+            case 2:
+                return "xbox";
+            case 3:
+                return "playstation";
+            default:
+                return "auto";
+        }
+    }
+
 }
 
 Launcher::SettingsPage::SettingsPage(Config::GameSettings& gameSettings, QWidget* parent)
@@ -316,6 +342,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mColorTopicEnable, *changeDialogTopicsCheckBox);
         showOwnedComboBox->setCurrentIndex(Settings::game().mShowOwned);
         loadSettingBool(Settings::gui().mStretchMenuBackground, *stretchBackgroundCheckBox);
+        loadSettingBool(Settings::gui().mUnskippableIntroVideos, *unskippableIntroVideosCheckBox);
         connect(controllerMenusCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotControllerMenusToggled);
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
@@ -330,6 +357,8 @@ bool Launcher::SettingsPage::loadSettings()
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
+        controllerIconStyleComboBox->setCurrentIndex(
+            toIndexControllerIconStyle(Settings::input().mControllerIconStyle));
     }
 
     // Bug fixes
@@ -519,6 +548,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*changeDialogTopicsCheckBox, Settings::gui().mColorTopicEnable);
         saveSettingInt(*showOwnedComboBox, Settings::game().mShowOwned);
         saveSettingBool(*stretchBackgroundCheckBox, Settings::gui().mStretchMenuBackground);
+        saveSettingBool(*unskippableIntroVideosCheckBox, Settings::gui().mUnskippableIntroVideos);
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
         saveSettingBool(*controllerMenuJoystickDpadCheckBox, Settings::gui().mControllerJoystickDpad);
@@ -532,6 +562,8 @@ void Launcher::SettingsPage::saveSettings()
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
         saveSettingBool(*enableFallbackFontsCheckBox, Settings::gui().mEnableFallbackFonts);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);
+        Settings::input().mControllerIconStyle.set(
+            fromIndexControllerIconStyle(controllerIconStyleComboBox->currentIndex()));
     }
 
     // Bug fixes
@@ -594,6 +626,8 @@ void Launcher::SettingsPage::slotControllerMenusToggled(bool checked)
     controllerMenuTurboSpinBox->setEnabled(checked);
     singularContainerTradeWindowCheckBox->setEnabled(checked);
     controllerMenuHighlightCheckBox->setEnabled(checked);
+    controllerIconStyleLabel->setEnabled(checked);
+    controllerIconStyleComboBox->setEnabled(checked);
 }
 
 void Launcher::SettingsPage::slotPostProcessToggled(bool checked)

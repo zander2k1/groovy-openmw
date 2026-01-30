@@ -27,6 +27,8 @@ namespace Settings
         SettingValue<bool> mEnableController{ mIndex, "Input", "enable controller" };
         SettingValue<float> mGamepadCursorSpeed{ mIndex, "Input", "gamepad cursor speed",
             makeMaxStrictSanitizerFloat(0) };
+        SettingValue<std::string> mControllerIconStyle{ mIndex, "Input", "controller icon style",
+            makeEnumSanitizerString({ "auto", "steam", "xbox", "playstation", "switch" }) };
         SettingValue<float> mJoystickDeadZone{ mIndex, "Input", "joystick dead zone",
             makeClampSanitizerFloat(0, 0.5f) };
         SettingValue<bool> mEnableGyroscope{ mIndex, "Input", "enable gyroscope" };

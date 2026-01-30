@@ -1558,5 +1558,32 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <source>XBOX Styled Dialog</source>
         <translation type="unfinished"></translation>
     </message>
-</context>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Prevent skipping intro videos before the main menu.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Unskippable Intro Videos</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose which controller button icons to show.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Controller Icon Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Xbox</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PlayStation</source>
+        <translation type="unfinished"></translation>
+    </message></context>
 </TS>

@@ -104,6 +104,29 @@ namespace
     {
         return mode == MWGui::GM_Dialogue;
     }
+
+    enum class ControllerIconStyle
+    {
+        Auto,
+        Steam,
+        Xbox,
+        Playstation,
+        Switch,
+    };
+
+    ControllerIconStyle getControllerIconStyle()
+    {
+        const std::string& style = Settings::input().mControllerIconStyle;
+        if (style == "steam")
+            return ControllerIconStyle::Steam;
+        if (style == "xbox")
+            return ControllerIconStyle::Xbox;
+        if (style == "playstation")
+            return ControllerIconStyle::Playstation;
+        if (style == "switch")
+            return ControllerIconStyle::Switch;
+        return ControllerIconStyle::Auto;
+    }
 }
 
 namespace MWInput
@@ -874,12 +897,24 @@ namespace MWInput
 
     std::string ControllerManager::getControllerButtonIcon(int button)
     {
-        int controllerType = ControllerManager::getControllerType();
-
-        bool isXbox = controllerType == SDL_CONTROLLER_TYPE_XBOX360 || controllerType == SDL_CONTROLLER_TYPE_XBOXONE;
-        bool isPsx = controllerType == SDL_CONTROLLER_TYPE_PS3 || controllerType == SDL_CONTROLLER_TYPE_PS4
-            || controllerType == SDL_CONTROLLER_TYPE_PS5;
-        bool isSwitch = controllerType == SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO;
+        const ControllerIconStyle style = getControllerIconStyle();
+        bool isXbox = false;
+        bool isPsx = false;
+        bool isSwitch = false;
+        if (style == ControllerIconStyle::Auto)
+        {
+            const int controllerType = ControllerManager::getControllerType();
+            isXbox = controllerType == SDL_CONTROLLER_TYPE_XBOX360 || controllerType == SDL_CONTROLLER_TYPE_XBOXONE;
+            isPsx = controllerType == SDL_CONTROLLER_TYPE_PS3 || controllerType == SDL_CONTROLLER_TYPE_PS4
+                || controllerType == SDL_CONTROLLER_TYPE_PS5;
+            isSwitch = controllerType == SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO;
+        }
+        else
+        {
+            isXbox = style == ControllerIconStyle::Xbox;
+            isPsx = style == ControllerIconStyle::Playstation;
+            isSwitch = style == ControllerIconStyle::Switch;
+        }
 
         switch (button)
         {
@@ -940,10 +975,20 @@ namespace MWInput
 
     std::string ControllerManager::getControllerAxisIcon(int axis)
     {
-        int controllerType = ControllerManager::getControllerType();
-
-        bool isXbox = controllerType == SDL_CONTROLLER_TYPE_XBOX360 || controllerType == SDL_CONTROLLER_TYPE_XBOXONE;
-        bool isSwitch = controllerType == SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO;
+        const ControllerIconStyle style = getControllerIconStyle();
+        bool isXbox = false;
+        bool isSwitch = false;
+        if (style == ControllerIconStyle::Auto)
+        {
+            const int controllerType = ControllerManager::getControllerType();
+            isXbox = controllerType == SDL_CONTROLLER_TYPE_XBOX360 || controllerType == SDL_CONTROLLER_TYPE_XBOXONE;
+            isSwitch = controllerType == SDL_CONTROLLER_TYPE_NINTENDO_SWITCH_PRO;
+        }
+        else
+        {
+            isXbox = style == ControllerIconStyle::Xbox;
+            isSwitch = style == ControllerIconStyle::Switch;
+        }
 
         switch (axis)
         {

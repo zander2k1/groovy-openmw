@@ -850,7 +850,10 @@ void OMW::Engine::prepareEngine()
     {
         std::string_view logo = Fallback::Map::getString("Movies_Company_Logo");
         if (!logo.empty())
-            mWindowManager->playVideo(logo, true);
+        {
+            const bool allowSkipping = !Settings::gui().mUnskippableIntroVideos;
+            mWindowManager->playVideo(logo, allowSkipping);
+        }
     }
 
     listener->loadingOn();
@@ -1011,7 +1014,10 @@ void OMW::Engine::go()
 
         std::string_view logo = Fallback::Map::getString("Movies_Morrowind_Logo");
         if (!logo.empty())
-            mWindowManager->playVideo(logo, /*allowSkipping*/ true, /*overrideSounds*/ false);
+        {
+            const bool allowSkipping = !Settings::gui().mUnskippableIntroVideos;
+            mWindowManager->playVideo(logo, allowSkipping, /*overrideSounds*/ false);
+        }
     }
     else
     {

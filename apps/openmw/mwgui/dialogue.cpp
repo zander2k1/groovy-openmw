@@ -1062,8 +1062,8 @@ namespace MWGui
         const int gap = 9;
         const int innerHeight = std::max(0, windowSize.height - topMargin - bottomMargin);
 
-        const int listWidthMax = 130;
-        const int listWidth = std::min(listWidthMax, std::max(0, windowSize.width / 3));
+        const int listWidthMax = 160;
+        const int listWidth = std::min(listWidthMax, std::max(0, static_cast<int>(windowSize.width * 0.42f)));
         const int listRightMargin = 16;
         const int listX = std::max(sideMargin, windowSize.width - listRightMargin - listWidth);
         const int leftBoxWidth = std::max(0, listX - gap - sideMargin);

@@ -733,6 +733,12 @@ namespace MWGui
         if (!Settings::gui().mControllerMenus)
             return;
 
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool keyboardVisible = winMgr->isVirtualKeyboardVisible();
+        if (mKeyboardWasVisible && !keyboardVisible)
+            setControllerFocusWidget(mNameEdit);
+        mKeyboardWasVisible = keyboardVisible;
+
         if (mControllerEffectsFocusActive)
             setControllerEffectsFocus(true);
 

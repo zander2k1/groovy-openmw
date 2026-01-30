@@ -398,7 +398,7 @@ namespace MWGui
             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
             setCoord(winRect.left, posY, width, barHeight);
 
-            const int desiredBarWidth = dialogueWindow->getDispositionBarWidth();
+            const int desiredBarWidth = static_cast<int>(dialogueWindow->getDispositionBarWidth() * 0.7f);
             const int barWidth = std::max(0, std::min(desiredBarWidth, width - paddingX * 2));
             const int barLeft = std::max(paddingX, width - paddingX - barWidth);
             const int labelWidth = std::max(0, barLeft - paddingX);
@@ -432,6 +432,7 @@ namespace MWGui
                 std::string mLabel;
                 std::string mValue;
                 bool mProgress = false;
+                float mProgressScale = 1.f;
                 int mProgressValue = 0;
                 int mProgressRange = 0;
                 std::string mProgressText;
@@ -458,6 +459,7 @@ namespace MWGui
                 row.mLabel = std::string(focus->getUserString("CollapsedLabel"));
                 row.mValue = std::string(focus->getUserString("CollapsedValue"));
                 row.mProgress = true;
+                row.mProgressScale = 0.4f;
                 row.mProgressRange = toInt(focus, "Range_LevelProgress");
                 row.mProgressValue = toInt(focus, "RangePosition_LevelProgress");
                 row.mProgressText = std::string(focus->getUserString("Caption_LevelProgressText"));
@@ -616,9 +618,10 @@ namespace MWGui
 
                     if (row.mProgress)
                     {
-                        const int barWidth = valueWidth;
+                        const int barWidth = std::max(0, static_cast<int>(valueWidth * row.mProgressScale));
+                        const int barLeft = paddingX * 2 + labelWidth + (valueWidth - barWidth);
                         MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>(
-                            "MW_Progress_Red", MyGUI::IntCoord(paddingX * 2 + labelWidth, y, barWidth, rowHeight),
+                            "MW_Progress_Red", MyGUI::IntCoord(barLeft, y, barWidth, rowHeight),
                             MyGUI::Align::Right | MyGUI::Align::VCenter);
                         const int range = std::max(1, row.mProgressRange);
                         const int pos = std::clamp(row.mProgressValue, 0, range);
