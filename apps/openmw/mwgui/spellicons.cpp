@@ -161,7 +161,7 @@ namespace MWGui
                             *MWBase::Environment::get().getResourceSystem()->getVFS()));
 
                     ToolTipInfo tooltipInfo;
-                    tooltipInfo.caption = nameTag;
+                    tooltipInfo.caption = effect->mName;
                     tooltipInfo.icon = effect->mIcon;
                     tooltipInfo.imageSize = 16;
                     tooltipInfo.wordWrap = false;
