@@ -645,6 +645,8 @@ namespace MWGui
         mPlayerGold->setCaptionWithReplacing(MyGUI::utility::toString(playerGold));
 
         startEditing();
+        if (Settings::gui().mControllerMenus)
+            setControllerFocusWidget(mNameEdit);
     }
 
     void SpellCreationDialog::onCancelButtonClicked(MyGUI::Widget* /*sender*/)
@@ -716,10 +718,14 @@ namespace MWGui
             const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
             window->setCoord(getCenteredWindowCoord(viewSize, window->getSize()));
         }
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (Settings::gui().mControllerMenus)
-            setControllerEffectsFocusActive(true);
+        {
+            mKeyboardWasVisible = false;
+            setControllerFocusWidget(mNameEdit);
+        }
         else
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+            winMgr->setKeyFocusWidget(mNameEdit);
     }
 
     void SpellCreationDialog::onFrame(float dt)
@@ -760,7 +766,7 @@ namespace MWGui
                 if (mControllerEffectsFocusActive)
                     setControllerEffectsFocus(true);
                 else if (!MWBase::Environment::get().getWindowManager()->isVirtualKeyboardVisible())
-                    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+                    setControllerFocusWidget(mNameEdit);
             }
             return;
         }
@@ -802,7 +808,7 @@ namespace MWGui
             if (mControllerEffectsFocusActive)
                 setControllerEffectsFocus(true);
             else if (!MWBase::Environment::get().getWindowManager()->isVirtualKeyboardVisible())
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+                setControllerFocusWidget(mNameEdit);
         }
     }
 
@@ -844,7 +850,7 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
-            if (MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
+            if (!mControllerEffectsFocusActive && MyGUI::InputManager::getInstance().getKeyFocusWidget() == mNameEdit)
             {
                 setControllerEffectsRightColumn(false);
                 setControllerEffectsFocusActive(true);
@@ -874,8 +880,19 @@ namespace MWGui
         if (!widget)
             return;
 
-        setControllerEffectsFocusActive(false);
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(widget);
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (mControllerEffectsFocusActive)
+            setControllerEffectsFocusActive(false);
+        else
+            setControllerEffectsFocus(false);
+        winMgr->setKeyFocusWidget(widget);
+        if (Settings::gui().mControllerMenus)
+        {
+            // Spell creation is fully controller-driven; keep the cursor hidden.
+            winMgr->setCursorVisible(false);
+            // Keep the hidden mouse aligned with controller focus so stale hover styles/tooltips don't stick.
+            MWBase::Environment::get().getInputManager()->warpMouseToWidget(widget);
+        }
         updateControllerFocusHighlight();
     }
 
@@ -887,12 +904,13 @@ namespace MWGui
         mControllerEffectsFocusActive = active;
         setControllerEffectsFocus(active);
 
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (active)
         {
-            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
             winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
-            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
         }
+        if (Settings::gui().mControllerMenus)
+            winMgr->setCursorVisible(false);
 
         updateControllerFocusHighlight();
     }
@@ -1027,7 +1045,7 @@ namespace MWGui
             mAvailableFocus = 0;
             mEffectFocus = 0;
             mRightColumn = false;
-            if (!mAvailableButtons.empty())
+            if (!mAvailableButtons.empty() && mType == Enchanting)
             {
                 MWBase::WindowManager& winMgr = *MWBase::Environment::get().getWindowManager();
                 winMgr.setCursorVisible(!winMgr.getControllerTooltipVisible());

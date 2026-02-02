@@ -50,6 +50,7 @@
 #include "levelupdialog.hpp"
 #include "mapwindow.hpp"
 #include "merchantrepair.hpp"
+#include "quickkeysmenu.hpp"
 #include "recharge.hpp"
 #include "repair.hpp"
 #include "spellbuyingwindow.hpp"
@@ -183,10 +184,12 @@ namespace MWGui
         const bool controllerEnchanting = Settings::gui().mControllerMenus && mode == GM_Enchanting;
         const bool controllerSpellCreation = Settings::gui().mControllerMenus && mode == GM_SpellCreation;
         const bool controllerSpellBuying = Settings::gui().mControllerMenus && mode == GM_SpellBuying;
+        const bool controllerQuickKeys = Settings::gui().mControllerMenus && mode == GM_QuickKeysMenu;
         const bool controllerInventory = Settings::gui().mControllerMenus
             && (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion
                 || mode == GM_Levelup || mode == GM_Training || mode == GM_Repair || mode == GM_MerchantRepair
-                || controllerAlchemy || controllerEnchanting || controllerSpellCreation || controllerSpellBuying);
+                || controllerAlchemy || controllerEnchanting || controllerSpellCreation || controllerSpellBuying
+                || controllerQuickKeys);
         const bool controllerRecharge = Settings::gui().mControllerMenus && mode == GM_Recharge;
         const bool controllerCharGen = Settings::gui().mControllerMenus
             && (mode == GM_Name || mode == GM_Race || mode == GM_Birth || mode == GM_Class || mode == GM_ClassGenerate
@@ -1257,6 +1260,8 @@ namespace MWGui
                 return statsWindow->getControllerFocusTooltipWidget();
             if (auto* spellWindow = dynamic_cast<SpellWindow*>(activeWindow))
                 return spellWindow->getControllerFocusTooltipWidget();
+            if (auto* quickKeysMenu = dynamic_cast<QuickKeysMenu*>(activeWindow))
+                return quickKeysMenu->getControllerFocusTooltipWidget();
             if (auto* enchantingDialog = dynamic_cast<EnchantingDialog*>(activeWindow))
                 return enchantingDialog->getControllerFocusTooltipWidget();
             if (auto* spellCreationDialog = dynamic_cast<SpellCreationDialog*>(activeWindow))
@@ -1966,17 +1971,20 @@ namespace MWGui
                                 }
                             }
 
-                            Gui::EditBox* school = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
-                                MyGUI::IntCoord(padding, y, width - padding * 2, 18),
-                                MyGUI::Align::Left | MyGUI::Align::Top);
-                            school->setEditStatic(true);
-                            school->setEditMultiLine(true);
-                            school->setEditWordWrap(true);
-                            school->setNeedKeyFocus(false);
-                            school->setCaptionWithReplacing(schoolText);
-                            const int schoolHeight = std::max(0, school->getTextSize().height);
-                            school->setSize(width - padding * 2, schoolHeight);
-                            y += schoolHeight + spacing;
+                            if (!schoolText.empty())
+                            {
+                                Gui::EditBox* school = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
+                                    MyGUI::IntCoord(padding, y, width - padding * 2, 18),
+                                    MyGUI::Align::Left | MyGUI::Align::Top);
+                                school->setEditStatic(true);
+                                school->setEditMultiLine(true);
+                                school->setEditWordWrap(true);
+                                school->setNeedKeyFocus(false);
+                                school->setCaptionWithReplacing(schoolText);
+                                const int schoolHeight = std::max(0, school->getTextSize().height);
+                                school->setSize(width - padding * 2, schoolHeight);
+                                y += schoolHeight + spacing;
+                            }
 
                             std::string effectText;
                             std::string effectIcon;

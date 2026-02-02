@@ -1408,6 +1408,8 @@ namespace MWGui
                 else
                     visible = false;
             }
+            else if (mode == GM_SpellCreation)
+                visible = false;
         }
         mCursorVisible = visible;
     }

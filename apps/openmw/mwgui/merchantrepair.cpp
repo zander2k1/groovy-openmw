@@ -35,6 +35,7 @@ namespace MWGui
             mDisableGamepadCursor = true;
             mControllerButtons.mA = "#{Interface:Repair}";
             mControllerButtons.mB = "#{Interface:Cancel}";
+            mControllerButtons.mY = "#{Interface:Info}";
         }
     }
 

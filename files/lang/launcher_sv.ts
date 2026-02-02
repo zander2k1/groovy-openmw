@@ -1585,5 +1585,6 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
     <message>
         <source>PlayStation</source>
         <translation type="unfinished"></translation>
-    </message></context>
+    </message>
+</context>
 </TS>

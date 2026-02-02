@@ -1596,5 +1596,6 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
     <message>
         <source>PlayStation</source>
         <translation type="unfinished"></translation>
-    </message></context>
+    </message>
+</context>
 </TS>

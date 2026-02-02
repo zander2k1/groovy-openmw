@@ -42,7 +42,7 @@ namespace MWGui
 
         mControllerButtons.mA = "#{Interface:Repair}";
         mControllerButtons.mB = "#{Interface:Cancel}";
-        mControllerButtons.mY.clear();
+        mControllerButtons.mY = "#{Interface:Info}";
     }
 
     void Repair::onOpen()

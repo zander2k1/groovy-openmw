@@ -63,6 +63,8 @@ namespace MWGui
         {
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:OK}";
+            mControllerButtons.mX = "#{sActivate}";
+            mControllerButtons.mY = "#{Interface:Info}";
         }
     }
 
@@ -100,6 +102,8 @@ namespace MWGui
 
                     if (!item.isEmpty())
                         mKey[index].button->setUserData(MWWorld::Ptr(item));
+                    else
+                        unassign(&mKey[index]);
 
                     break;
                 }
@@ -135,6 +139,17 @@ namespace MWGui
             mItemSelectionDialog->setVisible(false);
         if (mMagicSelectionDialog)
             mMagicSelectionDialog->setVisible(false);
+    }
+
+    MyGUI::Widget* QuickKeysMenu::getControllerFocusTooltipWidget() const
+    {
+        if (!Settings::gui().mControllerMenus || mControllerFocus >= mKey.size())
+            return nullptr;
+
+        ItemWidget* button = mKey[mControllerFocus].button;
+        if (!button || !button->getVisible())
+            return nullptr;
+        return button;
     }
 
     void QuickKeysMenu::unassign(keyData* key)
@@ -438,6 +453,9 @@ namespace MWGui
 
                 MWBase::Environment::get().getWorld()->getPlayer().setDrawState(MWMechanics::DrawState::Spell);
             }
+
+            // Item quick keys should disappear once their stack is depleted.
+            validate(index - 1);
         }
         else if (key->type == ESM::QuickKeys::Type::Magic)
         {
@@ -472,6 +490,8 @@ namespace MWGui
     {
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
             onQuickKeyButtonClicked(mKey[mControllerFocus].button);
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+            activateQuickKey(static_cast<int>(mControllerFocus + 1));
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
             onOkButtonClicked(mOkButton);
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)

@@ -1562,5 +1562,6 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
     <message>
         <source>PlayStation</source>
         <translation type="unfinished"></translation>
-    </message></context>
+    </message>
+</context>
 </TS>
