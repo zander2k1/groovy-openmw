@@ -36,10 +36,13 @@ set(BUILTIN_DATA_FILES
     textures/omw_switch_button_zl.dds
     textures/omw_switch_button_zr.dds
     textures/omw_xbox_button_lb.dds
+    textures/omw_xbox_button_lb_WHITE.dds
     textures/omw_xbox_button_lt.dds
     textures/omw_xbox_button_rb.dds
+    textures/omw_xbox_button_rb_BLACK.dds
     textures/omw_xbox_button_rt.dds
     textures/omw/water_nm.png
+    textures/omw/water_nm_classic.png
 
     fonts/DejaVuFontLicense.txt
     fonts/DejaVuLGCSansMono.ttf

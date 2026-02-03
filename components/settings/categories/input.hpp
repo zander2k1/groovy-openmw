@@ -29,6 +29,7 @@ namespace Settings
             makeMaxStrictSanitizerFloat(0) };
         SettingValue<std::string> mControllerIconStyle{ mIndex, "Input", "controller icon style",
             makeEnumSanitizerString({ "auto", "steam", "xbox", "playstation", "switch" }) };
+        SettingValue<bool> mControllerWhiteBlackButtonIcons{ mIndex, "Input", "controller white black button icons" };
         SettingValue<float> mJoystickDeadZone{ mIndex, "Input", "joystick dead zone",
             makeClampSanitizerFloat(0, 0.5f) };
         SettingValue<bool> mEnableGyroscope{ mIndex, "Input", "enable gyroscope" };

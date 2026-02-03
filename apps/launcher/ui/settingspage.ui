@@ -464,6 +464,16 @@
                    </property>
                   </widget>
                  </item>
+                 <item row="7" column="0">
+                  <widget class="QCheckBox" name="classicWaterShaderCheckBox">
+                   <property name="toolTip">
+                    <string>Use classic water shader files and textures when available.</string>
+                   </property>
+                   <property name="text">
+                    <string>Enable Classic Water Shader</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="3" column="0">
                   <widget class="QCheckBox" name="autoUseObjectSpecularMapsCheckBox">
                    <property name="toolTip">
@@ -1667,6 +1677,16 @@
                </widget>
               </item>
              </layout>
+            </item>
+            <item row="8" column="0">
+             <widget class="QCheckBox" name="controllerWhiteBlackButtonIconsCheckBox">
+              <property name="toolTip">
+               <string>Use white/black shoulder and trigger icons for LB/RB/R1/R2/ZL/ZR prompts.</string>
+              </property>
+              <property name="text">
+               <string>Enable white/black button icons</string>
+              </property>
+             </widget>
             </item>
             </layout>
            </item>

@@ -218,6 +218,7 @@ bool Launcher::SettingsPage::loadSettings()
             antialiasAlphaTestCheckBox->setCheckState(Qt::Unchecked);
         loadSettingBool(Settings::shaders().mAdjustCoverageForAlphaTest, *adjustCoverageForAlphaTestCheckBox);
         loadSettingBool(Settings::shaders().mWeatherParticleOcclusion, *weatherParticleOcclusionCheckBox);
+        loadSettingBool(Settings::shaders().mClassicWaterShader, *classicWaterShaderCheckBox);
         loadSettingBool(Settings::game().mUseMagicItemAnimations, *magicItemAnimationsCheckBox);
         connect(animSourcesCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotAnimSourcesToggled);
         loadSettingBool(Settings::game().mUseAdditionalAnimSources, *animSourcesCheckBox);
@@ -359,6 +360,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
         controllerIconStyleComboBox->setCurrentIndex(
             toIndexControllerIconStyle(Settings::input().mControllerIconStyle));
+        loadSettingBool(Settings::input().mControllerWhiteBlackButtonIcons, *controllerWhiteBlackButtonIconsCheckBox);
     }
 
     // Bug fixes
@@ -439,6 +441,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*antialiasAlphaTestCheckBox, Settings::shaders().mAntialiasAlphaTest);
         saveSettingBool(*adjustCoverageForAlphaTestCheckBox, Settings::shaders().mAdjustCoverageForAlphaTest);
         saveSettingBool(*weatherParticleOcclusionCheckBox, Settings::shaders().mWeatherParticleOcclusion);
+        saveSettingBool(*classicWaterShaderCheckBox, Settings::shaders().mClassicWaterShader);
         saveSettingBool(*magicItemAnimationsCheckBox, Settings::game().mUseMagicItemAnimations);
         saveSettingBool(*animSourcesCheckBox, Settings::game().mUseAdditionalAnimSources);
         saveSettingBool(*weaponSheathingCheckBox, Settings::game().mWeaponSheathing);
@@ -564,6 +567,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);
         Settings::input().mControllerIconStyle.set(
             fromIndexControllerIconStyle(controllerIconStyleComboBox->currentIndex()));
+        saveSettingBool(*controllerWhiteBlackButtonIconsCheckBox, Settings::input().mControllerWhiteBlackButtonIcons);
     }
 
     // Bug fixes
@@ -628,6 +632,7 @@ void Launcher::SettingsPage::slotControllerMenusToggled(bool checked)
     controllerMenuHighlightCheckBox->setEnabled(checked);
     controllerIconStyleLabel->setEnabled(checked);
     controllerIconStyleComboBox->setEnabled(checked);
+    controllerWhiteBlackButtonIconsCheckBox->setEnabled(checked);
 }
 
 void Launcher::SettingsPage::slotPostProcessToggled(bool checked)

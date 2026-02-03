@@ -1586,5 +1586,21 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <source>PlayStation</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use classic water shader files and textures when available.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Classic Water Shader</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use white/black shoulder and trigger icons for LB/RB/R1/R2/ZL/ZR prompts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable white/black button icons</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

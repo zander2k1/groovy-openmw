@@ -898,6 +898,7 @@ namespace MWInput
     std::string ControllerManager::getControllerButtonIcon(int button)
     {
         const ControllerIconStyle style = getControllerIconStyle();
+        const bool useWhiteBlackButtonIcons = Settings::input().mControllerWhiteBlackButtonIcons;
         bool isXbox = false;
         bool isPsx = false;
         bool isSwitch = false;
@@ -936,6 +937,8 @@ namespace MWInput
                     return "textures/omw_psx_button_dpad.dds";
                 return "textures/omw_steam_button_dpad.dds";
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                if (useWhiteBlackButtonIcons)
+                    return "textures/omw_xbox_button_lb_WHITE.dds";
                 if (isXbox)
                     return "textures/omw_xbox_button_lb.dds";
                 else if (isSwitch)
@@ -944,6 +947,8 @@ namespace MWInput
             case SDL_CONTROLLER_BUTTON_LEFTSTICK:
                 return "textures/omw_steam_button_l3.dds";
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                if (useWhiteBlackButtonIcons)
+                    return "textures/omw_xbox_button_rb_BLACK.dds";
                 if (isXbox)
                     return "textures/omw_xbox_button_rb.dds";
                 else if (isSwitch)
@@ -976,6 +981,7 @@ namespace MWInput
     std::string ControllerManager::getControllerAxisIcon(int axis)
     {
         const ControllerIconStyle style = getControllerIconStyle();
+        const bool useWhiteBlackButtonIcons = Settings::input().mControllerWhiteBlackButtonIcons;
         bool isXbox = false;
         bool isSwitch = false;
         if (style == ControllerIconStyle::Auto)
@@ -999,12 +1005,16 @@ namespace MWInput
             case SDL_CONTROLLER_AXIS_RIGHTY:
                 return "textures/omw_steam_button_rstick.dds";
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+                if (useWhiteBlackButtonIcons)
+                    return "textures/omw_xbox_button_lb_WHITE.dds";
                 if (isXbox)
                     return "textures/omw_xbox_button_lt.dds";
                 else if (isSwitch)
                     return "textures/omw_switch_button_zl.dds";
                 return "textures/omw_steam_button_l2.dds";
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+                if (useWhiteBlackButtonIcons)
+                    return "textures/omw_xbox_button_rb_BLACK.dds";
                 if (isXbox)
                     return "textures/omw_xbox_button_rt.dds";
                 else if (isSwitch)
