@@ -41,7 +41,7 @@ namespace MWGui
     class SpellIcons
     {
     public:
-        void updateWidgets(MyGUI::Widget* parent, bool adjustSize);
+        void updateWidgets(MyGUI::Widget* parent, bool adjustSize, bool anchorRight = true);
         void getVisibleWidgets(std::vector<MyGUI::ImageBox*>& out) const;
 
     private:

@@ -24,7 +24,7 @@
 
 namespace MWGui
 {
-    void SpellIcons::updateWidgets(MyGUI::Widget* parent, bool adjustSize)
+    void SpellIcons::updateWidgets(MyGUI::Widget* parent, bool adjustSize, bool anchorRight)
     {
         MWWorld::Ptr player = MWMechanics::getPlayer();
         const MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
@@ -208,7 +208,8 @@ namespace MWGui
                 s = 0;
             int diff = parent->getWidth() - s;
             parent->setSize(s, parent->getHeight());
-            parent->setPosition(parent->getLeft() + diff, parent->getTop());
+            if (anchorRight)
+                parent->setPosition(parent->getLeft() + diff, parent->getTop());
         }
 
         // hide inactive effects

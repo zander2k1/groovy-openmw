@@ -45,6 +45,7 @@ namespace Settings
         SettingValue<std::string> mVirtualKeyboardLayoutSecondary{ mIndex, "GUI", "virtual keyboard layout secondary" };
         SettingValue<bool> mColorTopicEnable{ mIndex, "GUI", "color topic enable" };
         SettingValue<bool> mXboxStyledDialog{ mIndex, "GUI", "xbox styled dialog" };
+        SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap" };
         SettingValue<MyGUI::Colour> mColorTopicSpecific{ mIndex, "GUI", "color topic specific" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificOver{ mIndex, "GUI", "color topic specific over" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificPressed{ mIndex, "GUI", "color topic specific pressed" };

@@ -305,7 +305,7 @@ namespace MWInput
 
         if (mGuiNavHeldButton != kLeftStickDpadNone)
         {
-            const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 5.f;
+            const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 7.5f;
             const bool repeatEnabled = repeatRate > 0.f;
             if (!repeatEnabled)
             {

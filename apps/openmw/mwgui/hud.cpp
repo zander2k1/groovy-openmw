@@ -83,6 +83,7 @@ namespace MWGui
 
         getWidget(mMinimapBox, "MiniMapBox");
         mMinimapBoxBaseRight = viewSize.width - mMinimapBox->getRight();
+        mMinimapBoxBaseBottom = viewSize.height - mMinimapBox->getBottom();
         getWidget(mMinimap, "MiniMap");
         getWidget(mCompass, "Compass");
         getWidget(mMinimapButton, "MiniMapButton");
@@ -100,6 +101,7 @@ namespace MWGui
         mMainWidget->eventMouseLostFocus += MyGUI::newDelegate(this, &HUD::onWorldMouseLostFocus);
 
         mSpellIcons = std::make_unique<SpellIcons>();
+        updatePositions();
     }
 
     HUD::~HUD()
@@ -308,7 +310,7 @@ namespace MWGui
             mWeaponSpellBox->setPosition(mWeaponSpellBox->getPosition() + MyGUI::IntPoint(0, 20));
         }
 
-        mSpellIcons->updateWidgets(mEffectBox, true);
+        mSpellIcons->updateWidgets(mEffectBox, true, !Settings::gui().mXboxStyledMinimap);
 
         if (mEnemyActor.isSet() && mEnemyHealth->getVisible())
         {
@@ -535,6 +537,13 @@ namespace MWGui
         mSneakBox->setPosition(mSneakBoxBaseLeft - sneakDx, mSneakBox->getTop());
 
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        const bool xboxStyledMinimap = Settings::gui().mXboxStyledMinimap;
+
+        const int minimapLeft = xboxStyledMinimap ? mMinimapBoxBaseRight
+                                                  : (viewSize.width - mMinimapBoxBaseRight) - mMinimapBox->getWidth();
+        const int minimapTop = xboxStyledMinimap ? mMinimapBoxBaseBottom
+                                                 : (viewSize.height - mMinimapBoxBaseBottom) - mMinimapBox->getHeight();
+        mMinimapBox->setPosition(minimapLeft, minimapTop);
 
         // effect box can have variable width -> variable left coordinate
         int effectsDx = 0;
@@ -545,8 +554,16 @@ namespace MWGui
         if (!mMapVisible)
             mCellNameBox->setVisible(false);
 
-        mEffectBox->setPosition(
-            (viewSize.width - mEffectBoxBaseRight) - mEffectBox->getWidth() + effectsDx, mEffectBox->getTop());
+        if (xboxStyledMinimap)
+        {
+            constexpr int effectsGap = 4;
+            mEffectBox->setPosition(mMinimapBox->getRight() + effectsGap, mMinimapBox->getTop());
+        }
+        else
+        {
+            mEffectBox->setPosition(
+                (viewSize.width - mEffectBoxBaseRight) - mEffectBox->getWidth() + effectsDx, mEffectBox->getTop());
+        }
     }
 
     void HUD::updateEnemyHealthBar()

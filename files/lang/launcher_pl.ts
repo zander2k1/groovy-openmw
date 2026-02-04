@@ -1613,5 +1613,13 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <source>Enable white/black button icons</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable XBOX-Styled Minimap</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

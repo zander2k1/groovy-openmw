@@ -1602,5 +1602,13 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <source>Enable white/black button icons</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable XBOX-Styled Minimap</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

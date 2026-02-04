@@ -1401,6 +1401,16 @@
               </widget>
              </item>
              <item row="8" column="0">
+              <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
+               <property name="toolTip">
+                <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
+               </property>
+               <property name="text">
+                <string>Enable XBOX-Styled Minimap</string>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="0">
               <widget class="QCheckBox" name="useZoomOnMapCheckBox">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

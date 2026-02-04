@@ -352,6 +352,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
+        loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         scalingSpinBox->setValue(Settings::gui().mScalingFactor);
@@ -559,6 +560,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
+        saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());

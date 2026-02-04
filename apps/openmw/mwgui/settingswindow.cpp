@@ -976,7 +976,7 @@ namespace MWGui
         switch (pos)
         {
             case 0: // Nearest
-                generalSettings.mTextureMipmap.set("none");
+                generalSettings.mTextureMipmap.set("nearest");
                 generalSettings.mTextureMagFilter.set("nearest");
                 generalSettings.mTextureMinFilter.set("nearest");
                 break;
