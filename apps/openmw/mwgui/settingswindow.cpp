@@ -975,12 +975,17 @@ namespace MWGui
         auto& generalSettings = Settings::general();
         switch (pos)
         {
-            case 0: // Bilinear with mips
+            case 0: // Nearest
+                generalSettings.mTextureMipmap.set("none");
+                generalSettings.mTextureMagFilter.set("nearest");
+                generalSettings.mTextureMinFilter.set("nearest");
+                break;
+            case 1: // Bilinear with mips
                 generalSettings.mTextureMipmap.set("nearest");
                 generalSettings.mTextureMagFilter.set("linear");
                 generalSettings.mTextureMinFilter.set("linear");
                 break;
-            case 1: // Trilinear with mips
+            case 2: // Trilinear with mips
                 generalSettings.mTextureMipmap.set("linear");
                 generalSettings.mTextureMagFilter.set("linear");
                 generalSettings.mTextureMinFilter.set("linear");

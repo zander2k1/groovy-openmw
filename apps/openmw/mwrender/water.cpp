@@ -717,6 +717,12 @@ namespace MWRender
         normalMap->setWrap(osg::Texture::WRAP_S, osg::Texture::REPEAT);
         normalMap->setWrap(osg::Texture::WRAP_T, osg::Texture::REPEAT);
         mResourceSystem->getSceneManager()->applyFilterSettings(normalMap);
+        if (useClassicWaterShader)
+        {
+            // Keep classic water detail stable regardless of global texture filtering setting.
+            normalMap->setFilter(osg::Texture::MIN_FILTER, osg::Texture::LINEAR_MIPMAP_LINEAR);
+            normalMap->setFilter(osg::Texture::MAG_FILTER, osg::Texture::LINEAR);
+        }
 
         mRainSettingsUpdater = new RainSettingsUpdater();
         node->setUpdateCallback(mRainSettingsUpdater);
