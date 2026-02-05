@@ -10,6 +10,9 @@
 
             <Widget type="MWDynamicStat" skin="MW_ChargeBar_Blue" position="0 0 490 23" name="EncumbranceBar" align="Left Top">
             </Widget>
+            <Widget type="AutoSizedTextBox" skin="SandText" name="ProfitLabel" align="Left VCenter">
+                <Property key="TextAlign" value="Center VCenter"/>
+            </Widget>
         </Widget>
         
         <!-- Items -->
@@ -17,8 +20,6 @@
         </Widget>
 
         <Widget type="HBox" position="5 235 575 24" align="Bottom HStretch">
-            <Widget type="AutoSizedTextBox" skin="SandText" name="ProfitLabel">
-            </Widget>
             <Widget type="Spacer"/>
             <Widget type="AutoSizedButton" skin="MW_Button" name="CloseButton">
                 <Property key="Caption" value="#{Interface:Close}"/>
