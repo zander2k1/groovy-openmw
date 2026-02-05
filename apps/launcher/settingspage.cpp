@@ -361,8 +361,11 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
-        scalingSpinBox->setValue(Settings::gui().mScalingFactor);
-        dialogueScalingSpinBox->setValue(Settings::gui().mDialogueInterfaceScaling);
+        const double interfaceScaling = Settings::gui().mScalingFactor;
+        scalingSpinBox->setValue(interfaceScaling);
+
+        const double dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
+        dialogueScalingSpinBox->setValue(dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
