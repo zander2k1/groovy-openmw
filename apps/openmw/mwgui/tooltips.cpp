@@ -377,13 +377,13 @@ namespace MWGui
                 return rect;
 
             const MyGUI::IntSize layerSize = widget->getLayer()->getSize();
-            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const MyGUI::IntSize renderViewSize = MyGUI::RenderManager::getInstance().getViewSize();
             const float scale = MyGUIPlatform::ScalingLayer::getScaleFactor(layerSize);
 
-            rect.left
-                = static_cast<int>(std::lround((rect.left - layerSize.width / 2.f) * scale + viewSize.width / 2.f));
-            rect.top
-                = static_cast<int>(std::lround((rect.top - layerSize.height / 2.f) * scale + viewSize.height / 2.f));
+            rect.left = static_cast<int>(
+                std::lround((rect.left - layerSize.width / 2.f) * scale + renderViewSize.width / 2.f));
+            rect.top = static_cast<int>(
+                std::lround((rect.top - layerSize.height / 2.f) * scale + renderViewSize.height / 2.f));
             rect.width = static_cast<int>(std::lround(rect.width * scale));
             rect.height = static_cast<int>(std::lround(rect.height * scale));
             return rect;

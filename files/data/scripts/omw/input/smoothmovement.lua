@@ -84,8 +84,11 @@ input.bindAction('Run', async:callback(function(_, run)
     end
     local smoothRun, movement = computeSmoothMovement()
     if movement:length2() > 0 then
-        -- ignore always run
-        return smoothRun ~= settings:get('alwaysRun')
+        -- Let "always run" toggle affect joystick movement too.
+        if settings:get('alwaysRun') then
+            return true
+        end
+        return smoothRun
     else
         return run
     end

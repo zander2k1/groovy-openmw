@@ -79,7 +79,7 @@ input.bindAction('Run', async:callback(function(_, value)
     local controllerInput = util.vector2(
         input.getAxisValue(input.CONTROLLER_AXIS.MoveForwardBackward),
         input.getAxisValue(input.CONTROLLER_AXIS.MoveLeftRight)
-    ):length2()
+    ):length()
     return value or controllerInput > 0.25
 end), {})
 
