@@ -201,6 +201,7 @@ namespace MWGui
         void resetFixedWindowGeometry();
         MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
         void updateDisposition();
+        void updateControllerScrollButtons();
         void restock();
         void deleteLater();
         void redrawTopicsList();

@@ -3,6 +3,7 @@
 #include "mapwindow.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <format>
 #include <iomanip>
 #include <sstream>
@@ -22,6 +23,7 @@
 #include <components/esm/records.hpp>
 #include <components/l10n/manager.hpp>
 #include <components/misc/resourcehelpers.hpp>
+#include <components/myguiplatform/scalinglayer.hpp>
 #include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>
 #include <components/widgets/box.hpp>
@@ -366,6 +368,26 @@ namespace MWGui
             }
             return nullptr;
         };
+        auto toScreenRect = [](const MyGUI::Widget* widget, MyGUI::IntCoord rect) {
+            if (!widget || !widget->getLayer())
+                return rect;
+
+            auto* scalingLayer = dynamic_cast<const MyGUIPlatform::ScalingLayer*>(widget->getLayer());
+            if (!scalingLayer)
+                return rect;
+
+            const MyGUI::IntSize layerSize = widget->getLayer()->getSize();
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const float scale = MyGUIPlatform::ScalingLayer::getScaleFactor(layerSize);
+
+            rect.left
+                = static_cast<int>(std::lround((rect.left - layerSize.width / 2.f) * scale + viewSize.width / 2.f));
+            rect.top
+                = static_cast<int>(std::lround((rect.top - layerSize.height / 2.f) * scale + viewSize.height / 2.f));
+            rect.width = static_cast<int>(std::lround(rect.width * scale));
+            rect.height = static_cast<int>(std::lround(rect.height * scale));
+            return rect;
+        };
 
         auto toInt = [](const MyGUI::Widget* widget, const std::string& key) {
             if (!widget || !widget->isUserString(key))
@@ -392,7 +414,8 @@ namespace MWGui
             const int rowHeight = 18;
             const int barHeight = 28;
 
-            const MyGUI::IntCoord winRect = dialogueWindow->mMainWidget->getAbsoluteCoord();
+            const MyGUI::IntCoord winRect
+                = toScreenRect(dialogueWindow->mMainWidget, dialogueWindow->mMainWidget->getAbsoluteCoord());
             const int width = winRect.width;
             const int posY = std::max(0, winRect.top - barHeight - 4);
             const int y = std::max(0, (barHeight - rowHeight) / 2);

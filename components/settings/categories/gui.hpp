@@ -19,6 +19,8 @@ namespace Settings
         using WithIndex::WithIndex;
 
         SettingValue<float> mScalingFactor{ mIndex, "GUI", "scaling factor", makeClampSanitizerFloat(0.5f, 8) };
+        SettingValue<float> mDialogueInterfaceScaling{ mIndex, "GUI", "dialogue interface scaling",
+            makeClampSanitizerFloat(0.f, 8) };
         SettingValue<int> mFontSize{ mIndex, "GUI", "font size", makeClampSanitizerInt(12, 18) };
         SettingValue<bool> mEnableFallbackFonts{ mIndex, "GUI", "enable fallback fonts" };
         SettingValue<float> mMenuTransparency{ mIndex, "GUI", "menu transparency", makeClampSanitizerFloat(0, 1) };

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <chrono>
+#include <cmath>
 #include <filesystem>
 #include <thread>
 
@@ -135,6 +136,19 @@ namespace MWGui
 {
     namespace
     {
+        float getDialogueScaleMultiplier()
+        {
+            const float interfaceScaling = Settings::gui().mScalingFactor;
+            if (interfaceScaling <= 0.f)
+                return 1.f;
+
+            float dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
+            if (dialogueScaling <= 0.f)
+                dialogueScaling = interfaceScaling;
+
+            return std::max(dialogueScaling / interfaceScaling, 0.01f);
+        }
+
         bool isChildOf(MyGUI::Widget* widget, MyGUI::Widget* parent)
         {
             for (MyGUI::Widget* current = widget; current; current = current->getParent())
@@ -294,6 +308,7 @@ namespace MWGui
         MyGUI::FactoryManager::getInstance().registerFactory<AutoSizedResourceSkin>(
             "Resource", "AutoSizedResourceSkin");
         MyGUI::ResourceManager::getInstance().load("core.xml");
+        updateDialogueLayerSize();
 
         const bool keyboardNav = Settings::gui().mKeyboardNavigation;
         mKeyboardNavigation = std::make_unique<KeyboardNavigation>();
@@ -1487,6 +1502,9 @@ namespace MWGui
         {
             if (setting.first == "GUI" && setting.second == "menu transparency")
                 setMenuTransparency(Settings::gui().mMenuTransparency);
+            else if (setting.first == "GUI"
+                && (setting.second == "dialogue interface scaling" || setting.second == "scaling factor"))
+                updateDialogueLayerSize();
             else if (setting.first == "Video"
                 && (setting.second == "resolution x" || setting.second == "resolution y"
                     || setting.second == "window mode" || setting.second == "window border"))
@@ -1522,6 +1540,7 @@ namespace MWGui
         Settings::Manager::resetPendingChanges(filter);
 
         mGuiPlatform->getRenderManagerPtr()->setViewSize(x, y);
+        updateDialogueLayerSize();
 
         // scaled size
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
@@ -1549,6 +1568,21 @@ namespace MWGui
         reapplyActiveControllerWindow();
 
         // TODO: check if any windows are now off-screen and move them back if so
+    }
+
+    void WindowManager::updateDialogueLayerSize()
+    {
+        auto* layer = MyGUI::LayerManager::getInstance().getByName("Dialogue", false);
+        auto* scalingLayer = dynamic_cast<MyGUIPlatform::ScalingLayer*>(layer);
+        if (!scalingLayer)
+            return;
+
+        const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        const float scaleMultiplier = getDialogueScaleMultiplier();
+
+        const int layerWidth = std::max(1, static_cast<int>(std::lround(viewSize.width / scaleMultiplier)));
+        const int layerHeight = std::max(1, static_cast<int>(std::lround(viewSize.height / scaleMultiplier)));
+        scalingLayer->setLayerSize(MyGUI::IntSize(layerWidth, layerHeight));
     }
 
     bool WindowManager::isWindowVisible() const

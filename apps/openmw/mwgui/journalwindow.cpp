@@ -1,5 +1,6 @@
 #include "journalwindow.hpp"
 
+#include <algorithm>
 #include <set>
 #include <stack>
 #include <string>
@@ -44,6 +45,7 @@ namespace
     static constexpr std::string_view LeftTopicIndex = "LeftTopicIndex";
     static constexpr std::string_view CenterTopicIndex = "CenterTopicIndex";
     static constexpr std::string_view RightTopicIndex = "RightTopicIndex";
+    static constexpr int JournalBookVerticalOffset = 15;
 
     struct JournalWindowImpl : MWGui::JournalBooks, MWGui::JournalWindow
     {
@@ -89,11 +91,18 @@ namespace
 
         MWGui::BookPage* getPage(std::string_view name) { return getWidget<MWGui::BookPage>(name); }
 
+        void applyVerticalOffset()
+        {
+            MyGUI::IntPoint pos = mMainWidget->getPosition();
+            mMainWidget->setPosition(pos.left, std::max(0, pos.top - JournalBookVerticalOffset));
+        }
+
         JournalWindowImpl(std::shared_ptr<MWGui::JournalViewModel> model, bool questList, ToUTF8::FromType encoding)
             : JournalBooks(std::move(model), encoding)
             , JournalWindow()
         {
             center();
+            applyVerticalOffset();
 
             adviseButtonClick(OptionsBTN, &JournalWindowImpl::notifyOptions);
             adviseButtonClick(PrevPageBTN, &JournalWindowImpl::notifyPrevPage);
@@ -239,6 +248,12 @@ namespace
             mAllQuests = false;
             mOptionsMode = false;
             mTopicsMode = false;
+        }
+
+        void onResChange(int, int) override
+        {
+            center();
+            applyVerticalOffset();
         }
 
         void onOpen() override

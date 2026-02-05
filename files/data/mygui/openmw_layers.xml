@@ -8,6 +8,9 @@
     <Layer name="JournalBooks" type="ScalingLayer" pick="true">
         <Property key="Size" value="600 520"/>
     </Layer>
+    <Layer name="Dialogue" type="ScalingLayer" pick="true">
+        <Property key="Size" value="1280 720"/>
+    </Layer>
     <Layer name="Windows" overlapped="true" pick="true"/>
     <Layer name="DragAndDrop" overlapped="false" pick="false"/>
     <Layer name="DrowningBar" overlapped="false" pick="false"/>

@@ -7,6 +7,7 @@
 
 #include <QCompleter>
 #include <QDir>
+#include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QString>
@@ -127,6 +128,11 @@ Launcher::SettingsPage::SettingsPage(Config::GameSettings& gameSettings, QWidget
     }
 
     loadSettings();
+    connect(scalingSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+        &SettingsPage::onInterfaceScalingChanged);
+    connect(dialogueScalingSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+        &SettingsPage::onDialogueScalingChanged);
+    mLastInterfaceScaling = scalingSpinBox->value();
 
     mCellNameCompleter.setModel(&mCellNameCompleterModel);
     startDefaultCharacterAtField->setCompleter(&mCellNameCompleter);
@@ -356,6 +362,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         scalingSpinBox->setValue(Settings::gui().mScalingFactor);
+        dialogueScalingSpinBox->setValue(Settings::gui().mDialogueInterfaceScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
@@ -400,7 +407,27 @@ bool Launcher::SettingsPage::loadSettings()
         startDefaultCharacterAtField->setText(mGameSettings.value("start").value);
         runScriptAfterStartupField->setText(mGameSettings.value("script-run").value);
     }
+    mLastInterfaceScaling = scalingSpinBox->value();
     return true;
+}
+
+void Launcher::SettingsPage::onInterfaceScalingChanged(double value)
+{
+    const double delta = value - mLastInterfaceScaling;
+    if (std::abs(delta) < 0.0001)
+        return;
+
+    const double dialogueScaling = dialogueScalingSpinBox->value();
+    if (dialogueScaling > 0.0)
+        dialogueScalingSpinBox->setValue(std::max(0.5, dialogueScaling + delta));
+
+    mLastInterfaceScaling = value;
+}
+
+void Launcher::SettingsPage::onDialogueScalingChanged(double value)
+{
+    if (value > 0.0 && value < 0.5)
+        dialogueScalingSpinBox->setValue(0.5);
 }
 
 void Launcher::SettingsPage::saveSettings()
@@ -564,6 +591,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
+        Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
         saveSettingBool(*enableFallbackFontsCheckBox, Settings::gui().mEnableFallbackFonts);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);

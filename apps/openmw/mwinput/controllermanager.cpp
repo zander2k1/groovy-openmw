@@ -35,6 +35,9 @@ namespace
     constexpr float kGuiTurboRepeatStartDelay = 1.f / 6.f;
     constexpr int kTriggerPressThreshold = 16000;
     constexpr int kTriggerReleaseThreshold = 8000;
+    constexpr int kDialogueTriggerScrollTicks = 25;
+    constexpr int kDialogueTriggerImmediateTicks = 3;
+    constexpr float kDialogueTriggerScrollSmoothRate = 120.f;
 
     void applyRadialDeadzone(float xIn, float yIn, float deadzone, float& xOut, float& yOut)
     {
@@ -149,6 +152,11 @@ namespace MWInput
         , mGamepadMousePressed(false)
         , mLeftTriggerPressed(false)
         , mRightTriggerPressed(false)
+        , mLeftTriggerHoldTime(0.f)
+        , mRightTriggerHoldTime(0.f)
+        , mLeftTriggerRepeatTime(0.f)
+        , mRightTriggerRepeatTime(0.f)
+        , mPendingDialogueTriggerScrollTicks(0.f)
     {
         if (!controllerBindingsFile.empty())
         {
@@ -331,6 +339,76 @@ namespace MWInput
                 }
             }
         }
+
+        if (Settings::gui().mControllerMenus && winMgr->isGuiMode() && !settingsVisible
+            && isDialogueMode(winMgr->getMode()))
+        {
+            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+            const bool canRepeatScroll
+                = topWin && topWin->isVisible() && topWin->getControllerScrollWidget() != nullptr;
+            if (!canRepeatScroll)
+                mPendingDialogueTriggerScrollTicks = 0.f;
+            const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 7.5f;
+            const bool repeatEnabled = repeatRate > 0.f;
+
+            auto repeatTriggerScroll = [&](bool pressed, float& holdTime, float& repeatTime, Sint16 axisValue) {
+                if (!pressed || !canRepeatScroll || !repeatEnabled)
+                {
+                    holdTime = 0.f;
+                    repeatTime = 0.f;
+                    return;
+                }
+
+                holdTime += dt;
+                if (holdTime < kGuiTurboRepeatStartDelay)
+                    return;
+
+                const float interval = 1.f / repeatRate;
+                repeatTime += dt;
+                while (repeatTime >= interval)
+                {
+                    repeatTime -= interval;
+                    mPendingDialogueTriggerScrollTicks
+                        += axisValue < 0 ? -kDialogueTriggerScrollTicks : kDialogueTriggerScrollTicks;
+                }
+            };
+
+            repeatTriggerScroll(mLeftTriggerPressed, mLeftTriggerHoldTime, mLeftTriggerRepeatTime, -32767);
+            repeatTriggerScroll(mRightTriggerPressed, mRightTriggerHoldTime, mRightTriggerRepeatTime, 32767);
+
+            if (!mLeftTriggerPressed && !mRightTriggerPressed)
+                mPendingDialogueTriggerScrollTicks = 0.f;
+
+            if (canRepeatScroll && mPendingDialogueTriggerScrollTicks != 0.f)
+            {
+                const int maxTicksThisFrame
+                    = std::max(1, static_cast<int>(std::lround(kDialogueTriggerScrollSmoothRate * dt)));
+                const int pendingTicks = static_cast<int>(std::abs(mPendingDialogueTriggerScrollTicks));
+                const int ticksToSend = std::max(1, std::min(maxTicksThisFrame, pendingTicks));
+                const Sint16 axisValue = mPendingDialogueTriggerScrollTicks < 0.f ? -32767 : 32767;
+
+                SDL_ControllerAxisEvent scrollEvent{};
+                scrollEvent.type = SDL_CONTROLLERAXISMOTION;
+                scrollEvent.axis = SDL_CONTROLLER_AXIS_RIGHTY;
+                scrollEvent.value = axisValue;
+                for (int i = 0; i < ticksToSend; ++i)
+                    topWin->onControllerThumbstickEvent(scrollEvent);
+
+                mPendingDialogueTriggerScrollTicks
+                    += mPendingDialogueTriggerScrollTicks < 0.f ? ticksToSend : -ticksToSend;
+                if (std::abs(mPendingDialogueTriggerScrollTicks) < 1.f)
+                    mPendingDialogueTriggerScrollTicks = 0.f;
+            }
+        }
+        else
+        {
+            mLeftTriggerHoldTime = 0.f;
+            mRightTriggerHoldTime = 0.f;
+            mLeftTriggerRepeatTime = 0.f;
+            mRightTriggerRepeatTime = 0.f;
+            mPendingDialogueTriggerScrollTicks = 0.f;
+        }
+
         if (mGuiCursorEnabled && !(mJoystickLastUsed && !allowGuiMouseInThisContext) && !leftStickDpadActive)
         {
             float xAxis = mBindingsManager->getActionValue(A_MoveLeftRight) * 2.0f - 1.0f;
@@ -663,15 +741,37 @@ namespace MWInput
 
         if (Settings::gui().mControllerMenus)
         {
+            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+            const bool useDialogueTriggerScroll = topWin && topWin->isVisible() && isDialogueMode(winMgr->getMode())
+                && topWin->getControllerScrollWidget() != nullptr;
+            auto scrollDialogueByTrigger = [&](Sint16 axisValue) {
+                SDL_ControllerAxisEvent scrollEvent = arg;
+                scrollEvent.axis = SDL_CONTROLLER_AXIS_RIGHTY;
+                scrollEvent.value = axisValue;
+                for (int i = 0; i < kDialogueTriggerImmediateTicks; ++i)
+                    topWin->onControllerThumbstickEvent(scrollEvent);
+                const int queuedTicks = std::max(0, kDialogueTriggerScrollTicks - kDialogueTriggerImmediateTicks);
+                mPendingDialogueTriggerScrollTicks += axisValue < 0 ? -queuedTicks : queuedTicks;
+            };
+
             // Left and right triggers toggle through open GUI windows.
             if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
             {
-                if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
+                if (useDialogueTriggerScroll)
+                {
+                    if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
+                    {
+                        mRightTriggerPressed = true;
+                        scrollDialogueByTrigger(32767);
+                    }
+                }
+                else if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
                 {
                     mRightTriggerPressed = true;
                     winMgr->cycleActiveControllerWindow(true);
                 }
-                else if (mRightTriggerPressed && arg.value <= kTriggerReleaseThreshold)
+
+                if (mRightTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
                     mRightTriggerPressed = false;
                 }
@@ -679,19 +779,27 @@ namespace MWInput
             }
             else if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
             {
-                if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
+                if (useDialogueTriggerScroll)
+                {
+                    if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
+                    {
+                        mLeftTriggerPressed = true;
+                        scrollDialogueByTrigger(-32767);
+                    }
+                }
+                else if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
                 {
                     mLeftTriggerPressed = true;
                     winMgr->cycleActiveControllerWindow(false);
                 }
-                else if (mLeftTriggerPressed && arg.value <= kTriggerReleaseThreshold)
+
+                if (mLeftTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
                     mLeftTriggerPressed = false;
                 }
                 return true;
             }
 
-            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
             if (topWin && topWin->isVisible())
             {
                 if (winMgr->isSettingsWindowVisible())
@@ -789,9 +897,7 @@ namespace MWInput
                 }
 
                 // Some windows have a specific widget to scroll with the right stick. Move the mouse there.
-                // Only do this when the cursor is hidden (controller navigation); otherwise it fights mouse emulation.
-                if (!winMgr->getCursorVisible() && arg.axis == SDL_CONTROLLER_AXIS_RIGHTY
-                    && topWin->getControllerScrollWidget() != nullptr)
+                if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTY && topWin->getControllerScrollWidget() != nullptr)
                 {
                     mMouseManager->warpMouseToWidget(topWin->getControllerScrollWidget());
                     winMgr->setCursorVisible(false);

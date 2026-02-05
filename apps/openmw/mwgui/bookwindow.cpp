@@ -1,5 +1,7 @@
 #include "bookwindow.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_InputManager.h>
 #include <MyGUI_TextBox.h>
 
@@ -18,6 +20,10 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        constexpr int sJournalBookVerticalOffset = 15;
+    }
 
     BookWindow::BookWindow()
         : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_book.layout" : "openmw_book.layout")
@@ -75,6 +81,15 @@ namespace MWGui
         mTakeButton->setVisible(false);
 
         center();
+        MyGUI::IntPoint pos = mMainWidget->getPosition();
+        mMainWidget->setPosition(pos.left, std::max(0, pos.top - sJournalBookVerticalOffset));
+    }
+
+    void BookWindow::onResChange(int, int)
+    {
+        center();
+        MyGUI::IntPoint pos = mMainWidget->getPosition();
+        mMainWidget->setPosition(pos.left, std::max(0, pos.top - sJournalBookVerticalOffset));
     }
 
     void BookWindow::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)

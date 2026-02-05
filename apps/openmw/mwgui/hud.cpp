@@ -90,6 +90,8 @@ namespace MWGui
         mMinimapButton->eventMouseButtonClick += MyGUI::newDelegate(this, &HUD::onMapClicked);
 
         getWidget(mCellNameBox, "CellName");
+        mCellNameBaseLeft = mCellNameBox->getLeft();
+        mCellNameBaseTop = mCellNameBox->getTop();
         getWidget(mWeaponSpellBox, "WeaponSpellName");
 
         getWidget(mCrosshair, "Crosshair");
@@ -556,11 +558,16 @@ namespace MWGui
 
         if (xboxStyledMinimap)
         {
+            constexpr int cellNameGap = 4;
             constexpr int effectsGap = 4;
+            mCellNameBox->setTextAlign(MyGUI::Align::Left);
+            mCellNameBox->setPosition(mMinimapBox->getLeft(), mMinimapBox->getBottom() + cellNameGap);
             mEffectBox->setPosition(mMinimapBox->getRight() + effectsGap, mMinimapBox->getTop());
         }
         else
         {
+            mCellNameBox->setTextAlign(MyGUI::Align::Right);
+            mCellNameBox->setPosition(mCellNameBaseLeft, mCellNameBaseTop);
             mEffectBox->setPosition(
                 (viewSize.width - mEffectBoxBaseRight) - mEffectBox->getWidth() + effectsDx, mEffectBox->getTop());
         }

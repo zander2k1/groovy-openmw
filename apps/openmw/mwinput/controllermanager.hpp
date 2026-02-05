@@ -78,6 +78,11 @@ namespace MWInput
         bool mGamepadMousePressed;
         bool mLeftTriggerPressed;
         bool mRightTriggerPressed;
+        float mLeftTriggerHoldTime;
+        float mRightTriggerHoldTime;
+        float mLeftTriggerRepeatTime;
+        float mRightTriggerRepeatTime;
+        float mPendingDialogueTriggerScrollTicks;
         int mLastControllerDeviceId = -1;
 
         void resetGuiNavState();

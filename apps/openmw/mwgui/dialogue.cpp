@@ -1,5 +1,7 @@
 #include "dialogue.hpp"
 
+#include <cmath>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_ProgressBar.h>
@@ -401,6 +403,7 @@ namespace MWGui
 
     // Morrowind uses 3 px invisible borders for padding topics
     static constexpr int sVerticalPadding = 3;
+    static constexpr int sHistoryScrollbarReserve = 3;
 
     DialogueWindow::DialogueWindow()
         : WindowBase("openmw_dialogue_window.layout")
@@ -444,6 +447,7 @@ namespace MWGui
         mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Ask}";
         mControllerButtons.mB = "#{Interface:Goodbye}";
+        updateControllerScrollButtons();
     }
 
     void DialogueWindow::onTradeComplete()
@@ -494,7 +498,8 @@ namespace MWGui
     {
         if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
         {
-            MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            MyGUI::IntSize viewSize = window->getLayer() ? window->getLayer()->getSize()
+                                                         : MyGUI::RenderManager::getInstance().getViewSize();
             window->setCoord(getFixedWindowCoord(viewSize));
         }
     }
@@ -524,8 +529,14 @@ namespace MWGui
     {
         if (!mScrollBar->getVisible())
             return;
-        mScrollBar->setScrollPosition(std::clamp<size_t>(
-            static_cast<size_t>(mScrollBar->getScrollPosition() - rel * 0.3), 0, mScrollBar->getScrollRange() - 1));
+
+        const float scaledStep = rel * 0.3f;
+        const int scrollDelta = scaledStep > 0.f ? std::max(1, static_cast<int>(std::floor(scaledStep)))
+                                                 : std::min(-1, static_cast<int>(std::ceil(scaledStep)));
+        const int maxPosition = static_cast<int>(mScrollBar->getScrollRange() - 1);
+        const int position
+            = std::clamp<int>(static_cast<int>(mScrollBar->getScrollPosition()) - scrollDelta, 0, maxPosition);
+        mScrollBar->setScrollPosition(position);
         onScrollbarMoved(mScrollBar, mScrollBar->getScrollPosition());
     }
 
@@ -805,16 +816,13 @@ namespace MWGui
 
     void DialogueWindow::updateHistory(bool scrollbar)
     {
+        const bool oldScrollbarVisible = mScrollBar->getVisible();
         if (!scrollbar && mScrollBar->getVisible())
-        {
-            mHistory->setSize(mHistory->getSize() + MyGUI::IntSize(mScrollBar->getWidth(), 0));
             mScrollBar->setVisible(false);
-        }
         if (scrollbar && !mScrollBar->getVisible())
-        {
-            mHistory->setSize(mHistory->getSize() - MyGUI::IntSize(mScrollBar->getWidth(), 0));
             mScrollBar->setVisible(true);
-        }
+        if (oldScrollbarVisible != mScrollBar->getVisible())
+            updateLayoutSizes();
 
         std::shared_ptr<BookTypesetter> typesetter
             = BookTypesetter::create(mHistory->getWidth(), std::numeric_limits<int>::max());
@@ -897,6 +905,9 @@ namespace MWGui
 
         bool topicsEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye;
         mTopicsList->setEnabled(topicsEnabled);
+
+        if (oldScrollbarVisible != mScrollBar->getVisible())
+            updateControllerScrollButtons();
     }
 
     void DialogueWindow::notifyLinkClicked(TypesetBook::InteractiveId link)
@@ -1063,7 +1074,8 @@ namespace MWGui
         const int innerHeight = std::max(0, windowSize.height - topMargin - bottomMargin);
 
         const int listWidthMax = 160;
-        const int listWidth = std::min(listWidthMax, std::max(0, static_cast<int>(windowSize.width * 0.42f)));
+        const int listWidth
+            = std::max(0, std::min(listWidthMax, std::max(0, static_cast<int>(windowSize.width * 0.42f))) - 5);
         const int listRightMargin = 16;
         const int listX = std::max(sideMargin, windowSize.width - listRightMargin - listWidth);
         const int leftBoxWidth = std::max(0, listX - gap - sideMargin);
@@ -1074,7 +1086,9 @@ namespace MWGui
         const int innerPadY = 7;
         const int innerRightPad = 10;
         const int innerBottomPad = 8;
-        const int historyWidth = std::max(0, leftBoxWidth - innerPadX - innerRightPad);
+        const int scrollbarReserve
+            = (mScrollBar && mScrollBar->getVisible()) ? (mScrollBar->getWidth() + sHistoryScrollbarReserve) : 0;
+        const int historyWidth = std::max(0, leftBoxWidth - innerPadX - innerRightPad - scrollbarReserve);
         const int historyHeight = std::max(0, innerHeight - innerBottomPad);
         mHistoryContainer->setCoord(sideMargin + innerPadX, topMargin + innerPadY, historyWidth, historyHeight);
         if (mHistory)
@@ -1083,12 +1097,21 @@ namespace MWGui
         if (mScrollBar)
         {
             const int scrollWidth = mScrollBar->getWidth();
-            const int scrollRightPadding = 5;
+            const int scrollRightPadding = 0;
             const int scrollX = sideMargin + leftBoxWidth - scrollWidth - scrollRightPadding;
-            mScrollBar->setCoord(scrollX, topMargin, scrollWidth, innerHeight);
+            mScrollBar->setCoord(scrollX, topMargin, scrollWidth, std::max(0, innerHeight - 1));
         }
 
         mTopicsList->setCoord(listX, topMargin, listWidth, innerHeight);
+    }
+
+    void DialogueWindow::updateControllerScrollButtons()
+    {
+        const bool scrollable = mScrollBar && mScrollBar->getVisible();
+        mControllerButtons.mL2 = scrollable ? "#{Interface:ScrollUp}" : "";
+        mControllerButtons.mR2 = scrollable ? "#{Interface:ScrollDown}" : "";
+        if (Settings::gui().mControllerMenus)
+            MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
     }
 
     void DialogueWindow::updateTopics()
@@ -1151,6 +1174,31 @@ namespace MWGui
 
     bool DialogueWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        const auto isSelectableTopicIndex = [this](size_t index) {
+            return index < mTopicsList->getItemCount() && !mTopicsList->getItemNameAt(index).empty();
+        };
+        const auto findFirstSelectableTopic = [this, &isSelectableTopicIndex]() -> size_t {
+            for (size_t i = 0; i < mTopicsList->getItemCount(); ++i)
+            {
+                if (isSelectableTopicIndex(i))
+                    return i;
+            }
+            return MyGUI::ITEM_NONE;
+        };
+        const auto findNextSelectableTopic = [this, &isSelectableTopicIndex](size_t start, int direction) -> size_t {
+            const size_t count = mTopicsList->getItemCount();
+            if (count == 0)
+                return MyGUI::ITEM_NONE;
+
+            for (size_t step = 1; step <= count; ++step)
+            {
+                const size_t index = (start + count + (direction > 0 ? step : (count - (step % count)))) % count;
+                if (isSelectableTopicIndex(index))
+                    return index;
+            }
+            return MyGUI::ITEM_NONE;
+        };
+
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             if (mChoices.size() > 0)
@@ -1160,7 +1208,7 @@ namespace MWGui
                 else if (mControllerChoice >= 0 && mControllerChoice < static_cast<int>(mChoices.size()))
                     onChoiceActivated(mChoices[mControllerChoice].second);
             }
-            else if (mTopicsList->getItemCount() > 0)
+            else if (isSelectableTopicIndex(mControllerFocus))
                 onSelectListItem(mTopicsList->getItemNameAt(mControllerFocus), static_cast<int>(mControllerFocus));
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
@@ -1180,14 +1228,19 @@ namespace MWGui
             {
                 if (mTopicsList->getItemCount() == 0)
                     return true;
+                if (!isSelectableTopicIndex(mControllerFocus))
+                {
+                    const size_t first = findFirstSelectableTopic();
+                    if (first == MyGUI::ITEM_NONE)
+                        return true;
+                    mControllerFocus = first;
+                }
                 setControllerFocus(mControllerFocus, false);
-                if (mControllerFocus <= 0)
-                    mControllerFocus = mTopicsList->getItemCount() - 1;
-                else if (mTopicsList->getItemNameAt(mControllerFocus - 1).empty())
-                    mControllerFocus -= 2; // Skip separator
-                else
-                    mControllerFocus--;
-                setControllerFocus(mControllerFocus, true);
+                const size_t next = findNextSelectableTopic(mControllerFocus, -1);
+                if (next == MyGUI::ITEM_NONE)
+                    return true;
+                mControllerFocus = next;
+                setControllerFocus(next, true);
             }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
@@ -1202,30 +1255,63 @@ namespace MWGui
             {
                 if (mTopicsList->getItemCount() == 0)
                     return true;
+                if (!isSelectableTopicIndex(mControllerFocus))
+                {
+                    const size_t first = findFirstSelectableTopic();
+                    if (first == MyGUI::ITEM_NONE)
+                        return true;
+                    mControllerFocus = first;
+                }
                 setControllerFocus(mControllerFocus, false);
-                if (mControllerFocus >= mTopicsList->getItemCount() - 1)
-                    mControllerFocus = 0;
-                else if (mTopicsList->getItemNameAt(mControllerFocus + 1).empty())
-                    mControllerFocus += 2; // Skip separator
-                else
-                    mControllerFocus++;
-                setControllerFocus(mControllerFocus, true);
+                const size_t next = findNextSelectableTopic(mControllerFocus, 1);
+                if (next == MyGUI::ITEM_NONE)
+                    return true;
+                mControllerFocus = next;
+                setControllerFocus(next, true);
             }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER && mChoices.size() == 0)
         {
             if (mTopicsList->getItemCount() == 0)
                 return true;
+            if (!isSelectableTopicIndex(mControllerFocus))
+            {
+                const size_t first = findFirstSelectableTopic();
+                if (first == MyGUI::ITEM_NONE)
+                    return true;
+                mControllerFocus = first;
+            }
             setControllerFocus(mControllerFocus, false);
-            mControllerFocus = mControllerFocus > 5 ? mControllerFocus - 5 : 0;
+            size_t next = mControllerFocus;
+            for (int i = 0; i < 5; ++i)
+            {
+                next = findNextSelectableTopic(next, -1);
+                if (next == MyGUI::ITEM_NONE)
+                    return true;
+            }
+            mControllerFocus = next;
             setControllerFocus(mControllerFocus, true);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER && mChoices.size() == 0)
         {
             if (mTopicsList->getItemCount() == 0)
                 return true;
+            if (!isSelectableTopicIndex(mControllerFocus))
+            {
+                const size_t first = findFirstSelectableTopic();
+                if (first == MyGUI::ITEM_NONE)
+                    return true;
+                mControllerFocus = first;
+            }
             setControllerFocus(mControllerFocus, false);
-            mControllerFocus = std::min(mControllerFocus + 5, mTopicsList->getItemCount() - 1);
+            size_t next = mControllerFocus;
+            for (int i = 0; i < 5; ++i)
+            {
+                next = findNextSelectableTopic(next, 1);
+                if (next == MyGUI::ITEM_NONE)
+                    return true;
+            }
+            mControllerFocus = next;
             setControllerFocus(mControllerFocus, true);
         }
 

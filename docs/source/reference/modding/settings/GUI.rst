@@ -13,6 +13,16 @@ GUI Settings
    Larger values increase GUI scale for high resolution displays.
 
 .. omw-setting::
+   :title: dialogue interface scaling
+   :type: float32
+   :range: 0.0 to 8.0
+   :default: 0.0
+
+   Scales the dialogue window independently from the main GUI scaling factor.
+   A value of 0.0 reuses "scaling factor", keeping dialogue scale matched by default.
+   Values above the main GUI scale make the dialogue interface larger.
+
+.. omw-setting::
    :title: font size
    :type: int
    :range: 12 to 18

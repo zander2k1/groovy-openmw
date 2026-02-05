@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Window_Pinnable_DialogNoTransp" layer="Windows" position="0 0 588 433" name="_Main">
+    <Widget type="Window" skin="MW_Window_Pinnable_DialogNoTransp" layer="Dialogue" position="0 0 588 433" name="_Main">
         <Property key="MinSize" value="380 230"/>
 
         <Widget type="Widget" skin="MW_Box" position="8 8 381 326" align="Left Top" name="HistoryBox"/>

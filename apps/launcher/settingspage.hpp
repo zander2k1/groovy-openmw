@@ -29,6 +29,8 @@ namespace Launcher
     private slots:
         void on_skipMenuCheckBox_stateChanged(int state);
         void on_runScriptAfterStartupBrowseButton_clicked();
+        void onInterfaceScalingChanged(double value);
+        void onDialogueScalingChanged(double value);
         void slotAnimSourcesToggled(bool checked);
         void slotPostProcessToggled(bool checked);
         void slotSkyBlendingToggled(bool checked);
@@ -40,6 +42,7 @@ namespace Launcher
         Config::GameSettings& mGameSettings;
         QCompleter mCellNameCompleter;
         QStringListModel mCellNameCompleterModel;
+        double mLastInterfaceScaling = 1.0;
 
         /**
          * Load the cells associated with the given content files for use in autocomplete
