@@ -1530,6 +1530,24 @@ namespace MWGui
                 }
                 return;
             }
+            if (countDialogVisible && mode == GM_Barter && countDialog->getTooltipSourceWindow() == nullptr)
+            {
+                // Offer amount dialog: keep the top tooltip strip visible but empty.
+                mFocusObject = MWWorld::Ptr();
+                mDynamicToolTipBox->setVisible(false);
+                if (controllerActive && !suppressControllerBar)
+                {
+                    MyGUI::IntCoord barRect = controllerWinRect;
+                    int barWidth = barRect.width;
+                    if (inventoryTooltipWidth > 0)
+                    {
+                        barRect = inventoryTooltipRect;
+                        barWidth = inventoryTooltipWidth;
+                    }
+                    showEmptyControllerBar(barRect, barWidth);
+                }
+                return;
+            }
             if (winMgr->getMode() == GM_Dialogue)
             {
                 DialogueWindow* dialogueWindow = nullptr;
