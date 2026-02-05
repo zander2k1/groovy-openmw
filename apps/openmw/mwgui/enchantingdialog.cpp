@@ -691,8 +691,6 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)
             onBuyButtonClicked(mBuyButton);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_Y)
-            onTypeButtonClicked(mTypeButton);
         return true;
     }
 }
