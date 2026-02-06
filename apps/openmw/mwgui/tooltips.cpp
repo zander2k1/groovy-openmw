@@ -1382,7 +1382,26 @@ namespace MWGui
             MyGUI::TextBox* weightText
                 = addValueWithIcon(w.str(), "textures\\weight.dds", "CollapsedWeightIcon", "CollapsedWeightText");
 
-            const int nameRight = std::max(padding, weightText->getLeft() - padding * 2);
+            MyGUI::TextBox* leftMostText = weightText;
+            const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+            const ESM::Enchantment* enchant = nullptr;
+            if (!collapsedInfo.enchant.empty())
+                enchant = store.get<ESM::Enchantment>().search(collapsedInfo.enchant);
+            if (enchant
+                && (enchant->mData.mType == ESM::Enchantment::WhenStrikes
+                    || enchant->mData.mType == ESM::Enchantment::WhenUsed))
+            {
+                const int maxCharge = MWMechanics::getEnchantmentCharge(*enchant);
+                if (maxCharge > 0)
+                {
+                    const int charge
+                        = collapsedInfo.remainingEnchantCharge == -1 ? maxCharge : collapsedInfo.remainingEnchantCharge;
+                    leftMostText = addValueWithIcon(std::format("{}/{}", charge, maxCharge), "textures\\charge.dds",
+                        "CollapsedChargeText", "CollapsedChargeIcon");
+                }
+            }
+
+            const int nameRight = std::max(padding, leftMostText->getLeft() - padding * 2);
             const int nameWidth = std::max(0, nameRight - padding);
             MyGUI::TextBox* nameText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
                 MyGUI::IntCoord(padding, textTop, nameWidth, textHeight), MyGUI::Align::VStretch | MyGUI::Align::Left,
