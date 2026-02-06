@@ -1607,42 +1607,6 @@
               </property>
              </widget>
             </item>
-             <item row="5" column="0">
-             <layout class="QHBoxLayout" name="controllerMenuTurboLayout">
-               <item>
-                <widget class="QLabel" name="controllerMenuTurboLabel">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="toolTip">
-                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Repeat rate for D-Pad/left stick navigation in controller menus. 0 disables turbo.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>Navigation Repeat Speed</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QDoubleSpinBox" name="controllerMenuTurboSpinBox">
-                 <property name="enabled">
-                  <bool>false</bool>
-                 </property>
-                 <property name="minimum">
-                  <double>0.000000000000000</double>
-                 </property>
-                 <property name="maximum">
-                  <double>2.000000000000000</double>
-                 </property>
-                 <property name="singleStep">
-                  <double>0.100000000000000</double>
-                 </property>
-                 <property name="decimals">
-                  <number>2</number>
-                 </property>
-                </widget>
-               </item>
-             </layout>
-            </item>
             <item row="6" column="0">
              <layout class="QHBoxLayout" name="gamepadCursorSpeedLayout">
               <item>
@@ -1669,9 +1633,9 @@
                 <property name="singleStep">
                  <double>0.100000000000000</double>
                 </property>
-                <property name="value">
-                 <double>0.500000000000000</double>
-                </property>
+                 <property name="value">
+                  <double>0.300000000000000</double>
+                 </property>
                </widget>
               </item>
              </layout>
@@ -1720,7 +1684,7 @@
             <item row="8" column="0">
              <widget class="QCheckBox" name="controllerWhiteBlackButtonIconsCheckBox">
               <property name="toolTip">
-               <string>Use white/black shoulder and trigger icons for LB/RB/R1/R2/ZL/ZR prompts.</string>
+               <string>Use white/black shoulder icons for LB/RB/L1/R1/L/R prompts.</string>
               </property>
               <property name="text">
                <string>Enable white/black button icons</string>

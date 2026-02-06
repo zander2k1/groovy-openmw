@@ -25,7 +25,7 @@ namespace Settings
         SettingValue<bool> mInvertXAxis{ mIndex, "Input", "invert x axis" };
         SettingValue<bool> mInvertYAxis{ mIndex, "Input", "invert y axis" };
         SettingValue<bool> mEnableController{ mIndex, "Input", "enable controller" };
-        SettingValue<float> mGamepadCursorSpeed{ mIndex, "Input", "gamepad cursor speed",
+        SettingValue<float> mGamepadCursorSpeed{ mIndex, "Input", "gamepad cursor speed", 0.3f,
             makeMaxStrictSanitizerFloat(0) };
         SettingValue<std::string> mControllerIconStyle{ mIndex, "Input", "controller icon style",
             makeEnumSanitizerString({ "auto", "steam", "xbox", "playstation", "switch" }) };

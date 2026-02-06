@@ -1539,14 +1539,6 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Repeat rate for D-Pad/left stick navigation in controller menus. 0 disables turbo.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Navigation Repeat Speed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Speed multiplier for the gamepad cursor.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1595,10 +1587,6 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Use white/black shoulder and trigger icons for LB/RB/R1/R2/ZL/ZR prompts.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Enable white/black button icons</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1616,6 +1604,10 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
     </message>
     <message>
         <source>Dialogue Interface Scaling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use white/black shoulder icons for LB/RB/L1/R1/L/R prompts.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
