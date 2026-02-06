@@ -2751,7 +2751,8 @@ namespace MWGui
             (captionHeight - captionSize.height) / 2, captionSize.width - imageSize, captionSize.height);
 
         // if its too long we do hscroll with the caption
-        if (captionSize.width > maximumWidth)
+        const bool captionScrolling = captionSize.width > maximumWidth;
+        if (captionScrolling)
         {
             mHorizontalScrollIndex = mHorizontalScrollIndex + 2;
             if (mHorizontalScrollIndex > captionSize.width)
@@ -2775,6 +2776,8 @@ namespace MWGui
             captionWidget->setPosition(captionWidget->getPosition() + padding);
         }
 
+        const int captionCenterX = captionWidget->getLeft() + captionWidget->getWidth() / 2;
+
         textWidget->setPosition(
             textWidget->getPosition() + MyGUI::IntPoint(0, padding.top)); // only apply vertical padding
 
@@ -2783,6 +2786,16 @@ namespace MWGui
             textWidget->setCoord(0, textWidget->getCoord().top, totalSize.width, textWidget->getHeight());
             if (extraWidget != nullptr)
                 extraWidget->setCoord(0, extraWidget->getCoord().top, totalSize.width, extraWidget->getHeight());
+        }
+
+        const int textWidgetCenterX = textWidget->getLeft() + textWidget->getWidth() / 2;
+        const int textCenterOffset = captionScrolling ? 0 : (captionCenterX - textWidgetCenterX);
+
+        if (textCenterOffset != 0)
+        {
+            textWidget->setPosition(textWidget->getPosition() + MyGUI::IntPoint(textCenterOffset, 0));
+            if (extraWidget != nullptr)
+                extraWidget->setPosition(extraWidget->getPosition() + MyGUI::IntPoint(textCenterOffset, 0));
         }
 
         if (!image.empty())
