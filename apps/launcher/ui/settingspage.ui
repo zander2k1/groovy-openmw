@@ -1422,6 +1422,19 @@
               </property>
              </widget>
             </item>
+            <item row="12" column="0">
+             <widget class="QCheckBox" name="settingsWindowIgnoreScalingCheckBox">
+              <property name="toolTip">
+               <string>Keep the in-game settings window at normal size regardless of GUI scaling.</string>
+              </property>
+              <property name="text">
+               <string>Ignore GUI Scaling for Settings Menu</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
              <item row="7" column="0">
               <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
                <property name="text">

@@ -22,20 +22,6 @@
                 </Widget>
             </Widget>
 
-            <Widget type="HBox" name="BtnRStick">
-                <Property key="Padding" value="0"/>
-                <Property key="Spacing" value="0"/>
-                <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="BtnRStickImage">
-                    <Property key="ImageTexture" value="textures\omw_steam_button_rstick.dds"/>
-                </Widget>
-                <Widget type="AutoSizedTextBox" skin="NormalText" name="BtnRStickText">
-                    <Property key="Caption" value=""/>
-                    <Property key="TextShadow" value="true"/>
-                    <Property key="TextShadowColour" value="0 0 0"/>
-                    <Property key="ReadOnly" value="true"/>
-                </Widget>
-            </Widget>
-
             <Widget type="HBox" name="BtnDpad">
                 <Property key="Padding" value="0"/>
                 <Property key="Spacing" value="0"/>
@@ -78,13 +64,27 @@
                 </Widget>
             </Widget>
 
-                        <Widget type="HBox" name="BtnY">
+            <Widget type="HBox" name="BtnY">
                 <Property key="Padding" value="0"/>
                 <Property key="Spacing" value="0"/>
                 <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="BtnYImage">
                     <Property key="ImageTexture" value="textures\omw_steam_button_y.dds"/>
                 </Widget>
                 <Widget type="AutoSizedTextBox" skin="NormalText" name="BtnYText">
+                    <Property key="Caption" value=""/>
+                    <Property key="TextShadow" value="true"/>
+                    <Property key="TextShadowColour" value="0 0 0"/>
+                    <Property key="ReadOnly" value="true"/>
+                </Widget>
+            </Widget>
+
+            <Widget type="HBox" name="BtnRStick">
+                <Property key="Padding" value="0"/>
+                <Property key="Spacing" value="0"/>
+                <Widget type="ImageBox" skin="ImageBox" align="Center" position="0 0 24 24" name="BtnRStickImage">
+                    <Property key="ImageTexture" value="textures\omw_steam_button_rstick.dds"/>
+                </Widget>
+                <Widget type="AutoSizedTextBox" skin="NormalText" name="BtnRStickText">
                     <Property key="Caption" value=""/>
                     <Property key="TextShadow" value="true"/>
                     <Property key="TextShadowColour" value="0 0 0"/>

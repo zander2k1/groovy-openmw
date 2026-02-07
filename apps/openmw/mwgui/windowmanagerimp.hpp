@@ -608,6 +608,7 @@ namespace MWGui
         void createCursors();
         void setMenuTransparency(float value);
         void updateDialogueLayerSize();
+        void updateSettingsLayerSize();
 
         void updatePinnedWindows();
 

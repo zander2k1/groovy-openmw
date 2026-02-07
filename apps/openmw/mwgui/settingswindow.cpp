@@ -213,6 +213,33 @@ namespace
             max = MyGUI::utility::parseFloat(widget->getUserString(settingMax));
     }
 
+    void collectComboBoxes(MyGUI::Widget* parent, std::vector<MyGUI::ComboBox*>& out)
+    {
+        MyGUI::EnumeratorWidgetPtr enumerator = parent->getEnumerator();
+        while (enumerator.next())
+        {
+            MyGUI::Widget* current = enumerator.current();
+            if (auto* combo = current->castType<MyGUI::ComboBox>(false))
+                out.push_back(combo);
+            collectComboBoxes(current, out);
+        }
+    }
+
+    void retargetComboPopupLayer(MyGUI::Widget* root, std::string_view layer)
+    {
+        if (!root)
+            return;
+        std::vector<MyGUI::ComboBox*> combos;
+        collectComboBoxes(root, combos);
+        for (MyGUI::ComboBox* combo : combos)
+        {
+            MyGUI::Widget* list = combo->findWidget("List");
+            if (!list)
+                continue;
+            list->setWidgetStyle(MyGUI::WidgetStyle::Popup, layer);
+        }
+    }
+
     void updateMaxLightsComboBox(MyGUI::ComboBox* box)
     {
         constexpr int min = 8;
@@ -509,6 +536,7 @@ namespace MWGui
 
         mScriptFilter->eventEditTextChange += MyGUI::newDelegate(this, &SettingsWindow::onScriptFilterChange);
         mScriptList->eventListMouseItemActivate += MyGUI::newDelegate(this, &SettingsWindow::onScriptListSelection);
+        retargetComboPopupLayer(mMainWidget, "SettingsPopup");
 
         std::vector<std::string> availableLanguages;
         const VFS::Manager* vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
@@ -618,11 +646,10 @@ namespace MWGui
         }
         updateKeyboardSecondaryLayoutVisibility();
 
+        mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Select}";
-        mControllerButtons.mB = "#{Interface:OK}";
-        mControllerButtons.mLStick = "#{Interface:Mouse}";
-        if (Settings::gui().mControllerMenus)
-            mControllerButtons = {};
+        mControllerButtons.mB = "#{Interface:Back}";
+        mControllerButtons.mRStick = "#{Interface:Mouse}";
     }
 
     void SettingsWindow::onTabChanged(MyGUI::TabControl* /*sender*/, size_t /*index*/)
@@ -1346,6 +1373,7 @@ namespace MWGui
         updateVSyncModeSettings();
         resetScrollbars();
         renderScriptSettings();
+        center();
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
     }
 

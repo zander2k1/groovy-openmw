@@ -367,6 +367,7 @@ bool Launcher::SettingsPage::loadSettings()
         dialogueScalingSpinBox->setValue(dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
+        loadSettingBool(Settings::gui().mSettingsWindowIgnoreScaling, *settingsWindowIgnoreScalingCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
         controllerIconStyleComboBox->setCurrentIndex(
             toIndexControllerIconStyle(Settings::input().mControllerIconStyle));
@@ -595,6 +596,7 @@ void Launcher::SettingsPage::saveSettings()
         Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
         saveSettingBool(*enableFallbackFontsCheckBox, Settings::gui().mEnableFallbackFonts);
+        saveSettingBool(*settingsWindowIgnoreScalingCheckBox, Settings::gui().mSettingsWindowIgnoreScaling);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);
         Settings::input().mControllerIconStyle.set(
             fromIndexControllerIconStyle(controllerIconStyleComboBox->currentIndex()));
