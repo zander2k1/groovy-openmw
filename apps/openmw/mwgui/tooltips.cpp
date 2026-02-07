@@ -88,6 +88,19 @@ namespace MWGui
             return false;
         }
 
+        bool isSettingsTooltipPipeline(MyGUI::Widget* widget)
+        {
+            for (MyGUI::Widget* current = widget; current; current = current->getParent())
+            {
+                if (current->isUserString("SettingsTooltipPipeline")
+                    && current->getUserString("SettingsTooltipPipeline") == "true")
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         WeaponDamageInfo getWeaponDamageInfo(const MWWorld::Ptr& ptr)
         {
             if (ptr.getType() != ESM::Weapon::sRecordId)
@@ -167,6 +180,15 @@ namespace MWGui
         {
             mMainWidget->getChildAt(i)->setVisible(false);
         }
+
+        auto ensureTooltipLayer = [&](std::string_view layerName) {
+            MyGUI::ILayer* currentLayer = mMainWidget->getLayer();
+            if (!currentLayer || currentLayer->getName() != layerName)
+                mMainWidget->detachFromWidget(layerName);
+            mMainWidget->setWidgetStyle(MyGUI::WidgetStyle::Popup, layerName);
+        };
+
+        ensureTooltipLayer("Popup");
 
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
 
@@ -1187,6 +1209,192 @@ namespace MWGui
             return true;
         };
 
+        // Settings window: keep legacy tooltip behavior (no collapsed/expanded states).
+        auto renderSettingsTooltip = [&](MyGUI::Widget* focus, std::string_view type) -> bool {
+            if (!focus || !isSettingsTooltipPipeline(focus))
+                return false;
+
+            ensureTooltipLayer("SettingsPopup");
+
+            auto getSettingsViewport = [&]() {
+                MyGUI::ILayer* layer = mMainWidget->getLayer();
+                MyGUI::IntSize viewportSize = viewSize;
+                MyGUI::IntPoint mousePos = MyGUI::InputManager::getInstance().getMousePosition();
+                float scale = 1.f;
+                if (layer)
+                {
+                    viewportSize = layer->getSize();
+                    mousePos = layer->getPosition(mousePos.left, mousePos.top);
+                    scale = MyGUIPlatform::ScalingLayer::getScaleFactor(viewportSize);
+                    if (scale <= 0.f)
+                        scale = 1.f;
+                }
+                return std::tuple<MyGUI::ILayer*, MyGUI::IntSize, MyGUI::IntPoint, float>(
+                    layer, viewportSize, mousePos, scale);
+            };
+
+            auto positionInViewport = [&](MyGUI::IntPoint& position, const MyGUI::IntSize& size,
+                                          const MyGUI::IntSize& viewportSize, const MyGUI::IntPoint& mousePos,
+                                          float scale) {
+                if (viewportSize.width <= 0 || viewportSize.height <= 0)
+                    return;
+
+                const float safeScale = scale > 0.f ? scale : 1.f;
+                const int offsetY = static_cast<int>(std::lround(32.f / safeScale));
+                const int offsetUp = static_cast<int>(std::lround(8.f / safeScale));
+
+                position += MyGUI::IntPoint(0, offsetY)
+                    - MyGUI::IntPoint(static_cast<int>(mousePos.left / float(viewportSize.width) * size.width), 0);
+
+                if ((position.left + size.width) > viewportSize.width)
+                {
+                    position.left = viewportSize.width - size.width;
+                }
+                if ((position.top + size.height) > viewportSize.height)
+                {
+                    position.top = mousePos.top - size.height - offsetUp;
+                }
+            };
+
+            if (type == "Layout")
+            {
+                if (!focus->isUserString("ToolTipLayout"))
+                    return false;
+
+                const std::string layout = std::string(focus->getUserString("ToolTipLayout"));
+                if (layout == "TextToolTip" || layout == "TextToolTipOneLine")
+                {
+                    ToolTipInfo info;
+                    if (layout == "TextToolTipOneLine")
+                        info.text = std::string(focus->getUserString("Caption_TextOneLine"));
+                    else
+                        info.text = std::string(focus->getUserString("Caption_Text"));
+
+                    const MyGUI::IntSize tooltipSize = createToolTip(info, false, 0, true);
+                    mDynamicToolTipBox->changeWidgetSkin("HUD_Box_NoTransp_Settings");
+                    auto [layer, viewportSize, mousePos, scale] = getSettingsViewport();
+
+                    MyGUI::IntPoint tooltipPosition = mousePos;
+                    if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
+                    {
+                        const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
+                        tooltipPosition = MyGUI::IntPoint(
+                            focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
+                        if (layer)
+                            tooltipPosition = layer->getPosition(tooltipPosition.left, tooltipPosition.top);
+                        mousePos = tooltipPosition;
+                    }
+
+                    positionInViewport(tooltipPosition, tooltipSize, viewportSize, mousePos, scale);
+                    setCoord(tooltipPosition.left, tooltipPosition.top, tooltipSize.width, tooltipSize.height);
+                    return true;
+                }
+
+                MyGUI::Widget* tooltip = nullptr;
+                getWidget(tooltip, focus->getUserString("ToolTipLayout"));
+
+                tooltip->setVisible(true);
+                tooltip->changeWidgetSkin("HUD_Box_NoTransp_Settings");
+
+                const auto& userStrings = focus->getUserStrings();
+                std::vector<std::pair<std::string, std::string>> pendingImageTextures;
+                const VFS::Manager* const vfs = MWBase::Environment::get().getResourceSystem()->getVFS();
+                for (auto& userStringPair : userStrings)
+                {
+                    size_t underscorePos = userStringPair.first.find('_');
+                    if (underscorePos == std::string::npos)
+                        continue;
+                    std::string key = userStringPair.first.substr(0, underscorePos);
+                    std::string_view first = userStringPair.first;
+                    std::string_view widgetName = first.substr(underscorePos + 1);
+
+                    std::string_view updateType = "Property";
+                    size_t caretPos = key.find('^');
+                    if (caretPos != std::string::npos)
+                    {
+                        updateType = first.substr(0, caretPos);
+                        key.erase(key.begin(), key.begin() + caretPos + 1);
+                    }
+
+                    MyGUI::Widget* w = nullptr;
+                    getWidget(w, widgetName);
+                    if (updateType == "Property")
+                    {
+                        if (key == "ImageTexture")
+                        {
+                            pendingImageTextures.emplace_back(
+                                std::string(widgetName), std::string(userStringPair.second));
+                            continue;
+                        }
+                        w->setProperty(key, userStringPair.second);
+                    }
+                    else if (updateType == "UserData")
+                        w->setUserString(key, userStringPair.second);
+                }
+
+                auto updateLayoutSize = [&]() {
+                    MyGUI::IntSize size = tooltip->getSize();
+                    tooltip->setCoord(0, 0, size.width, size.height);
+                    return size;
+                };
+
+                const MyGUI::IntSize tooltipSize = updateLayoutSize();
+
+                for (const auto& [imageWidgetName, texture] : pendingImageTextures)
+                {
+                    MyGUI::Widget* imageWidget = nullptr;
+                    getWidget(imageWidget, imageWidgetName);
+                    if (auto* image = dynamic_cast<MyGUI::ImageBox*>(imageWidget))
+                    {
+                        image->setImageTexture(
+                            Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(texture), *vfs));
+                    }
+                }
+
+                auto [layer, viewportSize, mousePos, scale] = getSettingsViewport();
+
+                MyGUI::IntPoint tooltipPosition = mousePos;
+                if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
+                {
+                    const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
+                    tooltipPosition
+                        = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
+                    if (layer)
+                        tooltipPosition = layer->getPosition(tooltipPosition.left, tooltipPosition.top);
+                    mousePos = tooltipPosition;
+                }
+
+                positionInViewport(tooltipPosition, tooltipSize, viewportSize, mousePos, scale);
+                setCoord(tooltipPosition.left, tooltipPosition.top, tooltipSize.width, tooltipSize.height);
+                return true;
+            }
+
+            if (type == "ToolTipInfo")
+            {
+                const MyGUI::IntSize tooltipSize
+                    = createToolTip(*focus->getUserData<MWGui::ToolTipInfo>(), false, 0, true);
+                mDynamicToolTipBox->changeWidgetSkin("HUD_Box_NoTransp_Settings");
+                auto [layer, viewportSize, mousePos, scale] = getSettingsViewport();
+
+                MyGUI::IntPoint tooltipPosition = mousePos;
+                if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
+                {
+                    const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
+                    tooltipPosition
+                        = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
+                    if (layer)
+                        tooltipPosition = layer->getPosition(tooltipPosition.left, tooltipPosition.top);
+                    mousePos = tooltipPosition;
+                }
+
+                positionInViewport(tooltipPosition, tooltipSize, viewportSize, mousePos, scale);
+                setCoord(tooltipPosition.left, tooltipPosition.top, tooltipSize.width, tooltipSize.height);
+                return true;
+            }
+
+            return false;
+        };
+
         auto showEmptyControllerBar = [&](const MyGUI::IntCoord& winRect, int width) {
             const int height = 28;
             const int posY = std::max(0, winRect.top - height - 4);
@@ -1833,6 +2041,9 @@ namespace MWGui
                     }
                     type = focus->getUserString("ToolTipType");
                 }
+
+                if (renderSettingsTooltip(focus, type))
+                    return;
 
                 MyGUI::IntCoord tooltipWinRect = controllerWinRect;
                 int tooltipWidth = controllerTooltipWidth;
@@ -2808,7 +3019,7 @@ namespace MWGui
         }
 
         const int textWidgetCenterX = textWidget->getLeft() + textWidget->getWidth() / 2;
-        const int textCenterOffset = captionScrolling ? 0 : (captionCenterX - textWidgetCenterX);
+        const int textCenterOffset = (menuMode && !captionScrolling) ? (captionCenterX - textWidgetCenterX) : 0;
 
         if (textCenterOffset != 0)
         {
