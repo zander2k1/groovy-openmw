@@ -122,9 +122,15 @@ namespace MWGui
         {
             const int direction = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT) ? 1 : -1;
             const size_t maxCount = mSlider->getScrollRange();
-            const bool allowFastStep = maxCount > 500;
+            const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 7.5f;
             const auto now = std::chrono::steady_clock::now();
-            const auto gap = std::chrono::milliseconds(350);
+            float gapSeconds = 0.2f;
+            if (repeatRate > 0.f)
+            {
+                const float intervalSeconds = 1.f / repeatRate;
+                gapSeconds = std::max(gapSeconds, intervalSeconds * 1.5f);
+            }
+            const auto gap = std::chrono::duration<float>(gapSeconds);
 
             if (!mNavActive || mNavButton != static_cast<int>(arg.button) || (now - mLastNavEventTime) > gap)
             {
@@ -136,10 +142,10 @@ namespace MWGui
             mLastNavEventTime = now;
 
             int step = 1;
-            if (allowFastStep && (now - mNavStartTime) >= std::chrono::seconds(5))
+            if ((now - mNavStartTime) >= std::chrono::seconds(3))
             {
                 if (maxCount > 1000)
-                    step = 50;
+                    step = 100;
                 else
                     step = 10;
             }

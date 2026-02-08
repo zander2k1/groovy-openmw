@@ -165,7 +165,6 @@ namespace MWGui
         mItemTransfer->addTarget(*mItemView);
         if (auto* inventory = MWBase::Environment::get().getWindowManager()->getInventoryWindow())
             mItemTransfer->addTarget(*inventory->getItemView());
-        updateEncumbranceBar();
         auto model = std::make_unique<CompanionItemModel>(actor);
         mModel = model.get();
         auto sortModel = std::make_unique<SortFilterItemModel>(std::move(model));
@@ -176,6 +175,7 @@ namespace MWGui
         mItemView->resetScrollBars();
 
         setTitle(actor.getClass().getName(actor));
+        updateEncumbranceBar();
     }
 
     void CompanionWindow::onFrame(float dt)
