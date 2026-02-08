@@ -470,6 +470,8 @@ namespace MWGui
                 message = "#{sQuanityMenuMessage01}";
             else if (mPendingControllerAction == ControllerAction::Drop)
                 message = "#{sDrop}";
+            else if (mGuiMode == MWGui::GM_Companion || mGuiMode == MWGui::GM_Container)
+                message = "Give";
             std::string name{ object.getClass().getName(object) };
             name += MWGui::ToolTips::getSoulString(object.getCellRef());
             dialog->openCountDialog(name, message, static_cast<int>(count), this);

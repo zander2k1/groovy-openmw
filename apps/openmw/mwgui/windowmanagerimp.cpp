@@ -1701,6 +1701,11 @@ namespace MWGui
                 // Ensure controller focus is on container when entering container mode.
                 setActiveControllerWindow(mode, 0);
             }
+            else if (mode == GM_Companion)
+            {
+                // Always start with the companion window focused.
+                setActiveControllerWindow(mode, 0);
+            }
             else if (mode == GM_Inventory)
             {
                 const size_t winCount = mGuiModeStates[mode].mWindows.size();
