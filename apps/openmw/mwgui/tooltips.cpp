@@ -762,13 +762,11 @@ namespace MWGui
                     name->setCaption(nameText);
                 }
 
-                const int topBlockHeight = std::max(iconSize, lineHeight);
-                y += topBlockHeight + spacing;
-
+                int descHeight = 0;
                 if (!descriptionText.empty())
                 {
                     auto* desc = mDynamicToolTipBox->createWidget<Gui::AutoSizedEditBox>("SandText",
-                        MyGUI::IntCoord(padding, y, std::max(0, width - padding * 2), 0),
+                        MyGUI::IntCoord(nameLeft, y + lineHeight, textWidth, 0),
                         MyGUI::Align::Left | MyGUI::Align::Top);
                     desc->setEditStatic(true);
                     desc->setNeedKeyFocus(false);
@@ -778,9 +776,12 @@ namespace MWGui
                     desc->setCaptionWithReplacing(descriptionText);
                     desc->forceTextUpdate();
                     const MyGUI::IntSize descSize = desc->getRequestedSize();
-                    desc->setSize(MyGUI::IntSize(std::max(0, width - padding * 2), descSize.height));
-                    y += descSize.height;
+                    desc->setSize(MyGUI::IntSize(textWidth, descSize.height));
+                    descHeight = descSize.height;
                 }
+
+                const int topBlockHeight = std::max(iconSize, lineHeight + descHeight);
+                y += topBlockHeight + spacing;
             }
             else if (layout == "HealthToolTip")
             {
