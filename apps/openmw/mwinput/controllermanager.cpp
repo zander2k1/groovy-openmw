@@ -385,17 +385,16 @@ namespace MWInput
                     = std::max(1, static_cast<int>(std::lround(kDialogueTriggerScrollSmoothRate * dt)));
                 const int pendingTicks = static_cast<int>(std::abs(mPendingDialogueTriggerScrollTicks));
                 const int ticksToSend = std::max(1, std::min(maxTicksThisFrame, pendingTicks));
-                const Sint16 axisValue = mPendingDialogueTriggerScrollTicks < 0.f ? -32767 : 32767;
+                const bool scrollUp = mPendingDialogueTriggerScrollTicks < 0.f;
 
                 SDL_ControllerAxisEvent scrollEvent{};
                 scrollEvent.type = SDL_CONTROLLERAXISMOTION;
-                scrollEvent.axis = SDL_CONTROLLER_AXIS_RIGHTY;
-                scrollEvent.value = axisValue;
+                scrollEvent.axis = scrollUp ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+                scrollEvent.value = 32767;
                 for (int i = 0; i < ticksToSend; ++i)
                     topWin->onControllerThumbstickEvent(scrollEvent);
 
-                mPendingDialogueTriggerScrollTicks
-                    += mPendingDialogueTriggerScrollTicks < 0.f ? ticksToSend : -ticksToSend;
+                mPendingDialogueTriggerScrollTicks += scrollUp ? ticksToSend : -ticksToSend;
                 if (std::abs(mPendingDialogueTriggerScrollTicks) < 1.f)
                     mPendingDialogueTriggerScrollTicks = 0.f;
             }
@@ -746,8 +745,9 @@ namespace MWInput
                 && topWin->getControllerScrollWidget() != nullptr;
             auto scrollDialogueByTrigger = [&](Sint16 axisValue) {
                 SDL_ControllerAxisEvent scrollEvent = arg;
-                scrollEvent.axis = SDL_CONTROLLER_AXIS_RIGHTY;
-                scrollEvent.value = axisValue;
+                scrollEvent.axis
+                    = axisValue < 0 ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+                scrollEvent.value = 32767;
                 for (int i = 0; i < kDialogueTriggerImmediateTicks; ++i)
                     topWin->onControllerThumbstickEvent(scrollEvent);
                 const int queuedTicks = std::max(0, kDialogueTriggerScrollTicks - kDialogueTriggerImmediateTicks);
@@ -762,6 +762,8 @@ namespace MWInput
                     if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
                         mRightTriggerPressed = true;
+                        mRightTriggerHoldTime = kGuiTurboRepeatStartDelay;
+                        mRightTriggerRepeatTime = 0.f;
                         scrollDialogueByTrigger(32767);
                     }
                 }
@@ -784,6 +786,8 @@ namespace MWInput
                     if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
                         mLeftTriggerPressed = true;
+                        mLeftTriggerHoldTime = kGuiTurboRepeatStartDelay;
+                        mLeftTriggerRepeatTime = 0.f;
                         scrollDialogueByTrigger(-32767);
                     }
                 }

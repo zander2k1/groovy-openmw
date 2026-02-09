@@ -821,7 +821,7 @@ namespace MWGui
             mScrollBar->setVisible(false);
         if (scrollbar && !mScrollBar->getVisible())
             mScrollBar->setVisible(true);
-        if (oldScrollbarVisible != mScrollBar->getVisible())
+        if (oldScrollbarVisible != mScrollBar->getVisible() && !Settings::gui().mXboxStyledDialog)
             updateLayoutSizes();
 
         std::shared_ptr<BookTypesetter> typesetter
@@ -883,10 +883,11 @@ namespace MWGui
             // Scroll range should be >= 2 to enable scrolling and prevent a crash
             size_t range = std::max(book->getSize().second - viewHeight, size_t(2));
             mScrollBar->setScrollRange(range);
-            mScrollBar->setScrollPosition(range - 1);
+            const size_t targetPos = Settings::gui().mXboxStyledDialog ? 0 : range - 1;
+            mScrollBar->setScrollPosition(targetPos);
             mScrollBar->setTrackSize(
                 static_cast<int>(viewHeight / static_cast<float>(book->getSize().second) * mScrollBar->getLineSize()));
-            onScrollbarMoved(mScrollBar, range - 1);
+            onScrollbarMoved(mScrollBar, targetPos);
         }
 
         if (Settings::gui().mControllerMenus && !mChoiceStyles.empty())
@@ -1320,17 +1321,19 @@ namespace MWGui
 
     bool DialogueWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
-        if (arg.axis != SDL_CONTROLLER_AXIS_RIGHTY)
+        if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTY)
+            return true;
+
+        const bool isTrigger
+            = arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT;
+        if (!isTrigger)
             return false;
 
         if (!mScrollBar->getVisible())
             return true;
 
-        static constexpr int kDeadzone = 8000;
-        if (std::abs(arg.value) < kDeadzone)
-            return true;
-
-        onMouseWheel(nullptr, arg.value < 0 ? 1 : -1);
+        const int direction = (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT) ? 1 : -1;
+        onMouseWheel(nullptr, direction);
         return true;
     }
 }
