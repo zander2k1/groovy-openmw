@@ -247,16 +247,24 @@ namespace Gui
     void FontLoader::loadFonts()
     {
         std::string defaultFont{ Fallback::Map::getString("Fonts_Font_0") };
+        std::string dialogueFont;
         std::string scrollFont{ Fallback::Map::getString("Fonts_Font_2") };
         if (defaultFont.empty())
-            defaultFont = "CenturyGothicPaneuropeanSemiBold";
+        {
+            defaultFont = "MontserratMedium";
+            dialogueFont = "MontserratSemiBold";
+        }
+        else
+        {
+            dialogueFont = defaultFont;
+        }
         if (scrollFont.empty())
             scrollFont = "DemonicLetters";
         loadFont(defaultFont, "DefaultFont");
-        loadFont("CenturyGothicPaneuropeanBold", "DialogueBoldFont");
+        loadFont(dialogueFont, "DialogueBoldFont");
         loadFont(scrollFont, "ScrollFont");
-        loadFont("DejaVuLGCSansMono",
-            "MonoFont"); // We need to use a TrueType monospace font to display debug texts properly.
+        loadFont("MontserratMedium",
+            "MonoFont"); // We need to use a TrueType font to display debug texts properly.
     }
 
     void FontLoader::loadFont(const std::string& fileName, const std::string& fontId)

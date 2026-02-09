@@ -44,13 +44,10 @@ set(BUILTIN_DATA_FILES
     textures/omw/water_nm.png
     textures/omw/water_nm_classic.png
 
-    fonts/DejaVuFontLicense.txt
-    fonts/DejaVuLGCSansMono.ttf
-    fonts/DejaVuLGCSansMono.omwfont
-    fonts/CenturyGothicPaneuropeanSemiBold.ttf
-    fonts/CenturyGothicPaneuropeanSemiBold.omwfont
-    fonts/CenturyGothicPaneuropeanBold.ttf
-    fonts/CenturyGothicPaneuropeanBold.omwfont
+    fonts/MontserratMedium.ttf
+    fonts/MontserratMedium.omwfont
+    fonts/MontserratSemiBold.ttf
+    fonts/MontserratSemiBold.omwfont
     fonts/DemonicLetters.ttf
     fonts/DemonicLetters.omwfont
     fonts/DemonicLettersFontLicense.txt

@@ -53,8 +53,8 @@
         <Property key="TextAlign" value="VCenter HCenter"/>
         <Property key="TextShadow" value="true"/>
         <BasisSkin type="SimpleText" offset="0 0 16 10" align="Stretch">
-            <State name="normal" colour="#{fontcolour=normal}" shift="0"/>
-            <State name="highlighted" colour="#{fontcolour=active}" shift="0"/>
+            <State name="normal" colour="#{fontcolour=normal}" shift="0 0.5"/>
+            <State name="highlighted" colour="#{fontcolour=active}" shift="0 0.5"/>
         </BasisSkin>
     </Resource>
 

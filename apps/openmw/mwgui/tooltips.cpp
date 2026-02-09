@@ -463,7 +463,7 @@ namespace MWGui
             bar->setProgressPosition(disposition);
 
             MyGUI::TextBox* value = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("ProgressText",
-                MyGUI::IntCoord(barLeft, y, barWidth, rowHeight), MyGUI::Align::Right | MyGUI::Align::VCenter);
+                MyGUI::IntCoord(barLeft, y + 1, barWidth, rowHeight), MyGUI::Align::Right | MyGUI::Align::VCenter);
             value->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
             value->setCaption(MyGUI::utility::toString(disposition, "/100"));
             return true;

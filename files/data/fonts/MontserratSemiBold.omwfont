@@ -1,6 +1,6 @@
 <MyGUI type="Resource" version="1.1">
     <Resource type="ResourceTrueTypeFont">
-        <Property key="Source" value="CenturyGothicPaneuropeanSemiBold.ttf"/>
+        <Property key="Source" value="MontserratSemiBold.ttf"/>
         <Property key="Antialias" value="false"/>
         <Property key="SubstituteCode" value="95"/>
         <Property key="TabWidth" value="8"/>
