@@ -10,6 +10,7 @@
 #include <QDoubleSpinBox>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QSignalBlocker>
 #include <QString>
 
 #include <components/config/gamesettings.hpp>
@@ -109,6 +110,52 @@ namespace
         }
     }
 
+    struct RecommendedScalingDefaults
+    {
+        int width;
+        int height;
+        double interfaceScaling;
+        double dialogueScaling;
+    };
+
+    constexpr std::array<RecommendedScalingDefaults, 21> recommendedScalingDefaults = {
+        RecommendedScalingDefaults{ 640, 480, 0.8, 1.0 },
+        RecommendedScalingDefaults{ 720, 480, 0.8, 1.0 },
+        RecommendedScalingDefaults{ 720, 576, 0.9, 1.1 },
+        RecommendedScalingDefaults{ 800, 600, 1.0, 1.2 },
+        RecommendedScalingDefaults{ 1024, 768, 1.25, 1.45 },
+        RecommendedScalingDefaults{ 1152, 864, 1.45, 1.65 },
+        RecommendedScalingDefaults{ 1280, 720, 1.45, 1.65 },
+        RecommendedScalingDefaults{ 1280, 800, 1.65, 2.0 },
+        RecommendedScalingDefaults{ 1280, 960, 1.65, 2.0 },
+        RecommendedScalingDefaults{ 1280, 1024, 1.65, 2.0 },
+        RecommendedScalingDefaults{ 1360, 768, 1.55, 1.85 },
+        RecommendedScalingDefaults{ 1366, 768, 1.55, 1.85 },
+        RecommendedScalingDefaults{ 1440, 1080, 1.85, 2.15 },
+        RecommendedScalingDefaults{ 1600, 900, 1.75, 2.05 },
+        RecommendedScalingDefaults{ 1600, 1200, 1.95, 2.35 },
+        RecommendedScalingDefaults{ 1680, 1050, 1.85, 2.25 },
+        RecommendedScalingDefaults{ 1920, 1080, 1.85, 2.25 },
+        RecommendedScalingDefaults{ 1920, 1200, 1.95, 2.35 },
+        RecommendedScalingDefaults{ 1920, 1440, 2.35, 2.75 },
+        RecommendedScalingDefaults{ 2560, 1440, 2.35, 2.75 },
+        RecommendedScalingDefaults{ 3840, 2160, 2.65, 3.15 },
+    };
+
+    bool tryGetRecommendedScaling(int width, int height, double& interfaceScaling, double& dialogueScaling)
+    {
+        for (const auto& entry : recommendedScalingDefaults)
+        {
+            if (entry.width == width && entry.height == height)
+            {
+                interfaceScaling = entry.interfaceScaling;
+                dialogueScaling = entry.dialogueScaling;
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
 
 Launcher::SettingsPage::SettingsPage(Config::GameSettings& gameSettings, QWidget* parent)
@@ -150,6 +197,31 @@ void Launcher::SettingsPage::on_skipMenuCheckBox_stateChanged(int state)
 {
     startDefaultCharacterAtLabel->setEnabled(state == Qt::Checked);
     startDefaultCharacterAtField->setEnabled(state == Qt::Checked);
+}
+
+void Launcher::SettingsPage::on_recommendedScalingDefaultsCheckBox_stateChanged(int state)
+{
+    if (state == Qt::Checked)
+    {
+        int width = mLastResolutionWidth;
+        int height = mLastResolutionHeight;
+        if (width <= 0 || height <= 0)
+        {
+            width = Settings::video().mResolutionX;
+            height = Settings::video().mResolutionY;
+        }
+        applyRecommendedScalingDefaults(width, height);
+    }
+    else
+        setScalingValues(1.0, 1.0);
+}
+
+void Launcher::SettingsPage::onResolutionChanged(int width, int height)
+{
+    mLastResolutionWidth = width;
+    mLastResolutionHeight = height;
+    if (recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked)
+        applyRecommendedScalingDefaults(width, height);
 }
 
 void Launcher::SettingsPage::on_runScriptAfterStartupBrowseButton_clicked()
@@ -342,6 +414,8 @@ bool Launcher::SettingsPage::loadSettings()
 
     // Interface Changes
     {
+        mLastResolutionWidth = Settings::video().mResolutionX;
+        mLastResolutionHeight = Settings::video().mResolutionY;
         loadSettingBool(Settings::game().mShowEffectDuration, *showEffectDurationCheckBox);
         loadSettingBool(Settings::game().mShowEnchantChance, *showEnchantChanceCheckBox);
         loadSettingBool(Settings::game().mShowMeleeInfo, *showMeleeInfoCheckBox);
@@ -360,11 +434,15 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
+        loadSettingBool(Settings::gui().mUseRecommendedScalingDefaults, *recommendedScalingDefaultsCheckBox);
         const double interfaceScaling = Settings::gui().mScalingFactor;
-        scalingSpinBox->setValue(interfaceScaling);
-
         const double dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
-        dialogueScalingSpinBox->setValue(dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling);
+        if (!(recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked
+                && applyRecommendedScalingDefaults(Settings::video().mResolutionX, Settings::video().mResolutionY)))
+        {
+            const double effectiveDialogueScaling = dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling;
+            setScalingValues(interfaceScaling, effectiveDialogueScaling);
+        }
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingBool(Settings::gui().mSettingsWindowIgnoreScaling, *settingsWindowIgnoreScalingCheckBox);
@@ -431,6 +509,28 @@ void Launcher::SettingsPage::onDialogueScalingChanged(double value)
 {
     if (value > 0.0 && value < 0.5)
         dialogueScalingSpinBox->setValue(0.5);
+}
+
+void Launcher::SettingsPage::setScalingValues(double interfaceScaling, double dialogueScaling)
+{
+    const QSignalBlocker interfaceBlocker(scalingSpinBox);
+    const QSignalBlocker dialogueBlocker(dialogueScalingSpinBox);
+    scalingSpinBox->setValue(interfaceScaling);
+    dialogueScalingSpinBox->setValue(dialogueScaling);
+    mLastInterfaceScaling = interfaceScaling;
+}
+
+bool Launcher::SettingsPage::applyRecommendedScalingDefaults(int width, int height)
+{
+    double interfaceScaling = 1.0;
+    double dialogueScaling = 1.0;
+    if (!tryGetRecommendedScaling(width, height, interfaceScaling, dialogueScaling))
+    {
+        return false;
+    }
+
+    setScalingValues(interfaceScaling, dialogueScaling);
+    return true;
 }
 
 void Launcher::SettingsPage::saveSettings()
@@ -592,6 +692,9 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
+        if (recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked)
+            applyRecommendedScalingDefaults(Settings::video().mResolutionX, Settings::video().mResolutionY);
+        saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());

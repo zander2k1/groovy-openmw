@@ -1584,6 +1584,14 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Apply recommended interface and dialogue scaling based on resolution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Recommended Scaling Defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Use white/black shoulder icons for LB/RB/L1/R1/L/R prompts.</source>
         <translation type="unfinished"></translation>
     </message>

@@ -24,6 +24,9 @@ namespace Launcher
         void saveSettings();
         bool loadSettings();
 
+    signals:
+        void resolutionChanged(int width, int height);
+
     public slots:
         void screenChanged(int screen);
 
@@ -37,6 +40,9 @@ namespace Launcher
 
         static QStringList getAvailableResolutions(int screen);
         static QRect getMaximumResolution();
+
+        void emitResolutionChanged();
+        bool getCurrentResolution(int& width, int& height) const;
 
         bool setupSDL();
         void handleWindowModeChange(Settings::WindowMode state);

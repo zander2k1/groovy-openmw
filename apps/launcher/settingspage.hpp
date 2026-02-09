@@ -25,8 +25,10 @@ namespace Launcher
 
     public slots:
         void slotLoadedCellsChanged(QStringList cellNames);
+        void onResolutionChanged(int width, int height);
 
     private slots:
+        void on_recommendedScalingDefaultsCheckBox_stateChanged(int state);
         void on_skipMenuCheckBox_stateChanged(int state);
         void on_runScriptAfterStartupBrowseButton_clicked();
         void onInterfaceScalingChanged(double value);
@@ -39,10 +41,15 @@ namespace Launcher
         void slotControllerMenusToggled(bool checked);
 
     private:
+        bool applyRecommendedScalingDefaults(int width, int height);
+        void setScalingValues(double interfaceScaling, double dialogueScaling);
+
         Config::GameSettings& mGameSettings;
         QCompleter mCellNameCompleter;
         QStringListModel mCellNameCompleterModel;
         double mLastInterfaceScaling = 1.0;
+        int mLastResolutionWidth = 0;
+        int mLastResolutionHeight = 0;
 
         /**
          * Load the cells associated with the given content files for use in autocomplete
