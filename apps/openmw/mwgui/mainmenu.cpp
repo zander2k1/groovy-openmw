@@ -145,6 +145,7 @@ namespace MWGui
         }
 
         Layout::setVisible(visible);
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
     }
 
     void MainMenu::onNewGameConfirmed()
@@ -295,6 +296,13 @@ namespace MWGui
         int curH = 0;
 
         MWBase::StateManager::State state = MWBase::Environment::get().getStateManager()->getState();
+
+        mControllerButtons = {};
+        if (state == MWBase::StateManager::State_Running)
+        {
+            mControllerButtons.mA = "#{Interface:Select}";
+            mControllerButtons.mB = "#{Interface:Back}";
+        }
 
         mVersionText->setVisible(state == MWBase::StateManager::State_NoGame);
 
