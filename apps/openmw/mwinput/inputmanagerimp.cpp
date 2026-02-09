@@ -59,12 +59,14 @@ namespace MWInput
     {
         mControlsDisabled = disableControls;
 
-        mInputWrapper->setMouseVisible(MWBase::Environment::get().getWindowManager()->getCursorVisible());
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
         mInputWrapper->capture(disableEvents);
 
         if (disableControls)
         {
             mMouseManager->updateCursorMode();
+            mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
             return;
         }
 
@@ -87,6 +89,8 @@ namespace MWInput
                     dt, controllerAvailable ? mControllerManager->getGyroValues() : mSensorManager->getGyroValues());
             }
         }
+
+        mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
     }
 
     void InputManager::setDragDrop(bool dragDrop)
