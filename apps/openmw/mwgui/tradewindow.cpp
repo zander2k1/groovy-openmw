@@ -314,10 +314,9 @@ namespace MWGui
         {
             if (mCategories)
             {
-                const MyGUI::IntCoord widgetCoord = widget->getAbsoluteCoord();
-                const MyGUI::IntCoord categoriesCoord = mCategories->getAbsoluteCoord();
-                mControllerTabHighlight->setCoord(widgetCoord.left - categoriesCoord.left,
-                    widgetCoord.top - categoriesCoord.top, widgetCoord.width, widgetCoord.height);
+                const MyGUI::IntCoord widgetCoord = widget->getCoord();
+                mControllerTabHighlight->setCoord(
+                    widgetCoord.left, widgetCoord.top, widgetCoord.width, widgetCoord.height);
                 mControllerTabHighlight->setVisible(true);
             }
             else
@@ -936,6 +935,8 @@ namespace MWGui
         mItemView->setActiveControllerWindow(active && !mControllerTabsActive);
         if (active && !mControllerTabsActive)
             mItemView->refreshControllerFocus();
+        if (active && mControllerTabsActive)
+            updateControllerTabFocus(-1, mControllerTabIndex);
         WindowBase::setActiveControllerWindow(active);
     }
 
