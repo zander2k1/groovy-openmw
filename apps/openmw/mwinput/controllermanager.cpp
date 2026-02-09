@@ -389,7 +389,8 @@ namespace MWInput
 
                 SDL_ControllerAxisEvent scrollEvent{};
                 scrollEvent.type = SDL_CONTROLLERAXISMOTION;
-                scrollEvent.axis = scrollUp ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+                scrollEvent.axis
+                    = static_cast<Uint8>(scrollUp ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
                 scrollEvent.value = 32767;
                 for (int i = 0; i < ticksToSend; ++i)
                     topWin->onControllerThumbstickEvent(scrollEvent);
@@ -745,8 +746,8 @@ namespace MWInput
                 && topWin->getControllerScrollWidget() != nullptr;
             auto scrollDialogueByTrigger = [&](Sint16 axisValue) {
                 SDL_ControllerAxisEvent scrollEvent = arg;
-                scrollEvent.axis
-                    = axisValue < 0 ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+                scrollEvent.axis = static_cast<Uint8>(
+                    axisValue < 0 ? SDL_CONTROLLER_AXIS_TRIGGERLEFT : SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
                 scrollEvent.value = 32767;
                 for (int i = 0; i < kDialogueTriggerImmediateTicks; ++i)
                     topWin->onControllerThumbstickEvent(scrollEvent);

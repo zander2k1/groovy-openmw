@@ -190,8 +190,8 @@ namespace MWGui
             if (mItemView && targetPaneHeight <= 0)
                 targetPaneHeight = mItemView->getTop() + mItemView->getHeight();
         }
-        const int maxPaneHeight = std::max(
-            0, client.height - bottomGap - (showTradeInfo ? tradeInfoHeight + tradeInfoGap : 0));
+        const int maxPaneHeight
+            = std::max(0, client.height - bottomGap - (showTradeInfo ? tradeInfoHeight + tradeInfoGap : 0));
         const int paneHeight = std::min(targetPaneHeight, maxPaneHeight);
         const int leftPaneWidth = std::max(0, static_cast<int>((paneHeight - mArmorRating->getHeight()) * aspect));
         const int rightPaneWidth = std::max(0, client.width - rightGap - leftPaneWidth - paneGap);

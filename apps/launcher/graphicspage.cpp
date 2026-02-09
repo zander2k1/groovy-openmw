@@ -80,8 +80,12 @@ bool Launcher::GraphicsPage::setupSDL()
 
 bool Launcher::GraphicsPage::loadSettings()
 {
+    mIgnoreResolutionChanges = true;
     if (!setupSDL())
+    {
+        mIgnoreResolutionChanges = false;
         return false;
+    }
 
     // Visuals
 
@@ -130,6 +134,7 @@ bool Launcher::GraphicsPage::loadSettings()
         framerateLimitSpinBox->setValue(fpsLimit);
     }
 
+    mIgnoreResolutionChanges = false;
     emitResolutionChanged();
     return true;
 }
@@ -321,6 +326,9 @@ void Launcher::GraphicsPage::slotFramerateLimitToggled(bool checked)
 
 void Launcher::GraphicsPage::emitResolutionChanged()
 {
+    if (mIgnoreResolutionChanges)
+        return;
+
     int width = 0;
     int height = 0;
     if (getCurrentResolution(width, height))

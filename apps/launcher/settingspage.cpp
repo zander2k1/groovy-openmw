@@ -210,7 +210,11 @@ void Launcher::SettingsPage::on_recommendedScalingDefaultsCheckBox_stateChanged(
             width = Settings::video().mResolutionX;
             height = Settings::video().mResolutionY;
         }
-        applyRecommendedScalingDefaults(width, height);
+        if (applyRecommendedScalingDefaults(width, height))
+        {
+            mLastRecommendedResolutionWidth = width;
+            mLastRecommendedResolutionHeight = height;
+        }
     }
     else
         setScalingValues(1.0, 1.0);
@@ -220,8 +224,15 @@ void Launcher::SettingsPage::onResolutionChanged(int width, int height)
 {
     mLastResolutionWidth = width;
     mLastResolutionHeight = height;
-    if (recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked)
-        applyRecommendedScalingDefaults(width, height);
+    if (recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked
+        && (width != mLastRecommendedResolutionWidth || height != mLastRecommendedResolutionHeight))
+    {
+        if (applyRecommendedScalingDefaults(width, height))
+        {
+            mLastRecommendedResolutionWidth = width;
+            mLastRecommendedResolutionHeight = height;
+        }
+    }
 }
 
 void Launcher::SettingsPage::on_runScriptAfterStartupBrowseButton_clicked()
@@ -416,6 +427,8 @@ bool Launcher::SettingsPage::loadSettings()
     {
         mLastResolutionWidth = Settings::video().mResolutionX;
         mLastResolutionHeight = Settings::video().mResolutionY;
+        mLastRecommendedResolutionWidth = mLastResolutionWidth;
+        mLastRecommendedResolutionHeight = mLastResolutionHeight;
         loadSettingBool(Settings::game().mShowEffectDuration, *showEffectDurationCheckBox);
         loadSettingBool(Settings::game().mShowEnchantChance, *showEnchantChanceCheckBox);
         loadSettingBool(Settings::game().mShowMeleeInfo, *showMeleeInfoCheckBox);
@@ -434,15 +447,14 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
-        loadSettingBool(Settings::gui().mUseRecommendedScalingDefaults, *recommendedScalingDefaultsCheckBox);
+        {
+            const QSignalBlocker blocker(recommendedScalingDefaultsCheckBox);
+            loadSettingBool(Settings::gui().mUseRecommendedScalingDefaults, *recommendedScalingDefaultsCheckBox);
+        }
         const double interfaceScaling = Settings::gui().mScalingFactor;
         const double dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
-        if (!(recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked
-                && applyRecommendedScalingDefaults(Settings::video().mResolutionX, Settings::video().mResolutionY)))
-        {
-            const double effectiveDialogueScaling = dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling;
-            setScalingValues(interfaceScaling, effectiveDialogueScaling);
-        }
+        const double effectiveDialogueScaling = dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling;
+        setScalingValues(interfaceScaling, effectiveDialogueScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingBool(Settings::gui().mSettingsWindowIgnoreScaling, *settingsWindowIgnoreScalingCheckBox);
@@ -692,8 +704,6 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
-        if (recommendedScalingDefaultsCheckBox->checkState() == Qt::Checked)
-            applyRecommendedScalingDefaults(Settings::video().mResolutionX, Settings::video().mResolutionY);
         saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());

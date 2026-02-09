@@ -37,6 +37,7 @@ namespace Launcher
 
     private:
         QVector<QStringList> mResolutionsPerScreen;
+        bool mIgnoreResolutionChanges = false;
 
         static QStringList getAvailableResolutions(int screen);
         static QRect getMaximumResolution();

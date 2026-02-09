@@ -50,6 +50,9 @@ namespace Launcher
         double mLastInterfaceScaling = 1.0;
         int mLastResolutionWidth = 0;
         int mLastResolutionHeight = 0;
+        int mLastRecommendedResolutionWidth = 0;
+        int mLastRecommendedResolutionHeight = 0;
+        bool mLoadingSettings = false;
 
         /**
          * Load the cells associated with the given content files for use in autocomplete
