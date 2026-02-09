@@ -103,7 +103,7 @@ namespace MWGui
 
         bool mUpdateSkillArea;
 
-        // 0 = Name, 1 = Race, 2 = Class, 3 = BirthSign, 4 = Back, 5 = OK
+        // 0 = Name, 1 = Race, 2 = Class, 3 = BirthSign
         std::vector<MyGUI::Button*> mButtons;
         size_t mControllerFocus = 0;
         MyGUI::Widget* mControllerHighlight = nullptr;

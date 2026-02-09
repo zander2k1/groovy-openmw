@@ -110,16 +110,6 @@ namespace MWGui
             mSkillWidgetMap.emplace(skill.mId, static_cast<MyGUI::TextBox*>(nullptr));
         }
 
-        MyGUI::Button* backButton;
-        getWidget(backButton, "BackButton");
-        backButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onBackClicked);
-        mButtons.push_back(backButton);
-
-        MyGUI::Button* okButton;
-        getWidget(okButton, "OKButton");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onOkClicked);
-        mButtons.push_back(okButton);
-
         if (Settings::gui().mControllerMenus)
         {
             MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
@@ -133,11 +123,10 @@ namespace MWGui
 
             setControllerFocus(mButtons, mControllerFocus, true);
             updateControllerHighlight();
+            mControllerButtons = {};
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Done}";
-            okButton->setCaption(
-                MyGUI::UString(MWBase::Environment::get().getWindowManager()->getGameSettingString("sDone", {})));
         }
     }
 
@@ -592,22 +581,8 @@ namespace MWGui
                 case 3:
                     onBirthSignClicked(mButtons[3]);
                     break;
-                case 4:
-                    onBackClicked(mButtons[4]);
-                    break;
-                case 5:
-                    onOkClicked(mButtons[5]);
-                    break;
             }
             return true;
-        }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_B)
-        {
-            onBackClicked(mButtons[4]);
-        }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
-        {
-            onOkClicked(mButtons[5]);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
         {
@@ -622,6 +597,14 @@ namespace MWGui
             mControllerFocus = wrap(mControllerFocus, mButtons.size(), 1);
             setControllerFocus(mButtons, mControllerFocus, true);
             updateControllerHighlight();
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_B)
+        {
+            onBackClicked(nullptr);
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        {
+            onOkClicked(nullptr);
         }
 
         return true;

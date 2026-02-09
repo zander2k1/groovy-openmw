@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 541 428" align="Center" name="_Main">
+    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 541 396" align="Center" name="_Main">
 
         <!-- Player Name, Race, Class and Birthsign -->
         <Widget type="Widget" skin="MW_Box" position="8 8 265 126">
@@ -49,19 +49,8 @@
         <Widget type="Widget" skin="MW_Box" position="8 224 265 156" name="Attributes" />
 
         <!-- Player Skills -->
-        <Widget type="Widget" skin="MW_Box" position="281 7 244 372" align="Left VStretch" name="Skills">
+        <Widget type="Widget" skin="MW_Box" position="281 8 244 372" align="Left VStretch" name="Skills">
             <Widget type="ScrollView" skin="MW_ScrollView" position="8 6 232 362" align="Stretch" name="SkillView"/>
-        </Widget>
-
-        <!-- Dialogue Buttons -->
-        <Widget type="HBox" position="0 388 525 24">
-            <Widget type="Spacer"/>
-            <Widget type="AutoSizedButton" skin="MW_Button" name="BackButton">
-                <Property key="Caption" value="#{sBack}"/>
-            </Widget>
-            <Widget type="AutoSizedButton" skin="MW_Button" name="OKButton">
-                <Property key="Caption" value="#{Interface:OK}"/>
-            </Widget>
         </Widget>
     </Widget>
 </MyGUI>
