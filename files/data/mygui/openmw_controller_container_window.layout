@@ -6,7 +6,7 @@
         <Property key="Visible" value="false"/>
 
         <!-- Items -->
-        <Widget type="ItemView" skin="MW_ItemView" position="5 5 580 250" name="ItemView" align="Left Top Stretch">
+        <Widget type="ItemView" skin="MW_ItemView" position="8 5 576 251" name="ItemView" align="Left Top Stretch">
         </Widget>
 
         <Widget type="HBox" position="0 2350 580 28" align="Right Bottom">

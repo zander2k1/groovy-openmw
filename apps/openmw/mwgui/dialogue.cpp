@@ -1067,7 +1067,7 @@ namespace MWGui
             return;
 
         const MyGUI::IntSize windowSize = mMainWidget->getSize();
-        const int sideMargin = 10;
+        const int sideMargin = 8;
         const int topMargin = 8;
         const int bottomMargin = 16;
         const int gap = 9;

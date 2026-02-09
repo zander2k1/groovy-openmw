@@ -1,5 +1,6 @@
 #include "inventorywindow.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -114,8 +115,14 @@ namespace MWGui
         getWidget(mLeftPane, "LeftPane");
         getWidget(mRightPane, "RightPane");
         getWidget(mCategories, "Categories");
+        getWidget(mTradeInfoPane, "TradeInfoPane");
+        getWidget(mTradeTotalBalanceLabel, "TradeTotalBalanceLabel");
+        getWidget(mTradeTotalBalanceValue, "TradeTotalBalanceValue");
+        getWidget(mTradePlayerGold, "TradePlayerGold");
+        getWidget(mTradeMerchantGold, "TradeMerchantGold");
         getWidget(mArmorRating, "ArmorRating");
         mFilterEdit = nullptr;
+        mTradeInfoPane->setVisible(false);
 
         mAvatarImage->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onAvatarClicked);
         mAvatarImage->setRenderItemTexture(mPreviewTexture.get());
@@ -157,13 +164,46 @@ namespace MWGui
         const int bottomGap = leftGap;
         const int rightGap = leftGap;
         const int paneGap = 4;
+        const int tradeInfoGap = 8;
         const MyGUI::IntCoord client = mMainWidget->getClientCoord();
-        const int paneHeight = std::max(0, client.height - bottomGap);
+        const bool showTradeInfo = mTradeInfoPane->getVisible();
+        const int tradeInfoHeight = showTradeInfo ? mTradeInfoPane->getHeight() : 0;
+        int targetPaneHeight = client.height - bottomGap;
+        if (showTradeInfo)
+        {
+            MWGui::TradeWindow* tradeWindow = MWBase::Environment::get().getWindowManager()->getTradeWindow();
+            if (tradeWindow)
+            {
+                const MyGUI::IntCoord tradeClient = tradeWindow->mMainWidget->getClientCoord();
+                const int tradeClientAbsTop = tradeWindow->mMainWidget->getAbsoluteCoord().top + tradeClient.top;
+                if (tradeWindow->mBottomPane)
+                {
+                    const int tradeBottomAbsTop = tradeWindow->mBottomPane->getAbsoluteCoord().top;
+                    targetPaneHeight = tradeBottomAbsTop - tradeClientAbsTop;
+                }
+                else if (tradeWindow->getItemView())
+                {
+                    const MyGUI::IntCoord tradeItemViewAbs = tradeWindow->getItemView()->getAbsoluteCoord();
+                    targetPaneHeight = tradeItemViewAbs.top + tradeItemViewAbs.height - tradeClientAbsTop;
+                }
+            }
+            if (mItemView && targetPaneHeight <= 0)
+                targetPaneHeight = mItemView->getTop() + mItemView->getHeight();
+        }
+        const int maxPaneHeight = std::max(
+            0, client.height - bottomGap - (showTradeInfo ? tradeInfoHeight + tradeInfoGap : 0));
+        const int paneHeight = std::min(targetPaneHeight, maxPaneHeight);
         const int leftPaneWidth = std::max(0, static_cast<int>((paneHeight - mArmorRating->getHeight()) * aspect));
         const int rightPaneWidth = std::max(0, client.width - rightGap - leftPaneWidth - paneGap);
 
         mLeftPane->setCoord(0, 0, leftPaneWidth, paneHeight);
         mRightPane->setCoord(leftPaneWidth + paneGap, 0, rightPaneWidth, paneHeight);
+        if (showTradeInfo)
+        {
+            const int tradeInfoWidth = std::min(mTradeInfoPane->getWidth(), client.width - leftGap - rightGap);
+            const int tradeInfoTop = paneHeight + tradeInfoGap;
+            mTradeInfoPane->setCoord(leftGap, tradeInfoTop, tradeInfoWidth, tradeInfoHeight);
+        }
     }
 
     void InventoryWindow::resetFixedWindowGeometry()
@@ -695,6 +735,39 @@ namespace MWGui
                 viewport.height / float(mPreview->getTextureHeight())));
     }
 
+    void InventoryWindow::updateTradeInfo()
+    {
+        if (!mTrading)
+            return;
+
+        MWGui::TradeWindow* tradeWindow = MWBase::Environment::get().getWindowManager()->getTradeWindow();
+        if (!tradeWindow)
+            return;
+
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        mTradePlayerGold->setCaptionWithReplacing("#{sYourGold} " + MyGUI::utility::toString(playerGold));
+
+        TradeItemModel* playerTradeModel = getTradeModel();
+        if (!playerTradeModel || !tradeWindow->mTradeModel)
+            return;
+
+        const std::vector<ItemStack>& playerBorrowed = playerTradeModel->getItemsBorrowedToUs();
+        const std::vector<ItemStack>& merchantBorrowed = tradeWindow->mTradeModel->getItemsBorrowedToUs();
+        int currentBalance = tradeWindow->mCurrentBalance;
+        if (playerBorrowed.empty() && merchantBorrowed.empty())
+            currentBalance = 0;
+
+        if (currentBalance < 0)
+            mTradeTotalBalanceLabel->setCaptionWithReplacing("#{sTotalCost}");
+        else
+            mTradeTotalBalanceLabel->setCaptionWithReplacing("#{sTotalSold}");
+
+        mTradeTotalBalanceValue->setCaption(MyGUI::utility::toString(std::abs(currentBalance)));
+        mTradeMerchantGold->setCaptionWithReplacing(
+            "#{sSellerGold} " + MyGUI::utility::toString(tradeWindow->getMerchantGold()));
+    }
+
     void InventoryWindow::onNameFilterChanged(MyGUI::EditBox* sender)
     {
         if (mSortModel)
@@ -925,11 +998,18 @@ namespace MWGui
         if (Settings::gui().mControllerMenus && !mControllerTabsActive && !mControllerTabWidgets.empty()
             && mItemView->getItemCount() <= 0)
             setControllerTabsActive(true);
+
+        if (mTrading)
+            updateTradeInfo();
     }
 
     void InventoryWindow::setTrading(bool trading)
     {
         mTrading = trading;
+        mTradeInfoPane->setVisible(trading);
+        if (mTrading)
+            updateTradeInfo();
+        adjustPanes();
     }
 
     void InventoryWindow::dirtyPreview()
@@ -1131,6 +1211,7 @@ namespace MWGui
             case MWGui::GM_Barter:
                 mControllerButtons.mA = "#{Interface:Sell}";
                 mControllerButtons.mB = "#{Interface:Cancel}";
+                mControllerButtons.mX = "#{Interface:Offer}";
                 mControllerButtons.mY = "#{Interface:Info}";
                 mControllerButtons.mL2 = "#{Interface:Barter}";
                 break;

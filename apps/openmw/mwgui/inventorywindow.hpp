@@ -108,6 +108,7 @@ namespace MWGui
         MyGUI::Widget* mLeftPane;
         MyGUI::Widget* mRightPane;
         MyGUI::Widget* mCategories;
+        MyGUI::Widget* mTradeInfoPane = nullptr;
 
         MyGUI::Button* mFilterAll;
         MyGUI::Button* mFilterWeapon;
@@ -117,6 +118,10 @@ namespace MWGui
 
         MyGUI::EditBox* mFilterEdit;
         MyGUI::Widget* mControllerTabHighlight = nullptr;
+        MyGUI::TextBox* mTradeTotalBalanceLabel = nullptr;
+        MyGUI::EditBox* mTradeTotalBalanceValue = nullptr;
+        MyGUI::TextBox* mTradePlayerGold = nullptr;
+        MyGUI::TextBox* mTradeMerchantGold = nullptr;
 
         std::vector<MyGUI::Widget*> mControllerTabWidgets;
         int mControllerTabIndex = 0;
@@ -170,6 +175,7 @@ namespace MWGui
         void dirtyPreview();
         void updatePreviewSize();
         void updateArmorRating();
+        void updateTradeInfo();
 
         MyGUI::IntSize getPreviewViewportSize() const;
         osg::Vec2i mapPreviewWindowToViewport(int x, int y) const;

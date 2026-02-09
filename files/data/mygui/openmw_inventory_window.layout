@@ -54,5 +54,34 @@
 
         </Widget>
 
+        <Widget type="Widget" skin="" position="8 0 570 48" name="TradeInfoPane" align="Left Bottom HStretch">
+            <Property key="Visible" value="false"/>
+            <Widget type="Widget" skin="" position="4 0 566 16" align="Left Top HStretch">
+                <Widget type="AutoSizedTextBox" skin="SandText" position="0 -1 140 24" name="TradeTotalBalanceLabel" align="Left Top">
+                    <Property key="TextAlign" value="Left VCenter"/>
+                </Widget>
+                <Widget type="HBox" skin="" position="0 -4 562 24" name="TradePlayerGoldContainer" align="Right Top">
+                    <Widget type="Spacer"/>
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="0 -2 562 24" name="TradePlayerGold" align="Left Top">
+                        <Property key="TextAlign" value="Right"/>
+                    </Widget>
+                </Widget>
+            </Widget>
+            <Widget type="Widget" skin="" position="0 22 566 24" align="Left Top HStretch">
+                <Widget type="EditBox" skin="MW_TextEdit" position="4 0 140 24" name="TradeTotalBalanceValue" align="Left Top">
+                    <Property key="TextAlign" value="Center"/>
+                    <Property key="ReadOnly" value="true"/>
+                    <Property key="NeedKey" value="false"/>
+                </Widget>
+                <Widget type="HBox" skin="" position="0 0 566 24" name="TradeMerchantGoldContainer" align="Right Top">
+                    <Widget type="Spacer"/>
+                    <Widget type="AutoSizedTextBox" skin="SandText" position="0 0 566 24" name="TradeMerchantGold" align="Left Top">
+                        <Property key="TextAlign" value="Right"/>
+                    </Widget>
+                </Widget>
+            </Widget>
+        </Widget>
+
     </Widget>
 </MyGUI>
+
