@@ -22,6 +22,7 @@
 
 #include <components/esm/records.hpp>
 #include <components/l10n/manager.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/myguiplatform/scalinglayer.hpp>
 #include <components/settings/values.hpp>
@@ -1100,6 +1101,107 @@ namespace MWGui
             }
             position(tooltipPosition, statsSize, viewSize);
             setCoord(tooltipPosition.left, tooltipPosition.top, statsSize.width, statsSize.height);
+            return true;
+        };
+        auto renderClassLayoutTooltip
+            = [&](MyGUI::Widget* focus, const MyGUI::IntCoord& winRect, int tooltipWidth) -> bool {
+            if (!focus || !focus->isUserString("ToolTipLayout"))
+                return false;
+            if (focus->getUserString("ToolTipLayout") != "ClassToolTip")
+                return false;
+
+            const int padding = 8;
+            const int spacing = 8;
+            const int lineHeight = 18;
+            const int width
+                = tooltipWidth > 0 ? tooltipWidth : (Settings::gui().mControllerMenus ? winRect.width : 300);
+
+            auto getText = [&](std::string_view key) -> std::string {
+                if (!focus->isUserString(std::string(key)))
+                    return std::string();
+                return MyGUI::LanguageManager::getInstance().replaceTags(
+                    std::string(focus->getUserString(std::string(key))));
+            };
+
+            const std::string nameText = getText("Caption_ClassName");
+            const std::string descriptionText = getText("Caption_ClassDescription");
+            const std::string specializationText = getText("Caption_ClassSpecialisation");
+
+            mDynamicToolTipBox->setVisible(true);
+            mDynamicToolTipBox->changeWidgetSkin("HUD_Box_NoTransp");
+
+            int y = padding;
+            bool hasContent = false;
+            const int textWidth = std::max(0, width - padding * 2);
+
+            auto addSpacing = [&]() {
+                if (hasContent)
+                    y += spacing;
+            };
+
+            if (!nameText.empty())
+            {
+                MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                    MyGUI::IntCoord(padding, y, textWidth, lineHeight), MyGUI::Align::Center | MyGUI::Align::Top);
+                name->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
+                name->setCaption(nameText);
+                y += lineHeight;
+                hasContent = true;
+            }
+
+            if (!descriptionText.empty())
+            {
+                addSpacing();
+                auto* desc = mDynamicToolTipBox->createWidget<Gui::AutoSizedEditBox>(
+                    "SandText", MyGUI::IntCoord(padding, y, textWidth, 0), MyGUI::Align::Left | MyGUI::Align::Top);
+                desc->setEditStatic(true);
+                desc->setNeedKeyFocus(false);
+                desc->setEditMultiLine(true);
+                desc->setEditWordWrap(true);
+                desc->setTextAlign(MyGUI::Align::Center | MyGUI::Align::Top);
+                desc->setCaptionWithReplacing(descriptionText);
+                desc->forceTextUpdate();
+                const MyGUI::IntSize descSize = desc->getRequestedSize();
+                desc->setSize(MyGUI::IntSize(textWidth, descSize.height));
+                y += descSize.height;
+                hasContent = true;
+            }
+
+            if (!specializationText.empty())
+            {
+                addSpacing();
+                MyGUI::TextBox* spec = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("SandText",
+                    MyGUI::IntCoord(padding, y, textWidth, lineHeight), MyGUI::Align::Center | MyGUI::Align::Top);
+                spec->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
+                spec->setCaption(specializationText);
+                y += lineHeight;
+                hasContent = true;
+            }
+
+            if (!hasContent)
+                return false;
+
+            const int height = y + padding;
+            const MyGUI::IntSize tipSize(width, height);
+
+            if (controllerTooltipAnchor)
+            {
+                const int anchorHeight = 28;
+                const int anchorPadding = 4;
+                const int posY = std::max(0, winRect.top - anchorHeight - anchorPadding);
+                setCoord(winRect.left, posY, tipSize.width, tipSize.height);
+                return true;
+            }
+
+            MyGUI::IntPoint tooltipPosition = MyGUI::InputManager::getInstance().getMousePosition();
+            if (Settings::gui().mControllerMenus && !winMgr->getCursorVisible() && focus)
+            {
+                const MyGUI::IntCoord focusRect = focus->getAbsoluteCoord();
+                tooltipPosition
+                    = MyGUI::IntPoint(focusRect.left + focusRect.width / 2, focusRect.top + focusRect.height / 2);
+            }
+            position(tooltipPosition, tipSize, viewSize);
+            setCoord(tooltipPosition.left, tooltipPosition.top, tipSize.width, tipSize.height);
             return true;
         };
         auto renderMagicEffectLayoutTooltip
@@ -2535,6 +2637,8 @@ namespace MWGui
                         || (controllerActive && controllerTooltipAnchor && !winMgr->getControllerTooltipEnabled());
                     if (renderCollapsedLayoutTooltip(controllerLayoutCollapsed, focus, tooltipWinRect, tooltipWidth))
                         return;
+                    if (renderClassLayoutTooltip(focus, tooltipWinRect, tooltipWidth))
+                        return;
                     if (renderStatsLayoutTooltip(focus, tooltipWinRect, tooltipWidth))
                         return;
                     if (renderMagicEffectLayoutTooltip(focus, tooltipWinRect, tooltipWidth))
@@ -2600,13 +2704,29 @@ namespace MWGui
                         MyGUI::IntSize size = tooltip->getSize();
                         if (forceWidth)
                         {
+                            tooltip->setSize(tooltipWidth, size.height);
+                            if (auto* box = dynamic_cast<Gui::Box*>(tooltip))
+                                box->notifyChildrenSizeChanged();
+
                             if (auto* autosize = dynamic_cast<Gui::AutoSizedWidget*>(tooltip))
                             {
+                                const std::string_view layout = focus->getUserString("ToolTipLayout");
+                                if (layout == "ClassToolTip")
+                                {
+                                    MyGUI::Widget* descriptionWidget = nullptr;
+                                    getWidget(descriptionWidget, "ClassDescription");
+                                    if (descriptionWidget)
+                                    {
+                                        descriptionWidget->setProperty("Shrink", "false");
+                                        if (auto* edit = dynamic_cast<Gui::AutoSizedEditBox*>(descriptionWidget))
+                                            edit->forceTextUpdate();
+                                    }
+                                }
+
                                 const MyGUI::IntSize requested = autosize->getRequestedSize();
-                                tooltip->setSize(tooltipWidth, requested.height);
                                 size.width = tooltipWidth;
                                 size.height = requested.height;
-
+                                tooltip->setSize(size);
                                 if (auto* box = dynamic_cast<Gui::Box*>(tooltip))
                                     box->notifyChildrenSizeChanged();
                             }
@@ -3351,13 +3471,20 @@ namespace MWGui
         if (playerClass.mName.empty())
             return;
 
+        std::string description = playerClass.mDescription;
+        Misc::StringUtils::trim(description);
+
         int spec = playerClass.mData.mSpecialization;
         std::string specStr = "#{";
         specStr += ESM::Class::sGmstSpecializationIds[spec];
         specStr += '}';
 
         widget->setUserString("Caption_ClassName", playerClass.mName);
-        widget->setUserString("Caption_ClassDescription", playerClass.mDescription);
+        if (!description.empty())
+            widget->setUserString("Caption_ClassDescription", description);
+        else
+            widget->clearUserString("Caption_ClassDescription");
+        widget->setUserString("UserData^Hidden_ClassDescription", description.empty() ? "true" : "false");
         widget->setUserString("Caption_ClassSpecialisation", "#{sSpecialization}: " + specStr);
         widget->setUserString("ToolTipType", "Layout");
         widget->setUserString("ToolTipLayout", "ClassToolTip");
