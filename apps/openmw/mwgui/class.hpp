@@ -353,6 +353,7 @@ namespace MWGui
         void onDescriptionClicked(MyGUI::Widget* sender);
         void onDescriptionEntered(WindowBase* parWindow);
         void onDialogCancel();
+        void onNameEdited(MyGUI::EditBox* sender);
 
         void setSpecialization(int id);
 
@@ -402,6 +403,8 @@ namespace MWGui
         size_t mControllerNameIndex = 0;
         int mControllerNameReturnColumn = 0;
         MyGUI::Widget* mControllerFocusHighlight = nullptr;
+        bool mNameHitLimit = false;
+        bool mSuppressNameLimitMessage = false;
     };
 }
 #endif

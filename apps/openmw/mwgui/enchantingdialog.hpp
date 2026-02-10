@@ -58,6 +58,8 @@ namespace MWGui
         void setControllerEffectsFocusActive(bool active);
         void updateControllerFocusHighlight();
         void updateEditStaticState();
+        void onNameEdited(MyGUI::EditBox* sender);
+        void setNameCaption(const MyGUI::UString& caption);
 
         std::unique_ptr<ItemSelectionDialog> mItemSelectionDialog;
 
@@ -80,6 +82,8 @@ namespace MWGui
         MyGUI::Widget* mControllerFocusHighlight = nullptr;
         bool mControllerEffectsFocusActive = false;
         bool mKeyboardWasVisible = false;
+        bool mNameHitLimit = false;
+        bool mSuppressNameLimitMessage = false;
 
         MWMechanics::Enchanting mEnchanting;
         ESM::EffectList mEffectList;

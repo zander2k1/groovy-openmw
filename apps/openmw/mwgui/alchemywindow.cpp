@@ -45,6 +45,8 @@
 
 namespace
 {
+    constexpr size_t kAlchemyNameLimit = 48;
+
     bool isChildOf(MyGUI::Widget* widget, MyGUI::Widget* parent)
     {
         for (MyGUI::Widget* current = widget; current; current = current->getParent())
@@ -124,7 +126,9 @@ namespace MWGui
         mCreateButton->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::onCreateButtonClicked);
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::onCancelButtonClicked);
 
+        mNameEdit->setMaxTextLength(kAlchemyNameLimit);
         mNameEdit->eventEditSelectAccept += MyGUI::newDelegate(this, &AlchemyWindow::onAccept);
+        mNameEdit->eventEditTextChange += MyGUI::newDelegate(this, &AlchemyWindow::onNameEdited);
         mFilterValue->eventComboChangePosition += MyGUI::newDelegate(this, &AlchemyWindow::onFilterChanged);
         mFilterValue->eventEditTextChange += MyGUI::newDelegate(this, &AlchemyWindow::onFilterEdited);
         mFilterType->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::switchFilterType);
@@ -364,7 +368,7 @@ namespace MWGui
         mItemView->setModel(std::move(sortModel));
         mItemView->resetScrollBars();
 
-        mNameEdit->setCaption({});
+        setNameCaption({});
         mBrewCountEdit->setValue(1);
 
         size_t index = 0;
@@ -498,7 +502,7 @@ namespace MWGui
         std::string suggestedName = mAlchemy->suggestPotionName();
         if (suggestedName != mSuggestedPotionName)
         {
-            mNameEdit->setCaptionWithReplacing(suggestedName);
+            setNameCaptionWithReplacing(suggestedName);
             mSuggestedPotionName = std::move(suggestedName);
         }
 
@@ -820,6 +824,44 @@ namespace MWGui
             mFilterValue->setEditStatic(true);
     }
 
+    void AlchemyWindow::onNameEdited(MyGUI::EditBox* sender)
+    {
+        const size_t length = sender->getCaption().size();
+        if (mSuppressNameLimitMessage)
+        {
+            mNameHitLimit = length >= kAlchemyNameLimit;
+            return;
+        }
+
+        if (length < kAlchemyNameLimit)
+        {
+            mNameHitLimit = false;
+            return;
+        }
+
+        if (!mNameHitLimit)
+        {
+            MWBase::Environment::get().getWindowManager()->messageBox("You've hit the character limit");
+            mNameHitLimit = true;
+        }
+    }
+
+    void AlchemyWindow::setNameCaption(const MyGUI::UString& caption)
+    {
+        mSuppressNameLimitMessage = true;
+        mNameEdit->setCaption(caption);
+        mSuppressNameLimitMessage = false;
+        mNameHitLimit = caption.size() >= kAlchemyNameLimit;
+    }
+
+    void AlchemyWindow::setNameCaptionWithReplacing(const std::string& caption)
+    {
+        mSuppressNameLimitMessage = true;
+        mNameEdit->setCaptionWithReplacing(caption);
+        mSuppressNameLimitMessage = false;
+        mNameHitLimit = mNameEdit->getCaption().size() >= kAlchemyNameLimit;
+    }
+
     bool AlchemyWindow::isFocusInItemView(MyGUI::Widget* focus) const
     {
         return focus && mItemView && isChildOf(focus, mItemView);
@@ -948,7 +990,7 @@ namespace MWGui
         {
             if (!mNameEdit->getCaption().empty())
             {
-                mNameEdit->setCaption({});
+                setNameCaption({});
                 return true;
             }
             for (size_t i = mIngredients.size(); i > 0; --i)

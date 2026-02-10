@@ -6,6 +6,7 @@
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_ControllerItem.h>
+#include <MyGUI_UString.h>
 
 #include <components/widgets/box.hpp>
 #include <components/widgets/numericeditbox.hpp>
@@ -79,6 +80,8 @@ namespace MWGui
         bool mControllerItemViewFocus = false;
         MyGUI::EditBox* mLastKeyboardEdit = nullptr;
         bool mVirtualKeyboardWasVisible = false;
+        bool mNameHitLimit = false;
+        bool mSuppressNameLimitMessage = false;
 
         void openVirtualKeyboard(MyGUI::EditBox* edit);
         void setControllerFocusWidget(MyGUI::Widget* widget);
@@ -86,6 +89,9 @@ namespace MWGui
         void updateControllerFocusState();
         void updateEditStaticState();
         bool isFocusInItemView(MyGUI::Widget* focus) const;
+        void onNameEdited(MyGUI::EditBox* sender);
+        void setNameCaption(const MyGUI::UString& caption);
+        void setNameCaptionWithReplacing(const std::string& caption);
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onCreateButtonClicked(MyGUI::Widget* sender);

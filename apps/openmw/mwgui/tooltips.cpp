@@ -1694,6 +1694,9 @@ namespace MWGui
                 = addValueWithIcon(w.str(), "textures\\weight.dds", "CollapsedWeightIcon", "CollapsedWeightText");
 
             MyGUI::TextBox* leftMostText = weightText;
+            bool showChargeBar = false;
+            int charge = 0;
+            int maxCharge = 0;
             const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
             const ESM::Enchantment* enchant = nullptr;
             if (!collapsedInfo.enchant.empty())
@@ -1702,13 +1705,12 @@ namespace MWGui
                 && (enchant->mData.mType == ESM::Enchantment::WhenStrikes
                     || enchant->mData.mType == ESM::Enchantment::WhenUsed))
             {
-                const int maxCharge = MWMechanics::getEnchantmentCharge(*enchant);
+                maxCharge = MWMechanics::getEnchantmentCharge(*enchant);
                 if (maxCharge > 0)
                 {
-                    const int charge
+                    charge
                         = collapsedInfo.remainingEnchantCharge == -1 ? maxCharge : collapsedInfo.remainingEnchantCharge;
-                    leftMostText = addValueWithIcon(std::format("{}/{}", charge, maxCharge), "textures\\charge.dds",
-                        "CollapsedChargeText", "CollapsedChargeIcon");
+                    showChargeBar = true;
                 }
             }
 
@@ -1722,7 +1724,32 @@ namespace MWGui
 
             const WeaponDamageInfo damageInfo = getWeaponDamageInfo(mFocusObject);
             const bool hasDamage = damageInfo.mMin > 0 || damageInfo.mMax > 0;
-            if (hasDamage)
+            if (showChargeBar)
+            {
+                const int maxBarWidth = 160;
+                const int barHeight = 18;
+                int barWidth = std::min(maxBarWidth, std::max(0, winRect.width - padding * 2));
+                if ((winRect.width - barWidth) % 2 != 0)
+                    barWidth = std::max(0, barWidth - 1);
+                if (barWidth > 0)
+                {
+                    int barLeft = (winRect.width - barWidth) / 2;
+                    const int textWidth = std::min(nameText->getTextSize().width, nameWidth);
+                    const int textRight = padding + textWidth;
+                    if (textRight + padding > barLeft)
+                    {
+                        const int rightLimit = leftMostText->getLeft() - padding;
+                        const int maxLeft = std::max(padding, rightLimit - barWidth);
+                        barLeft = std::min(std::max(textRight + padding, padding), maxLeft);
+                    }
+                    const int barTop = (collapsedHeight - barHeight) / 2;
+                    auto* chargeBar = mDynamicToolTipBox->createWidget<Widgets::MWDynamicStat>("MW_ChargeBar",
+                        MyGUI::IntCoord(barLeft, barTop, barWidth, barHeight), MyGUI::Align::Default,
+                        "CollapsedChargeBar");
+                    chargeBar->setValue(charge, maxCharge);
+                }
+            }
+            else if (hasDamage)
             {
                 std::ostringstream stats;
                 if (hasDamage)

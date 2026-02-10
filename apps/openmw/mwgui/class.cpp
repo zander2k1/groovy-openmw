@@ -27,6 +27,7 @@
 
 namespace
 {
+    constexpr size_t kClassNameLimit = 48;
 
     bool sortClasses(const std::pair<ESM::RefId, std::string>& left, const std::pair<ESM::RefId, std::string>& right)
     {
@@ -687,6 +688,8 @@ namespace MWGui
         setText("LabelT", MWBase::Environment::get().getWindowManager()->getGameSettingString("sName", {}));
         getWidget(mEditName, "EditName");
         mEditName->setUserString("ForceEmptyTooltipBar", "true");
+        mEditName->setMaxTextLength(kClassNameLimit);
+        mEditName->eventEditTextChange += MyGUI::newDelegate(this, &CreateClassDialog::onNameEdited);
 
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mEditName);
@@ -818,6 +821,28 @@ namespace MWGui
             if (attr)
                 mFavoriteAttribute1->setUserString("CollapsedLabel", attr->mName);
             mFavoriteAttribute1->setUserString("CollapsedValue", {});
+        }
+    }
+
+    void CreateClassDialog::onNameEdited(MyGUI::EditBox* sender)
+    {
+        const size_t length = sender->getCaption().size();
+        if (mSuppressNameLimitMessage)
+        {
+            mNameHitLimit = length >= kClassNameLimit;
+            return;
+        }
+
+        if (length < kClassNameLimit)
+        {
+            mNameHitLimit = false;
+            return;
+        }
+
+        if (!mNameHitLimit)
+        {
+            MWBase::Environment::get().getWindowManager()->messageBox("You've hit the character limit");
+            mNameHitLimit = true;
         }
     }
 

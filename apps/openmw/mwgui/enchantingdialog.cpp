@@ -34,6 +34,8 @@
 
 namespace
 {
+    constexpr size_t kEnchantmentNameLimit = 48;
+
     MyGUI::IntCoord getCenteredWindowCoord(const MyGUI::IntSize& viewSize, const MyGUI::IntSize& windowSize)
     {
         const int w = windowSize.width;
@@ -74,7 +76,9 @@ namespace MWGui
         mSoulBox->eventMouseButtonClick += MyGUI::newDelegate(this, &EnchantingDialog::onSelectSoul);
         mBuyButton->eventMouseButtonClick += MyGUI::newDelegate(this, &EnchantingDialog::onBuyButtonClicked);
         mTypeButton->eventMouseButtonClick += MyGUI::newDelegate(this, &EnchantingDialog::onTypeButtonClicked);
+        mName->setMaxTextLength(kEnchantmentNameLimit);
         mName->eventEditSelectAccept += MyGUI::newDelegate(this, &EnchantingDialog::onAccept);
+        mName->eventEditTextChange += MyGUI::newDelegate(this, &EnchantingDialog::onNameEdited);
         mTypeButton->clearUserStrings();
 
         if (Settings::gui().mControllerMenus)
@@ -160,7 +164,7 @@ namespace MWGui
         else
         {
             std::string_view name = item.getClass().getName(item);
-            mName->setCaption(MyGUI::UString(name));
+            setNameCaption(MyGUI::UString(name));
             mItemBox->setItem(item);
             mItemBox->setUserString("ToolTipType", "ItemPtr");
             mItemBox->setUserData(MWWorld::Ptr(item));
@@ -210,7 +214,7 @@ namespace MWGui
         if (ptr.isEmpty() || (ptr.getType() != ESM::REC_MISC && !ptr.getClass().isActor()))
             throw std::runtime_error("Invalid argument in EnchantingDialog::setPtr");
 
-        mName->setCaption({});
+        setNameCaption({});
 
         if (ptr.getClass().isActor())
         {
@@ -473,6 +477,36 @@ namespace MWGui
         const bool shouldStatic = !winMgr->isVirtualKeyboardVisible();
         if (mName->getEditStatic() != shouldStatic)
             mName->setEditStatic(shouldStatic);
+    }
+
+    void EnchantingDialog::onNameEdited(MyGUI::EditBox* sender)
+    {
+        const size_t length = sender->getCaption().size();
+        if (mSuppressNameLimitMessage)
+        {
+            mNameHitLimit = length >= kEnchantmentNameLimit;
+            return;
+        }
+
+        if (length < kEnchantmentNameLimit)
+        {
+            mNameHitLimit = false;
+            return;
+        }
+
+        if (!mNameHitLimit)
+        {
+            MWBase::Environment::get().getWindowManager()->messageBox("You've hit the character limit");
+            mNameHitLimit = true;
+        }
+    }
+
+    void EnchantingDialog::setNameCaption(const MyGUI::UString& caption)
+    {
+        mSuppressNameLimitMessage = true;
+        mName->setCaption(caption);
+        mSuppressNameLimitMessage = false;
+        mNameHitLimit = caption.size() >= kEnchantmentNameLimit;
     }
 
     MyGUI::Widget* EnchantingDialog::getControllerFocusTooltipWidget() const

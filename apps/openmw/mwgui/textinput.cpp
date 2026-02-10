@@ -24,6 +24,7 @@ namespace MWGui
 
         getWidget(mTextEdit, "TextEdit");
         mTextEdit->eventEditSelectAccept += newDelegate(this, &TextInputDialog::onTextAccepted);
+        mTextEdit->eventEditTextChange += newDelegate(this, &TextInputDialog::onTextEdited);
 
         MyGUI::Button* okButton;
         getWidget(okButton, "OKButton");
@@ -112,7 +113,43 @@ namespace MWGui
 
     void TextInputDialog::setTextInput(const std::string& text)
     {
+        mSuppressLimitMessage = true;
         mTextEdit->setCaption(text);
+        mSuppressLimitMessage = false;
+        mHitLimit = mMaxTextLength > 0 && mTextEdit->getCaption().size() >= mMaxTextLength;
+    }
+
+    void TextInputDialog::setMaxTextLength(size_t length, bool showMessage)
+    {
+        mMaxTextLength = length;
+        mShowLimitMessage = showMessage;
+        mTextEdit->setMaxTextLength(length);
+        mHitLimit = length > 0 && mTextEdit->getCaption().size() >= length;
+    }
+
+    void TextInputDialog::onTextEdited(MyGUI::EditBox* sender)
+    {
+        if (mMaxTextLength == 0 || !mShowLimitMessage)
+            return;
+
+        const size_t length = sender->getCaption().size();
+        if (mSuppressLimitMessage)
+        {
+            mHitLimit = length >= mMaxTextLength;
+            return;
+        }
+
+        if (length < mMaxTextLength)
+        {
+            mHitLimit = false;
+            return;
+        }
+
+        if (!mHitLimit)
+        {
+            MWBase::Environment::get().getWindowManager()->messageBox("You've hit the character limit");
+            mHitLimit = true;
+        }
     }
 
     bool TextInputDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)

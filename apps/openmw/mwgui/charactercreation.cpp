@@ -1,5 +1,7 @@
 #include "charactercreation.hpp"
 
+#include <cstddef>
+
 #include <MyGUI_ITexture.h>
 
 #include <components/debug/debuglog.hpp>
@@ -29,6 +31,8 @@
 
 namespace
 {
+    constexpr size_t kNameLimit = 48;
+
     struct Response
     {
         const std::string mText;
@@ -168,6 +172,7 @@ namespace MWGui
                     {
                         mNameDialog = std::make_unique<TextInputDialog>();
                         mNameDialog->setControllerOpensKeyboard(true);
+                        mNameDialog->setMaxTextLength(kNameLimit, true);
                         mNameDialog->eventDone += MyGUI::newDelegate(this, &CharacterCreation::onNameDialogDone);
                         mNameDialog->setTextInput(mPlayerName);
                     }

@@ -196,7 +196,6 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_container_window.layout
     mygui/openmw_controllerbuttons.layout
     textures/tx_goldicon.dds
-    textures/charge.dds
     textures/weight.dds
     mygui/openmw_count_window.layout
     mygui/openmw_dialogue_window.layout
