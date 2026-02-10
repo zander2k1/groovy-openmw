@@ -69,8 +69,23 @@
             </Widget>
 
             <!-- Player level, race and class -->
-            <Widget type="Widget" skin="MW_Box" position="8 78 212 62" align="Top HStretch">
+            <Widget type="Widget" skin="MW_Box" position="8 78 212 80" align="Top HStretch">
                 <Widget type="HBox" position="4 4 204 18" align="Top HStretch">
+                    <Widget type="AutoSizedTextBox" skin="NormalTextController" position="0 0 200 18" name="Name_str" align="Left Top">
+                        <Property key="Caption" value="#{sName}"/>
+                        <UserString key="ToolTipType" value="Layout"/>
+                        <UserString key="ToolTipLayout" value="RaceToolTip"/>
+                        <UserString key="ForceCollapsedTooltip" value="true"/>
+                    </Widget>
+                    <Widget type="TextBox" skin="SandTextRightController" position="200 0 40 18" name="NameText" align="Right Top">
+                        <Property key="TextAlign" value="Right Top"/>
+                        <UserString key="ToolTipType" value="Layout"/>
+                        <UserString key="ToolTipLayout" value="RaceToolTip"/>
+                        <UserString key="ForceCollapsedTooltip" value="true"/>
+                        <UserString key="HStretch" value="true"/>
+                    </Widget>
+                </Widget>
+                <Widget type="HBox" position="4 22 204 18" align="Top HStretch">
                     <Widget type="AutoSizedTextBox" skin="NormalTextController" position="0 0 200 18" name="Level_str" align="Left Top">
                         <Property key="Caption" value="#{sLevel}"/>
                         <UserString key="ToolTipType" value="Layout"/>
@@ -84,7 +99,7 @@
                     </Widget>
 
                 </Widget>
-                <Widget type="HBox" position="4 24 204 18" align="Top HStretch">
+                <Widget type="HBox" position="4 42 204 18" align="Top HStretch">
                     <Widget type="AutoSizedTextBox" skin="NormalTextController" position="0 0 95 18" name="Race_str" align="Left Top">
                         <Property key="Caption" value="#{sRace}"/>
                         <UserString key="ToolTipType" value="Layout"/>
@@ -97,7 +112,7 @@
                         <UserString key="HStretch" value="true"/>
                     </Widget>
                 </Widget>
-                <Widget type="HBox" position="4 42 204 18" align="Top HStretch">
+                <Widget type="HBox" position="4 60 204 18" align="Top HStretch">
                     <Widget type="AutoSizedTextBox" skin="NormalTextController" position="0 0 95 18" name="Class_str" align="Left Top">
                         <Property key="Caption" value="#{sClass}"/>
                         <UserString key="ToolTipType" value="Layout"/>
@@ -112,9 +127,9 @@
                 </Widget>
             </Widget>
 
-            <Widget type="Widget" skin="MW_Box" position="8 148 212 186" align="Left Top Stretch">
+            <Widget type="Widget" skin="MW_Box" position="8 166 212 168" align="Left Top Stretch">
                 <!-- TODO: this should be a scroll view -->
-                <Widget type="Widget" skin="" position="4 4 204 178" align="Left Top Stretch" name="AttributeView" />
+                <Widget type="Widget" skin="" position="4 4 204 160" align="Left Top Stretch" name="AttributeView" />
             </Widget>
 
         </Widget>

@@ -138,19 +138,25 @@ namespace MWGui
             MyGUI::Widget* levelWidget = nullptr;
             MyGUI::Widget* raceWidget = nullptr;
             MyGUI::Widget* classWidget = nullptr;
+            MyGUI::Widget* nameWidget = nullptr;
             MyGUI::TextBox* levelName = nullptr;
             MyGUI::TextBox* raceName = nullptr;
             MyGUI::TextBox* className = nullptr;
+            MyGUI::TextBox* nameName = nullptr;
             MyGUI::TextBox* levelValue = nullptr;
             MyGUI::TextBox* raceValue = nullptr;
             MyGUI::TextBox* classValue = nullptr;
+            MyGUI::TextBox* nameValue = nullptr;
 
+            getWidget(nameWidget, "NameText");
             getWidget(levelWidget, "LevelText");
             getWidget(raceWidget, "RaceText");
             getWidget(classWidget, "ClassText");
+            getWidget(nameName, "Name_str");
             getWidget(levelName, "Level_str");
             getWidget(raceName, "Race_str");
             getWidget(className, "Class_str");
+            getWidget(nameValue, "NameText");
             getWidget(levelValue, "LevelText");
             getWidget(raceValue, "RaceText");
             getWidget(classValue, "ClassText");
@@ -160,10 +166,13 @@ namespace MWGui
             if (levelName)
                 levelName->setUserString("ToolTipDynamic", "Stats");
 
+            mNameRow = nameName ? nameName->getParent() : nullptr;
             mLevelRow = levelName ? levelName->getParent() : nullptr;
             mRaceRow = raceName ? raceName->getParent() : nullptr;
             mClassRow = className ? className->getParent() : nullptr;
 
+            if (mNameRow && mNameRow->getParent())
+                mNameHighlight = createControllerHighlight(mNameRow->getParent(), MyGUI::IntCoord(mNameRow->getCoord()));
             if (mLevelRow && mLevelRow->getParent())
                 mLevelHighlight
                     = createControllerHighlight(mLevelRow->getParent(), MyGUI::IntCoord(mLevelRow->getCoord()));
@@ -174,6 +183,7 @@ namespace MWGui
                 mClassHighlight
                     = createControllerHighlight(mClassRow->getParent(), MyGUI::IntCoord(mClassRow->getCoord()));
 
+            addStaticControllerEntry(nameWidget, { nameName, nameValue }, mNameHighlight, false);
             addStaticControllerEntry(levelWidget, { levelName, levelValue }, mLevelHighlight, false);
             addStaticControllerEntry(raceWidget, { raceName, raceValue }, mRaceHighlight, false);
             addStaticControllerEntry(classWidget, { className, classValue }, mClassHighlight, false);
@@ -202,6 +212,25 @@ namespace MWGui
     {
         resetFixedWindowGeometry();
         onWindowResize(mMainWidget->castType<MyGUI::Window>());
+
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        if (player.isEmpty() || !player.getClass().isNpc())
+            return;
+
+        const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
+        const ESM::Class* cls = store.get<ESM::Class>().search(player.get<ESM::NPC>()->mBase->mClass);
+        if (!cls)
+            return;
+
+        const size_t size = cls->mData.mSkills.size();
+        std::vector<ESM::RefId> majorSkills(size);
+        std::vector<ESM::RefId> minorSkills(size);
+        for (size_t i = 0; i < size; ++i)
+        {
+            minorSkills[i] = ESM::Skill::indexToRefId(cls->mData.mSkills[i][0]);
+            majorSkills[i] = ESM::Skill::indexToRefId(cls->mData.mSkills[i][1]);
+        }
+        configureSkills(majorSkills, minorSkills);
     }
 
     void StatsWindow::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)
@@ -266,6 +295,8 @@ namespace MWGui
 
     void StatsWindow::updateStaticHighlights()
     {
+        if (mNameHighlight && mNameRow)
+            mNameHighlight->setCoord(mNameRow->getCoord());
         if (mLevelHighlight && mLevelRow)
             mLevelHighlight->setCoord(mLevelRow->getCoord());
         if (mRaceHighlight && mRaceRow)
@@ -289,6 +320,23 @@ namespace MWGui
 
     void StatsWindow::setPlayerName(const std::string& playerName)
     {
+        MyGUI::TextBox* nameValue = nullptr;
+        MyGUI::TextBox* nameLabel = nullptr;
+        getWidget(nameValue, "NameText");
+        getWidget(nameLabel, "Name_str");
+        if (nameValue)
+            nameValue->setCaption(playerName);
+        if (nameLabel)
+        {
+            const std::string label = nameLabel->getCaption().asUTF8();
+            if (nameValue)
+            {
+                nameValue->setUserString("CollapsedLabel", label);
+                nameValue->setUserString("CollapsedValue", playerName);
+            }
+            nameLabel->setUserString("CollapsedLabel", label);
+            nameLabel->setUserString("CollapsedValue", playerName);
+        }
         mMainWidget->castType<MyGUI::Window>()->setCaption(playerName);
     }
 
@@ -1036,6 +1084,10 @@ namespace MWGui
             const int delta = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP) ? -1 : 1;
             index = wrap(index, list.size(), delta);
             setControllerFocus(list[index]);
+            if (rightPane)
+                mLastLeftFocus = mControllerItems.size();
+            else
+                mLastRightFocus = mControllerItems.size();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
         {
@@ -1047,8 +1099,22 @@ namespace MWGui
             if (targetRightPane == mControllerItems[mControllerFocus].mRightPane)
                 return true;
 
-            const size_t newFocus
-                = findClosestControllerItem(targetRightPane, mControllerItems[mControllerFocus].mTooltipWidget);
+            const std::vector<size_t>& list = targetRightPane ? mControllerRightItems : mControllerLeftItems;
+            size_t newFocus = mControllerItems.size();
+            if (!list.empty())
+            {
+                const size_t remembered = targetRightPane ? mLastRightFocus : mLastLeftFocus;
+                if (remembered < mControllerItems.size() && mControllerItems[remembered].mRightPane == targetRightPane
+                    && std::find(list.begin(), list.end(), remembered) != list.end())
+                {
+                    newFocus = remembered;
+                }
+                else
+                {
+                    newFocus
+                        = findClosestControllerItem(targetRightPane, mControllerItems[mControllerFocus].mTooltipWidget);
+                }
+            }
             if (newFocus < mControllerItems.size())
                 setControllerFocus(newFocus);
         }
@@ -1394,5 +1460,9 @@ namespace MWGui
         const size_t prevFocus = mControllerFocus;
         mControllerFocus = newFocus;
         updateControllerFocus(prevFocus, mControllerFocus);
+        if (mControllerItems[mControllerFocus].mRightPane)
+            mLastRightFocus = mControllerFocus;
+        else
+            mLastLeftFocus = mControllerFocus;
     }
 }

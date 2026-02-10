@@ -139,6 +139,8 @@ namespace MWGui
         std::vector<ControllerItem> mControllerItems;
         std::vector<size_t> mControllerLeftItems;
         std::vector<size_t> mControllerRightItems;
+        size_t mLastLeftFocus = 0;
+        size_t mLastRightFocus = 0;
         std::unordered_map<MyGUI::TextBox*, std::string> mControllerBaseStates;
         std::vector<AttributeControllerEntry> mAttributeControllerEntries;
         std::vector<StaticControllerEntry> mStaticControllerEntries;
@@ -146,9 +148,11 @@ namespace MWGui
         MyGUI::Widget* mLevelHighlight = nullptr;
         MyGUI::Widget* mRaceHighlight = nullptr;
         MyGUI::Widget* mClassHighlight = nullptr;
+        MyGUI::Widget* mNameHighlight = nullptr;
         MyGUI::Widget* mLevelRow = nullptr;
         MyGUI::Widget* mRaceRow = nullptr;
         MyGUI::Widget* mClassRow = nullptr;
+        MyGUI::Widget* mNameRow = nullptr;
 
     protected:
         void onPinToggled() override;
