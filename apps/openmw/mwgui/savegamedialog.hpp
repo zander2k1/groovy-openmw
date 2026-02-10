@@ -25,6 +25,7 @@ namespace MWGui
         void setLoadOrSave(bool load);
 
         ControllerButtons* getControllerButtons() override;
+        MyGUI::EditBox* getSaveNameEdit() const { return mSaveNameEdit; }
 
     private:
         void confirmDeleteSave();
@@ -50,6 +51,7 @@ namespace MWGui
         void onSaveNameChanged(MyGUI::EditBox* sender);
         void onConfirmationGiven();
         void onConfirmationCancel();
+        void openVirtualKeyboard();
 
         void accept(bool reallySure = false);
 

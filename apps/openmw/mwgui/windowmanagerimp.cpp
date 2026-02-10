@@ -116,6 +116,7 @@
 #include "recharge.hpp"
 #include "repair.hpp"
 #include "resourceskin.hpp"
+#include "savegamedialog.hpp"
 #include "screenfader.hpp"
 #include "scrollwindow.hpp"
 #include "settingswindow.hpp"
@@ -3064,7 +3065,8 @@ namespace MWGui
             || dynamic_cast<CreateClassDialog*>(topWin) != nullptr
             || dynamic_cast<DescriptionDialog*>(topWin) != nullptr || dynamic_cast<InventoryWindow*>(topWin) != nullptr
             || dynamic_cast<SpellWindow*>(topWin) != nullptr || dynamic_cast<TradeWindow*>(topWin) != nullptr
-            || dynamic_cast<SpellCreationDialog*>(topWin) != nullptr;
+            || dynamic_cast<SpellCreationDialog*>(topWin) != nullptr
+            || dynamic_cast<SaveGameDialog*>(topWin) != nullptr;
         if (!supportsKeyboard)
             return false;
 
@@ -3118,6 +3120,12 @@ namespace MWGui
                 edit = spellWindow->getFilterEdit();
             else if (auto* tradeWindow = dynamic_cast<TradeWindow*>(topWin))
                 edit = tradeWindow->getFilterEdit();
+            else if (auto* saveDialog = dynamic_cast<SaveGameDialog*>(topWin))
+            {
+                edit = saveDialog->getSaveNameEdit();
+                if (edit && !edit->getVisible())
+                    edit = nullptr;
+            }
         }
         if (!edit)
             return false;
@@ -3135,6 +3143,15 @@ namespace MWGui
         {
             addHiddenWindow(mTradeWindow);
             addHiddenWindow(mInventoryWindow);
+        }
+        if (dynamic_cast<SaveGameDialog*>(topWin) != nullptr)
+        {
+            auto it = mGuiModeStates.find(GM_MainMenu);
+            if (it != mGuiModeStates.end())
+            {
+                for (WindowBase* window : it->second.mWindows)
+                    addHiddenWindow(window);
+            }
         }
         if (dynamic_cast<DescriptionDialog*>(topWin) != nullptr)
         {

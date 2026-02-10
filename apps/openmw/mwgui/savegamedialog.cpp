@@ -310,6 +310,20 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveList);
     }
 
+    void SaveGameDialog::openVirtualKeyboard()
+    {
+        if (!mSaveNameEdit || !mSaveNameEdit->getVisible())
+            return;
+
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (winMgr->isVirtualKeyboardVisible())
+            return;
+
+        mSaveNameEdit->setEditStatic(false);
+        winMgr->setKeyFocusWidget(mSaveNameEdit);
+        winMgr->toggleVirtualKeyboard();
+    }
+
     void SaveGameDialog::accept(bool reallySure)
     {
         if (mSaving)
@@ -549,7 +563,7 @@ namespace MWGui
 
     ControllerButtons* SaveGameDialog::getControllerButtons()
     {
-        mControllerButtons.mX = mSaving ? "" : "#{Interface:Delete}";
+        mControllerButtons.mX = mSaving ? "#{Interface:ShowKeyboard}" : "#{Interface:Delete}";
         mControllerButtons.mY = mSaving ? "" : "#{OMWEngine:LoadingSelectCharacter}";
         return &mControllerButtons;
     }
@@ -579,6 +593,11 @@ namespace MWGui
         else if (arg.button == SDL_CONTROLLER_BUTTON_X && !mSaving)
         {
             confirmDeleteSave();
+            MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_X && mSaving)
+        {
+            openVirtualKeyboard();
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
