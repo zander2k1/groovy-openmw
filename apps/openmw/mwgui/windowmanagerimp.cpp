@@ -199,6 +199,23 @@ namespace MWGui
                     return nullptr;
             }
         }
+
+        GuiWindow inventoryIndexToWindow(size_t index)
+        {
+            switch (index)
+            {
+                case 0:
+                    return GW_Map;
+                case 1:
+                    return GW_Inventory;
+                case 2:
+                    return GW_Magic;
+                case 3:
+                    return GW_Stats;
+                default:
+                    return GW_None;
+            }
+        }
     }
 
     WindowManager::WindowManager(SDL_Window* window, osgViewer::Viewer* viewer, osg::Group* guiRoot,
@@ -1058,7 +1075,19 @@ namespace MWGui
             }
             else if (mode == GM_Inventory && Settings::gui().mControllerMenus)
             {
-                activeIndex = wrap(activeIndex, winCount, delta);
+                bool found = false;
+                for (size_t i = 0; i < winCount; ++i)
+                {
+                    activeIndex = wrap(activeIndex, winCount, delta);
+                    const GuiWindow window = inventoryIndexToWindow(activeIndex);
+                    if (window != GW_None && (mAllowed & window) && !(mForceHidden & window))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found)
+                    return;
             }
             else
             {
@@ -1084,11 +1113,18 @@ namespace MWGui
         const GuiMode mode = mGuiModes.back();
         size_t winCount = mGuiModeStates[mode].mWindows.size();
         WindowBase* activeWindow = nullptr;
+        if (winCount == 0)
+            return;
 
         if (mode == GM_Inventory)
         {
             for (size_t i = 0; i < winCount; i++)
-                mGuiModeStates[mode].mWindows[i]->setVisible(i == mActiveControllerWindows[mode]);
+                mGuiModeStates[mode].mWindows[i]->setVisible(false);
+
+            const size_t activeIndex = std::clamp<size_t>(mActiveControllerWindows[mode], 0, winCount - 1);
+            const GuiWindow window = inventoryIndexToWindow(activeIndex);
+            if (window != GW_None && (mAllowed & window) && !(mForceHidden & window))
+                mGuiModeStates[mode].mWindows[activeIndex]->setVisible(true);
         }
 
         for (size_t i = 0; i < winCount; i++)
@@ -1097,11 +1133,8 @@ namespace MWGui
             if (i != mActiveControllerWindows[mode])
                 mGuiModeStates[mode].mWindows[i]->setActiveControllerWindow(false);
         }
-        if (winCount > 0)
-        {
-            activeWindow = mGuiModeStates[mode].mWindows[mActiveControllerWindows[mode]];
-            activeWindow->setActiveControllerWindow(true);
-        }
+        activeWindow = mGuiModeStates[mode].mWindows[mActiveControllerWindows[mode]];
+        activeWindow->setActiveControllerWindow(true);
 
         if (mode == GM_Container || mode == GM_Barter)
         {
@@ -1136,6 +1169,12 @@ namespace MWGui
             return;
 
         activeIndex = std::clamp<size_t>(activeIndex, 0, winCount - 1);
+        if (mode == GM_Inventory)
+        {
+            const GuiWindow window = inventoryIndexToWindow(activeIndex);
+            if (window == GW_None || !(mAllowed & window) || (mForceHidden & window))
+                return;
+        }
         mActiveControllerWindows[mode] = activeIndex;
         if (mode == GM_Inventory)
             mLastInventoryControllerWindow = activeIndex;
