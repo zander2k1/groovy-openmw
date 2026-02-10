@@ -26,7 +26,7 @@ namespace MWGui
     }
 
     BookWindow::BookWindow()
-        : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_book.layout" : "openmw_book.layout")
+        : BookWindowBase("openmw_book.layout")
         , mCurrentPage(0)
         , mTakeButtonShow(true)
         , mTakeButtonAllowed(true)

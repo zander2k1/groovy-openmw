@@ -38,6 +38,7 @@
 
                <Widget type="AutoSizedButton" skin="MW_Button" name="CancelButton">
                    <Property key="Caption" value="#{Interface:Cancel}"/>
+		   <Property key="Visible" value="false"/>
                </Widget>
         </Widget>
     </Widget>

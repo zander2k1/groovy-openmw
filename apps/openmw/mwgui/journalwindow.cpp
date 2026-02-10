@@ -1003,6 +1003,6 @@ std::unique_ptr<MWGui::JournalWindow> MWGui::JournalWindow::create(
 }
 
 MWGui::JournalWindow::JournalWindow()
-    : BookWindowBase(Settings::gui().mControllerMenus ? "openmw_controller_journal.layout" : "openmw_journal.layout")
+    : BookWindowBase("openmw_journal.layout")
 {
 }

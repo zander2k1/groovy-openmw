@@ -34,8 +34,7 @@ namespace MWGui
 {
 
     RaceDialog::RaceDialog(osg::Group* parent, Resource::ResourceSystem* resourceSystem)
-        : WindowModal(
-            Settings::gui().mControllerMenus ? "openmw_controller_chargen_race.layout" : "openmw_chargen_race.layout")
+        : WindowModal("openmw_chargen_race.layout")
         , mParent(parent)
         , mResourceSystem(resourceSystem)
         , mGenderIndex(0)

@@ -48,8 +48,7 @@ namespace MWGui
 {
 
     EnchantingDialog::EnchantingDialog()
-        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_enchanting_dialog.layout"
-                                                      : "openmw_enchanting_dialog.layout")
+        : WindowBase("openmw_enchanting_dialog.layout")
         , EffectEditorBase(EffectEditorBase::Enchanting)
     {
         getWidget(mName, "NameEdit");

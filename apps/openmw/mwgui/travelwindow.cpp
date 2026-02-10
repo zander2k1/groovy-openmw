@@ -29,8 +29,7 @@
 namespace MWGui
 {
     TravelWindow::TravelWindow()
-        : WindowBase(
-            Settings::gui().mControllerMenus ? "openmw_controller_travel_window.layout" : "openmw_travel_window.layout")
+        : WindowBase("openmw_travel_window.layout")
         , mCurrentY(0)
     {
         getWidget(mCancelButton, "CancelButton");

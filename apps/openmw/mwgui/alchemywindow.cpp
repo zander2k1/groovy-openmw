@@ -72,8 +72,7 @@ namespace
 namespace MWGui
 {
     AlchemyWindow::AlchemyWindow()
-        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_alchemy_window.layout"
-                                                      : "openmw_alchemy_window.layout")
+        : WindowBase("openmw_alchemy_window.layout")
         , mCurrentFilter(FilterType::ByName)
         , mModel(nullptr)
         , mSortModel(nullptr)

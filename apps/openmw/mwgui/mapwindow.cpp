@@ -789,8 +789,7 @@ namespace MWGui
 #ifdef USE_OPENXR
         : WindowPinnableBase("openmw_map_window_vr.layout")
 #else
-        : WindowPinnableBase(
-            Settings::gui().mControllerMenus ? "openmw_controller_map_window.layout" : "openmw_map_window.layout")
+        : WindowPinnableBase("openmw_map_window.layout")
 #endif
         , LocalMapBase(customMarkers, localMapRender, true)
         , NoDrop(drag, mMainWidget)

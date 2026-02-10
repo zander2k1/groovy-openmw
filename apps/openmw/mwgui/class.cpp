@@ -160,8 +160,7 @@ namespace MWGui
     /* PickClassDialog */
 
     PickClassDialog::PickClassDialog()
-        : WindowModal(
-            Settings::gui().mControllerMenus ? "openmw_controller_chargen_class.layout" : "openmw_chargen_class.layout")
+        : WindowModal("openmw_chargen_class.layout")
     {
         // Centre dialog
         center();
@@ -1352,8 +1351,7 @@ namespace MWGui
     /* SelectSpecializationDialog */
 
     SelectSpecializationDialog::SelectSpecializationDialog()
-        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_chargen_select_specialization.layout"
-                                                       : "openmw_chargen_select_specialization.layout")
+        : WindowModal("openmw_chargen_select_specialization.layout")
     {
         // Centre dialog
         center();
@@ -1515,8 +1513,7 @@ namespace MWGui
     /* SelectAttributeDialog */
 
     SelectAttributeDialog::SelectAttributeDialog()
-        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_chargen_select_attribute.layout"
-                                                       : "openmw_chargen_select_attribute.layout")
+        : WindowModal("openmw_chargen_select_attribute.layout")
         , mAttributeId(ESM::Attribute::Strength)
     {
         // Centre dialog
@@ -1666,8 +1663,7 @@ namespace MWGui
     /* SelectSkillDialog */
 
     SelectSkillDialog::SelectSkillDialog()
-        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_chargen_select_skill.layout"
-                                                       : "openmw_chargen_select_skill.layout")
+        : WindowModal("openmw_chargen_select_skill.layout")
         , mSkillId(ESM::Skill::Block)
     {
         // Centre dialog
@@ -1863,8 +1859,7 @@ namespace MWGui
     /* DescriptionDialog */
 
     DescriptionDialog::DescriptionDialog()
-        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_chargen_class_description.layout"
-                                                       : "openmw_chargen_class_description.layout")
+        : WindowModal("openmw_chargen_class_description.layout")
     {
         // Centre dialog
         center();

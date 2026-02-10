@@ -48,8 +48,7 @@ namespace MWGui
     }
 
     PersuasionDialog::PersuasionDialog(std::unique_ptr<ResponseCallback> callback)
-        : WindowModal(Settings::gui().mControllerMenus ? "openmw_controller_persuasion_dialog.layout"
-                                                       : "openmw_persuasion_dialog.layout")
+        : WindowModal("openmw_persuasion_dialog.layout")
         , mCallback(std::move(callback))
         , mInitialGoldLabelWidth(0)
         , mInitialMainWidgetWidth(0)

@@ -36,8 +36,7 @@ namespace MWGui
 {
 
     BirthDialog::BirthDialog()
-        : WindowModal(
-            Settings::gui().mControllerMenus ? "openmw_controller_chargen_birth.layout" : "openmw_chargen_birth.layout")
+        : WindowModal("openmw_chargen_birth.layout")
     {
         // Centre dialog
         center();

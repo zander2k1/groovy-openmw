@@ -121,8 +121,7 @@ namespace
 namespace MWGui
 {
     TradeWindow::TradeWindow()
-        : WindowBase(
-            Settings::gui().mControllerMenus ? "openmw_controller_trade_window.layout" : "openmw_trade_window.layout")
+        : WindowBase("openmw_trade_window.layout")
         , mSortModel(nullptr)
         , mTradeModel(nullptr)
         , mItemToSell(-1)

@@ -76,23 +76,26 @@
             <Widget type="AutoSizedTextBox" skin="SandText" name="PlayerGold"/>
             <Widget type="Spacer"/>
 
-            <Widget type="AutoSizedTextBox" skin="NormalText">
+
+            <Widget type="AutoSizedButton" skin="MW_Button" name="BuyButton">
+				<Property key="Visible" value="False"/>
+                <Property key="Caption" value="#{sBuy}"/>
+            </Widget>
+
+            <Widget type="AutoSizedButton" skin="MW_Button" name="CancelButton">
+			<Property key="Visible" value="False"/>
+                <Property key="Caption" value="#{Interface:Cancel}"/>
+            </Widget>
+			<Widget type="AutoSizedTextBox" skin="NormalText">
                 <Property key="Caption" value="#{sBarterDialog7}"/>
                 <UserString key="ToolTipType" value="Layout"/>
                 <UserString key="ToolTipLayout" value="TextToolTip"/>
                 <UserString key="Caption_Text" value="#{sSpellmakingHelp4}"/>
             </Widget>
-            <Widget type="AutoSizedTextBox" skin="SandText" name="PriceLabel">
-            </Widget>
+			<Widget type="AutoSizedTextBox" skin="SandText" name="PriceLabel">
+				<Property key="TextAlign" value="Right HCenter"/>
+			</Widget>
 
-
-            <Widget type="AutoSizedButton" skin="MW_Button" name="BuyButton">
-                <Property key="Caption" value="#{sBuy}"/>
-            </Widget>
-
-            <Widget type="AutoSizedButton" skin="MW_Button" name="CancelButton">
-                <Property key="Caption" value="#{Interface:Cancel}"/>
-            </Widget>
         </Widget>
 
     </Widget>

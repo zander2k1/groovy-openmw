@@ -44,8 +44,7 @@ namespace MWGui
 {
 
     CompanionWindow::CompanionWindow(DragAndDrop& dragAndDrop, ItemTransfer& itemTransfer, MessageBoxManager* manager)
-        : WindowBase(Settings::gui().mControllerMenus ? "openmw_controller_companion_window.layout"
-                                                      : "openmw_companion_window.layout")
+        : WindowBase("openmw_companion_window.layout")
         , mSortModel(nullptr)
         , mModel(nullptr)
         , mSelectedItem(-1)
