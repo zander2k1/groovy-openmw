@@ -3046,7 +3046,7 @@ namespace MWGui
                 const int maxCharge = MWMechanics::getEnchantmentCharge(*enchant);
                 int charge = (info.remainingEnchantCharge == -1) ? maxCharge : info.remainingEnchantCharge;
 
-                const int chargeWidth = 204;
+                const int maxChargeWidth = 155;
 
                 MyGUI::TextBox* chargeText = enchantArea->createWidget<MyGUI::TextBox>(
                     "SandText", MyGUI::IntCoord(0, 0, 10, 18), MyGUI::Align::Default, "ToolTipEnchantChargeText");
@@ -3054,6 +3054,7 @@ namespace MWGui
 
                 const int chargeTextWidth = chargeText->getTextSize().width + 5;
 
+                const int chargeWidth = maxChargeWidth;
                 const int chargeAndTextWidth = chargeWidth + chargeTextWidth;
 
                 totalSize.width = std::max(totalSize.width, chargeAndTextWidth);
