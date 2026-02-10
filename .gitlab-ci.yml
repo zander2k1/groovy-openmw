@@ -1,6 +1,10 @@
 default:
   interruptible: true
 
+include:
+  - local: CI/jobs/GenericLinux_with_Debug.yml
+  - local: CI/jobs/GenericLinux.yml
+
 # Note: We set `needs` on each job to control the job DAG.
 # See https://docs.gitlab.com/ee/ci/yaml/#needs
 stages:
