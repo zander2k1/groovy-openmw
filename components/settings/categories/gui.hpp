@@ -24,7 +24,6 @@ namespace Settings
         SettingValue<bool> mUseRecommendedScalingDefaults{ mIndex, "GUI", "use recommended scaling defaults", true };
         SettingValue<bool> mSettingsWindowIgnoreScaling{ mIndex, "GUI", "settings window ignore scaling", true };
         SettingValue<int> mFontSize{ mIndex, "GUI", "font size", makeClampSanitizerInt(12, 18) };
-        SettingValue<bool> mEnableFallbackFonts{ mIndex, "GUI", "enable fallback fonts" };
         SettingValue<float> mMenuTransparency{ mIndex, "GUI", "menu transparency", makeClampSanitizerFloat(0, 1) };
         SettingValue<float> mTooltipDelay{ mIndex, "GUI", "tooltip delay", makeMaxSanitizerFloat(0) };
         SettingValue<bool> mStretchMenuBackground{ mIndex, "GUI", "stretch menu background" };
@@ -50,6 +49,7 @@ namespace Settings
         SettingValue<bool> mColorTopicEnable{ mIndex, "GUI", "color topic enable" };
         SettingValue<bool> mXboxStyledDialog{ mIndex, "GUI", "xbox styled dialog" };
         SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap" };
+        SettingValue<bool> mXboxStyledFonts{ mIndex, "GUI", "xbox styled fonts" };
         SettingValue<MyGUI::Colour> mColorTopicSpecific{ mIndex, "GUI", "color topic specific" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificOver{ mIndex, "GUI", "color topic specific over" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificPressed{ mIndex, "GUI", "color topic specific pressed" };

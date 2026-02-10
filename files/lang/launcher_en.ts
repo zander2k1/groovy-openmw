@@ -1328,14 +1328,6 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation></translation>
     </message>
     <message>
-        <source>Use fallback font settings from openmw.cfg (Fonts_Font_0/Fonts_Font_1).</source>
-        <translation></translation>
-    </message>
-    <message>
-        <source>Enable fallback fonts</source>
-        <translation></translation>
-    </message>
-    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation></translation>
     </message>
@@ -1572,10 +1564,6 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enable XBOX-Styled Minimap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales the dialogue window independently of the main GUI scaling.&lt;/p&gt;&lt;p&gt;Set to 0.0 to follow GUI Scaling Factor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1601,6 +1589,18 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
     </message>
     <message>
         <source>Ignore GUI Scaling for Settings Menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Styled Minimap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Styled Fonts</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

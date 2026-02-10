@@ -1423,16 +1423,6 @@
              </widget>
             </item>
             <item row="12" column="0">
-             <widget class="QCheckBox" name="enableFallbackFontsCheckBox">
-              <property name="toolTip">
-               <string>Use fallback font settings from openmw.cfg (Fonts_Font_0/Fonts_Font_1).</string>
-              </property>
-              <property name="text">
-               <string>Enable fallback fonts</string>
-              </property>
-             </widget>
-            </item>
-            <item row="13" column="0">
              <widget class="QCheckBox" name="settingsWindowIgnoreScalingCheckBox">
               <property name="toolTip">
                <string>Keep the in-game settings window at normal size regardless of GUI scaling.</string>
@@ -1458,11 +1448,21 @@
                 <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
                </property>
                <property name="text">
-                <string>Enable XBOX-Styled Minimap</string>
+               <string>XBOX Styled Minimap</string>
                </property>
               </widget>
              </item>
              <item row="10" column="0">
+              <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
+               <property name="toolTip">
+                <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
+               </property>
+               <property name="text">
+                <string>XBOX Styled Fonts</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="0">
               <widget class="QCheckBox" name="useZoomOnMapCheckBox">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

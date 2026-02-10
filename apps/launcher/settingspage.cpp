@@ -445,6 +445,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
+        loadSettingBool(Settings::gui().mXboxStyledFonts, *xboxStyledFontsCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         {
@@ -456,7 +457,6 @@ bool Launcher::SettingsPage::loadSettings()
         const double effectiveDialogueScaling = dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling;
         setScalingValues(interfaceScaling, effectiveDialogueScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
-        loadSettingBool(Settings::gui().mEnableFallbackFonts, *enableFallbackFontsCheckBox);
         loadSettingBool(Settings::gui().mSettingsWindowIgnoreScaling, *settingsWindowIgnoreScalingCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
         controllerIconStyleComboBox->setCurrentIndex(
@@ -702,13 +702,13 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
+        saveSettingBool(*xboxStyledFontsCheckBox, Settings::gui().mXboxStyledFonts);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
-        saveSettingBool(*enableFallbackFontsCheckBox, Settings::gui().mEnableFallbackFonts);
         saveSettingBool(*settingsWindowIgnoreScalingCheckBox, Settings::gui().mSettingsWindowIgnoreScaling);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);
         Settings::input().mControllerIconStyle.set(

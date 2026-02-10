@@ -154,10 +154,15 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
 
     // other settings
     auto fallbackMap = variables["fallback"].as<Fallback::FallbackMap>().mMap;
-    if (!Settings::gui().mEnableFallbackFonts)
+    if (Settings::gui().mXboxStyledFonts)
     {
-        fallbackMap.erase("Fonts_Font_0");
-        fallbackMap.erase("Fonts_Font_1");
+        fallbackMap["Fonts_Font_0"] = "MontserratMedium";
+        fallbackMap["Fonts_Font_1"] = "MontserratSemiBold";
+    }
+    else
+    {
+        fallbackMap["Fonts_Font_0"] = "MysticCards";
+        fallbackMap["Fonts_Font_1"] = "MysticCards";
     }
     Fallback::Map::init(fallbackMap);
     engine.setSoundUsage(!variables["no-sound"].as<bool>());

@@ -247,16 +247,16 @@ namespace Gui
     void FontLoader::loadFonts()
     {
         std::string defaultFont{ Fallback::Map::getString("Fonts_Font_0") };
-        std::string dialogueFont;
+        std::string dialogueFont{ Fallback::Map::getString("Fonts_Font_1") };
         std::string scrollFont{ Fallback::Map::getString("Fonts_Font_2") };
         if (defaultFont.empty())
-        {
             defaultFont = "MontserratMedium";
-            dialogueFont = "MontserratSemiBold";
-        }
-        else
+        if (dialogueFont.empty())
         {
-            dialogueFont = defaultFont;
+            if (defaultFont == "MontserratMedium")
+                dialogueFont = "MontserratSemiBold";
+            else
+                dialogueFont = defaultFont;
         }
         if (scrollFont.empty())
             scrollFont = "DemonicLetters";
