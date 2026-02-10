@@ -8,6 +8,7 @@ GenericLinux_with_Debug:
   variables:
     BUILD_TYPE: RelWithDebInfo
     STRIP_BINARIES: "0"
+    ARCHIVE_TAR: "0"
   before_script:
     - CI/install_debian_deps.sh gcc_preprocess openmw-deps openmw-deps-dynamic
   script:
@@ -15,4 +16,4 @@ GenericLinux_with_Debug:
     - CI/build_openmw_generic_debug.sh
   artifacts:
     paths:
-      - GenericLinux_with_Debug.tar.xz
+      - OpenMW-XBOX-UI

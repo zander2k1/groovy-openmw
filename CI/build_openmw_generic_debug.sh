@@ -9,12 +9,13 @@ set -euo pipefail
 ROOT="$(pwd)"
 BUILD_DIR="${BUILD_DIR:-$ROOT/_build_release}"
 STAGE_DIR="${STAGE_DIR:-$ROOT/_pkg_stage}"
-BUNDLE_DIR="${BUNDLE_DIR:-$ROOT/GenericLinux_with_Debug}"
-OUT_TAR="${OUT_TAR:-$ROOT/GenericLinux_with_Debug.tar.xz}"
+BUNDLE_DIR="${BUNDLE_DIR:-$ROOT/OpenMW-XBOX-UI}"
+OUT_TAR="${OUT_TAR:-$ROOT/OpenMW-XBOX-UI.tar.xz}"
 XZ_LEVEL="${XZ_LEVEL:-9}"
 XZ_EXTREME="${XZ_EXTREME:-0}"
 BUILD_TYPE="${BUILD_TYPE:-RelWithDebInfo}"
 STRIP_BINARIES="${STRIP_BINARIES:-0}"
+ARCHIVE_TAR="${ARCHIVE_TAR:-0}"
 
 die(){ echo "ERROR: $*" >&2; exit 1; }
 have(){ command -v "$1" >/dev/null 2>&1; }
@@ -167,10 +168,10 @@ copy_dep() {
   local dep="$1"
   [ -n "$dep" ] || return 0
   [ -e "$dep" ] || return 0
-  cp -a "$dep" ./lib/ 2>/dev/null || true
+  cp -aL "$dep" ./lib/ 2>/dev/null || true
   local real
   real="$(readlink -f "$dep" 2>/dev/null || true)"
-  [ -n "$real" ] && [ -f "$real" ] && cp -a "$real" ./lib/ 2>/dev/null || true
+  [ -n "$real" ] && [ -f "$real" ] && cp -aL "$real" ./lib/ 2>/dev/null || true
 }
 
 deps_tmp="$(mktemp)"
@@ -223,13 +224,12 @@ for f in /usr/lib/x86_64-linux-gnu/libunshield.so.0; do
   [ -e "$f" ] && copy_dep "$f"
 done
 
-# Make symlinks local and ensure targets exist
+# Replace any symlinks with real files (for FAT/exFAT compatibility).
 while IFS= read -r link; do
   real="$(readlink -f "$link" 2>/dev/null || true)"
   [ -n "$real" ] && [ -f "$real" ] || continue
-  base="$(basename "$real")"
-  [ -f "./lib/$base" ] || cp -a "$real" ./lib/ 2>/dev/null || true
-  ln -sf "$base" "./lib/$(basename "$link")"
+  rm -f "$link" 2>/dev/null || true
+  cp -aL "$real" "$link" 2>/dev/null || true
 done < <(find ./lib -type l)
 
 # Wrappers
@@ -314,12 +314,16 @@ fi
 
 popd >/dev/null
 
-echo "==> Tarball: $OUT_TAR"
-rm -f "$OUT_TAR"
+if [ "$ARCHIVE_TAR" = "1" ]; then
+  echo "==> Tarball: $OUT_TAR"
+  rm -f "$OUT_TAR"
 
-XZ_OPT="-$XZ_LEVEL"
-[ "$XZ_EXTREME" = "1" ] && XZ_OPT="$XZ_OPT -e"
-export XZ_OPT
+  XZ_OPT="-$XZ_LEVEL"
+  [ "$XZ_EXTREME" = "1" ] && XZ_OPT="$XZ_OPT -e"
+  export XZ_OPT
 
-tar -cJf "$OUT_TAR" -C "$ROOT" "$(basename "$BUNDLE_DIR")"
-echo "DONE: $OUT_TAR"
+  tar -cJf "$OUT_TAR" -C "$ROOT" "$(basename "$BUNDLE_DIR")"
+  echo "DONE: $OUT_TAR"
+else
+  echo "DONE: $BUNDLE_DIR"
+fi
