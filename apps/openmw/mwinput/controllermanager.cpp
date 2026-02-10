@@ -145,6 +145,7 @@ namespace MWInput
         , mGuiNavHoldTime(0.f)
         , mGuiNavRepeatTime(0.f)
         , mGuiNavHeldFromAxis(false)
+        , mIgnoreGuiNavUntilRelease(false)
         , mGyroAvailable(false)
         , mGamepadGuiCursorEnabled(true)
         , mGuiCursorEnabled(true)
@@ -212,11 +213,22 @@ namespace MWInput
             return;
 
         mGuiCursorEnabled = enabled;
-        if (!enabled)
+        resetGuiNavState();
+        mIgnoreGuiNavUntilRelease = false;
+        if (enabled)
         {
-            resetGuiNavState();
-            syncControllerAxisState();
+            SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
+            if (cntrl)
+            {
+                float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
+                if (xAxis != 0.f || yAxis != 0.f)
+                    mIgnoreGuiNavUntilRelease = true;
+            }
         }
+        else
+            syncControllerAxisState();
     }
 
     void ControllerManager::resetGuiNavState()
@@ -729,6 +741,17 @@ namespace MWInput
             mLeftStickX = arg.value;
         else if (arg.axis == SDL_CONTROLLER_AXIS_LEFTY)
             mLeftStickY = arg.value;
+
+        if (mIgnoreGuiNavUntilRelease
+            && (arg.axis == SDL_CONTROLLER_AXIS_LEFTX || arg.axis == SDL_CONTROLLER_AXIS_LEFTY))
+        {
+            float xAxis = mLeftStickX / kLeftStickAxisMax;
+            float yAxis = mLeftStickY / kLeftStickAxisMax;
+            applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadReleaseDeadzone, xAxis, yAxis);
+            if (xAxis == 0.f && yAxis == 0.f)
+                mIgnoreGuiNavUntilRelease = false;
+            return false;
+        }
 
         if (winMgr->isVirtualKeyboardVisible()
             && (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))

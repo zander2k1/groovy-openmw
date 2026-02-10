@@ -70,6 +70,7 @@ namespace MWInput
         float mGuiNavHoldTime;
         float mGuiNavRepeatTime;
         bool mGuiNavHeldFromAxis;
+        bool mIgnoreGuiNavUntilRelease;
 
         bool mGyroAvailable;
         bool mGamepadGuiCursorEnabled;
