@@ -77,6 +77,8 @@ namespace MWGui
         Gui::NumericEditBox* mBrewCountEdit;
         MyGUI::Widget* mControllerFocusHighlight = nullptr;
         bool mControllerItemViewFocus = false;
+        MyGUI::EditBox* mLastKeyboardEdit = nullptr;
+        bool mVirtualKeyboardWasVisible = false;
 
         void openVirtualKeyboard(MyGUI::EditBox* edit);
         void setControllerFocusWidget(MyGUI::Widget* widget);

@@ -726,6 +726,7 @@ namespace MWGui
             return;
 
         edit->setEditStatic(false);
+        mLastKeyboardEdit = edit;
         winMgr->setKeyFocusWidget(edit);
         winMgr->toggleVirtualKeyboard();
     }
@@ -773,8 +774,18 @@ namespace MWGui
             return;
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool keyboardVisible = winMgr->isVirtualKeyboardVisible();
+        const bool keyboardClosed = mVirtualKeyboardWasVisible && !keyboardVisible;
+        mVirtualKeyboardWasVisible = keyboardVisible;
+        if (keyboardClosed && mLastKeyboardEdit)
+        {
+            setControllerFocusWidget(mLastKeyboardEdit);
+            mLastKeyboardEdit = nullptr;
+            return;
+        }
+
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-        if (!winMgr->isVirtualKeyboardVisible() && focus == nullptr)
+        if (!keyboardVisible && focus == nullptr)
         {
             if (mItemView->getItemCount() > 0)
                 setControllerFocusWidget(mItemView);
