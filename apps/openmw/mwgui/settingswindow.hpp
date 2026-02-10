@@ -63,6 +63,7 @@ namespace MWGui
         MyGUI::Button* mGmstOverridesL10n;
 
         MyGUI::Widget* mWindowModeHint;
+        MyGUI::TextBox* mScalingRestartHint;
 
         // controls
         MyGUI::ScrollView* mControlsBox;

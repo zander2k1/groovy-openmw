@@ -465,6 +465,7 @@ namespace MWGui
         getWidget(mKeyboardSecondaryLayoutLabel, "KeyboardSecondaryLayoutLabel");
         getWidget(mGmstOverridesL10n, "GmstOverridesL10nButton");
         getWidget(mWindowModeHint, "WindowModeHint");
+        getWidget(mScalingRestartHint, "ScalingRestartHint");
         getWidget(mLightingMethodButton, "LightingMethodButton");
         getWidget(mLightsResetButton, "LightsResetButton");
         getWidget(mMaxLights, "MaxLights");
@@ -534,6 +535,8 @@ namespace MWGui
             += MyGUI::newDelegate(this, &SettingsWindow::onKeyboardSecondaryLayoutChanged);
         mGmstOverridesL10n->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SettingsWindow::onGmstOverridesL10nChanged);
+
+        mScalingRestartHint->setVisible(Settings::gui().mUseRecommendedScalingDefaults);
 
         computeMinimumWindowSize();
 
@@ -1428,6 +1431,7 @@ namespace MWGui
     void SettingsWindow::onOpen()
     {
         highlightCurrentResolution();
+        mScalingRestartHint->setVisible(Settings::gui().mUseRecommendedScalingDefaults);
         updateControlsBox();
         updateLightSettings();
         updateWindowModeSettings();
