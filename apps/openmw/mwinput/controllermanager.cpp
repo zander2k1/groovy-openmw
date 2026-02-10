@@ -777,6 +777,12 @@ namespace MWInput
                 const int queuedTicks = std::max(0, kDialogueTriggerScrollTicks - kDialogueTriggerImmediateTicks);
                 mPendingDialogueTriggerScrollTicks += axisValue < 0 ? -queuedTicks : queuedTicks;
             };
+            const float triggerPressThresholdNorm = static_cast<float>(kTriggerPressThreshold) / kLeftStickAxisMax;
+            auto cancelTriggerState = [](bool& pressed, float& holdTime, float& repeatTime) {
+                pressed = false;
+                holdTime = 0.f;
+                repeatTime = 0.f;
+            };
 
             // Left and right triggers toggle through open GUI windows.
             if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
@@ -785,6 +791,11 @@ namespace MWInput
                 {
                     if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
+                        if (mLeftTriggerPressed)
+                        {
+                            cancelTriggerState(mLeftTriggerPressed, mLeftTriggerHoldTime, mLeftTriggerRepeatTime);
+                            mPendingDialogueTriggerScrollTicks = 0.f;
+                        }
                         mRightTriggerPressed = true;
                         mRightTriggerHoldTime = kGuiTurboRepeatStartDelay;
                         mRightTriggerRepeatTime = 0.f;
@@ -799,7 +810,18 @@ namespace MWInput
 
                 if (mRightTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
-                    mRightTriggerPressed = false;
+                    cancelTriggerState(mRightTriggerPressed, mRightTriggerHoldTime, mRightTriggerRepeatTime);
+                    if (useDialogueTriggerScroll)
+                    {
+                        const float leftAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+                        if (!mLeftTriggerPressed && leftAxis >= triggerPressThresholdNorm)
+                        {
+                            mLeftTriggerPressed = true;
+                            mLeftTriggerHoldTime = kGuiTurboRepeatStartDelay;
+                            mLeftTriggerRepeatTime = 0.f;
+                            scrollDialogueByTrigger(-32767);
+                        }
+                    }
                 }
                 return true;
             }
@@ -809,6 +831,11 @@ namespace MWInput
                 {
                     if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
+                        if (mRightTriggerPressed)
+                        {
+                            cancelTriggerState(mRightTriggerPressed, mRightTriggerHoldTime, mRightTriggerRepeatTime);
+                            mPendingDialogueTriggerScrollTicks = 0.f;
+                        }
                         mLeftTriggerPressed = true;
                         mLeftTriggerHoldTime = kGuiTurboRepeatStartDelay;
                         mLeftTriggerRepeatTime = 0.f;
@@ -823,7 +850,18 @@ namespace MWInput
 
                 if (mLeftTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
-                    mLeftTriggerPressed = false;
+                    cancelTriggerState(mLeftTriggerPressed, mLeftTriggerHoldTime, mLeftTriggerRepeatTime);
+                    if (useDialogueTriggerScroll)
+                    {
+                        const float rightAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+                        if (!mRightTriggerPressed && rightAxis >= triggerPressThresholdNorm)
+                        {
+                            mRightTriggerPressed = true;
+                            mRightTriggerHoldTime = kGuiTurboRepeatStartDelay;
+                            mRightTriggerRepeatTime = 0.f;
+                            scrollDialogueByTrigger(32767);
+                        }
+                    }
                 }
                 return true;
             }

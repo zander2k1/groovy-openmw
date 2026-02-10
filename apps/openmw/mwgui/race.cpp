@@ -1,5 +1,8 @@
 #include "race.hpp"
 
+#include <algorithm>
+#include <cmath>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ListBox.h>
@@ -198,6 +201,9 @@ namespace MWGui
         mHeadRotate->setScrollPosition(initialPos);
         onHeadRotate(mHeadRotate, initialPos);
 
+        mHeadRotateAxis = 0.f;
+        mHeadRotateCarry = 0.f;
+
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mRaceList);
         updateControllerListHighlight(mRaceList, mControllerHighlight);
     }
@@ -228,6 +234,9 @@ namespace MWGui
 
         mPreviewTexture.reset(nullptr);
         mPreview.reset(nullptr);
+
+        mHeadRotateAxis = 0.f;
+        mHeadRotateCarry = 0.f;
     }
 
     // widget controls
@@ -255,6 +264,40 @@ namespace MWGui
             mHeadRotate->setScrollPosition(oldPos - std::min(oldPos, scrollPage));
 
         onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
+    }
+
+    void RaceDialog::onFrame(float dt)
+    {
+        if (!mPreview || !mHeadRotate || mHeadRotateAxis == 0.f)
+            return;
+
+        const size_t range = mHeadRotate->getScrollRange();
+        if (range <= 1)
+            return;
+
+        constexpr float kTurnsPerSecond = 1.4f;
+        const float scrollPerSecond = static_cast<float>(range - 1) * kTurnsPerSecond;
+        mHeadRotateCarry += mHeadRotateAxis * scrollPerSecond * dt;
+
+        const int step = static_cast<int>(std::lround(mHeadRotateCarry));
+        if (step == 0)
+            return;
+
+        mHeadRotateCarry -= static_cast<float>(step);
+
+        size_t pos = mHeadRotate->getScrollPosition();
+        if (step > 0)
+        {
+            pos = std::min(range - 1, pos + static_cast<size_t>(step));
+        }
+        else
+        {
+            const size_t delta = static_cast<size_t>(-step);
+            pos = (pos > delta) ? (pos - delta) : 0;
+        }
+
+        mHeadRotate->setScrollPosition(pos);
+        onHeadRotate(mHeadRotate, pos);
     }
 
     void RaceDialog::onHeadRotate(MyGUI::ScrollBar* scroll, size_t position)
@@ -536,7 +579,24 @@ namespace MWGui
     {
         if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTX)
         {
-            onPreviewScroll(nullptr, arg.value < 0 ? 1 : -1);
+            constexpr float kAxisMax = 32767.f;
+            constexpr float kDeadzone = 0.2f;
+
+            float axis = static_cast<float>(arg.value) / kAxisMax;
+            axis = std::clamp(axis, -1.f, 1.f);
+
+            const float magnitude = std::abs(axis);
+            if (magnitude <= kDeadzone)
+            {
+                mHeadRotateAxis = 0.f;
+            }
+            else
+            {
+                const float sign = axis < 0.f ? -1.f : 1.f;
+                const float scaled = (magnitude - kDeadzone) / (1.f - kDeadzone);
+                mHeadRotateAxis = sign * scaled;
+            }
+
             return true;
         }
 

@@ -48,6 +48,7 @@ namespace MWGui
         void setNextButtonShow(bool shown);
         void onOpen() override;
         void onClose() override;
+        void onFrame(float dt) override;
 
         bool exit() override { return false; }
 
@@ -117,6 +118,8 @@ namespace MWGui
         ESM::RefId mCurrentRaceId;
 
         float mCurrentAngle;
+        float mHeadRotateCarry = 0.f;
+        float mHeadRotateAxis = 0.f;
 
         std::unique_ptr<MWRender::RaceSelectionPreview> mPreview;
         std::unique_ptr<MyGUI::ITexture> mPreviewTexture;
