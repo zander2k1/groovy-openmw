@@ -172,7 +172,8 @@ namespace MWGui
             mClassRow = className ? className->getParent() : nullptr;
 
             if (mNameRow && mNameRow->getParent())
-                mNameHighlight = createControllerHighlight(mNameRow->getParent(), MyGUI::IntCoord(mNameRow->getCoord()));
+                mNameHighlight
+                    = createControllerHighlight(mNameRow->getParent(), MyGUI::IntCoord(mNameRow->getCoord()));
             if (mLevelRow && mLevelRow->getParent())
                 mLevelHighlight
                     = createControllerHighlight(mLevelRow->getParent(), MyGUI::IntCoord(mLevelRow->getCoord()));
