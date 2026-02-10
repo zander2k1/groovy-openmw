@@ -22,8 +22,8 @@
 
 #include <components/esm/records.hpp>
 #include <components/l10n/manager.hpp>
-#include <components/misc/strings/algorithm.hpp>
 #include <components/misc/resourcehelpers.hpp>
+#include <components/misc/strings/algorithm.hpp>
 #include <components/myguiplatform/scalinglayer.hpp>
 #include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>

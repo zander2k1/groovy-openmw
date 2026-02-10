@@ -178,6 +178,66 @@ namespace
         return left.first > right.first;
     }
 
+    struct RecommendedScalingDefaults
+    {
+        int width;
+        int height;
+        float interfaceScaling;
+        float dialogueScaling;
+    };
+
+    constexpr std::array<RecommendedScalingDefaults, 21> recommendedScalingDefaults = {
+        RecommendedScalingDefaults{ 640, 480, 0.8f, 1.0f },
+        RecommendedScalingDefaults{ 720, 480, 0.8f, 1.0f },
+        RecommendedScalingDefaults{ 720, 576, 0.9f, 1.1f },
+        RecommendedScalingDefaults{ 800, 600, 1.0f, 1.2f },
+        RecommendedScalingDefaults{ 1024, 768, 1.25f, 1.45f },
+        RecommendedScalingDefaults{ 1152, 864, 1.45f, 1.65f },
+        RecommendedScalingDefaults{ 1280, 720, 1.45f, 1.65f },
+        RecommendedScalingDefaults{ 1280, 800, 1.65f, 2.0f },
+        RecommendedScalingDefaults{ 1280, 960, 1.65f, 2.0f },
+        RecommendedScalingDefaults{ 1280, 1024, 1.65f, 2.0f },
+        RecommendedScalingDefaults{ 1360, 768, 1.55f, 1.85f },
+        RecommendedScalingDefaults{ 1366, 768, 1.55f, 1.85f },
+        RecommendedScalingDefaults{ 1440, 1080, 1.85f, 2.15f },
+        RecommendedScalingDefaults{ 1600, 900, 1.75f, 2.05f },
+        RecommendedScalingDefaults{ 1600, 1200, 1.95f, 2.35f },
+        RecommendedScalingDefaults{ 1680, 1050, 1.85f, 2.25f },
+        RecommendedScalingDefaults{ 1920, 1080, 1.85f, 2.25f },
+        RecommendedScalingDefaults{ 1920, 1200, 1.95f, 2.35f },
+        RecommendedScalingDefaults{ 1920, 1440, 2.35f, 2.75f },
+        RecommendedScalingDefaults{ 2560, 1440, 2.35f, 2.75f },
+        RecommendedScalingDefaults{ 3840, 2160, 2.65f, 3.15f },
+    };
+
+    bool tryGetRecommendedScaling(int width, int height, float& interfaceScaling, float& dialogueScaling)
+    {
+        for (const auto& entry : recommendedScalingDefaults)
+        {
+            if (entry.width == width && entry.height == height)
+            {
+                interfaceScaling = entry.interfaceScaling;
+                dialogueScaling = entry.dialogueScaling;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    void applyRecommendedScalingDefaults(int width, int height)
+    {
+        if (!Settings::gui().mUseRecommendedScalingDefaults)
+            return;
+
+        float interfaceScaling = 1.0f;
+        float dialogueScaling = 1.0f;
+        if (!tryGetRecommendedScaling(width, height, interfaceScaling, dialogueScaling))
+            return;
+
+        Settings::gui().mScalingFactor.set(interfaceScaling);
+        Settings::gui().mDialogueInterfaceScaling.set(dialogueScaling);
+    }
+
     const std::string_view checkButtonType = "CheckButton";
     const std::string_view sliderType = "Slider";
 
@@ -683,6 +743,7 @@ namespace MWGui
             Settings::video().mResolutionX.set(resolution->first);
             Settings::video().mResolutionY.set(resolution->second);
 
+            applyRecommendedScalingDefaults(resolution->first, resolution->second);
             apply();
         }
     }
