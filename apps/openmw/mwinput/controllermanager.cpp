@@ -171,6 +171,7 @@ namespace MWInput
         , mGuiNavRepeatTime(0.f)
         , mGuiNavHeldFromAxis(false)
         , mIgnoreGuiNavUntilRelease(false)
+        , mIgnoreGuiCursorUntilRelease(false)
         , mGyroAvailable(false)
         , mGamepadGuiCursorEnabled(true)
         , mGuiCursorEnabled(true)
@@ -240,16 +241,24 @@ namespace MWInput
         mGuiCursorEnabled = enabled;
         resetGuiNavState();
         mIgnoreGuiNavUntilRelease = false;
+        mIgnoreGuiCursorUntilRelease = false;
         if (enabled)
         {
             SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
             if (cntrl)
             {
-                float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
-                float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                const float xAxisRaw = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                const float yAxisRaw = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                float xAxis = xAxisRaw;
+                float yAxis = yAxisRaw;
                 applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
                 if (xAxis != 0.f || yAxis != 0.f)
                     mIgnoreGuiNavUntilRelease = true;
+                xAxis = xAxisRaw;
+                yAxis = yAxisRaw;
+                applyRadialDeadzone(xAxis, yAxis, kGuiJoystickDeadzone, xAxis, yAxis);
+                if (xAxis != 0.f || yAxis != 0.f)
+                    mIgnoreGuiCursorUntilRelease = true;
             }
         }
         else
@@ -308,8 +317,12 @@ namespace MWInput
                 SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
                 if (cntrl)
                 {
-                    float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
-                    float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                    const float xAxisRaw
+                        = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                    const float yAxisRaw
+                        = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                    float xAxis = xAxisRaw;
+                    float yAxis = yAxisRaw;
                     applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
                     if (xAxis != 0.f || yAxis != 0.f)
                     {
@@ -322,6 +335,11 @@ namespace MWInput
                         resetGuiNavState();
                         mIgnoreGuiNavUntilRelease = true;
                     }
+                    xAxis = xAxisRaw;
+                    yAxis = yAxisRaw;
+                    applyRadialDeadzone(xAxis, yAxis, kGuiJoystickDeadzone, xAxis, yAxis);
+                    if (xAxis != 0.f || yAxis != 0.f)
+                        mIgnoreGuiCursorUntilRelease = true;
                 }
             }
         }
@@ -350,6 +368,21 @@ namespace MWInput
                         winMgr->setCursorVisible(false);
                     }
                 }
+            }
+        }
+
+        if (mIgnoreGuiCursorUntilRelease && winMgr->isGuiMode())
+        {
+            SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
+            if (!cntrl)
+                mIgnoreGuiCursorUntilRelease = false;
+            else
+            {
+                float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                applyRadialDeadzone(xAxis, yAxis, kGuiJoystickDeadzone, xAxis, yAxis);
+                if (xAxis == 0.f && yAxis == 0.f)
+                    mIgnoreGuiCursorUntilRelease = false;
             }
         }
 
@@ -481,6 +514,11 @@ namespace MWInput
 
             if (winMgr->isGuiMode())
             {
+                if (mIgnoreGuiCursorUntilRelease)
+                {
+                    xAxis = 0.f;
+                    yAxis = 0.f;
+                }
                 applyRadialDeadzone(xAxis, yAxis, kGuiJoystickDeadzone, xAxis, yAxis);
                 const float joystickDeadZone = Settings::input().mJoystickDeadZone;
                 const float scrollDeadzone = joystickDeadZone > 0.2f ? joystickDeadZone : 0.2f;

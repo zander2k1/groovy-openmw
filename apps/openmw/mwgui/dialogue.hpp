@@ -242,6 +242,7 @@ namespace MWGui
         void setControllerFocus(size_t index, bool focused);
         size_t mControllerFocus = 0;
         int mControllerChoice = -1;
+        float mControllerNavUpDelay = 0.f;
 
         void updateTopicFormat();
     };

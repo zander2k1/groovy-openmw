@@ -10,6 +10,8 @@
 #include <MyGUI_UString.h>
 #include <MyGUI_Window.h>
 
+#include <SDL.h>
+
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/settings/values.hpp>
@@ -19,6 +21,7 @@
 
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -403,6 +406,8 @@ namespace MWGui
     // Morrowind uses 3 px invisible borders for padding topics
     static constexpr int sVerticalPadding = 3;
     static constexpr int sHistoryScrollbarReserve = 3;
+    static constexpr float sControllerNavUpDelaySeconds = 0.25f;
+    static constexpr float sControllerNavUpHoldThreshold = 0.85f;
 
     DialogueWindow::DialogueWindow()
         : WindowBase("openmw_dialogue_window.layout")
@@ -464,6 +469,15 @@ namespace MWGui
         updateHistory();
         if (Settings::gui().mControllerMenus && mTopicsList->getItemCount() > 0)
             setControllerFocus(mControllerFocus, true);
+
+        mControllerNavUpDelay = 0.f;
+        if (Settings::gui().mControllerMenus && Settings::gui().mControllerJoystickDpad)
+        {
+            const float axisY
+                = MWBase::Environment::get().getInputManager()->getControllerAxisValue(SDL_CONTROLLER_AXIS_LEFTY);
+            if (axisY <= -sControllerNavUpHoldThreshold)
+                mControllerNavUpDelay = sControllerNavUpDelaySeconds;
+        }
     }
 
     bool DialogueWindow::exit()
@@ -1017,6 +1031,13 @@ namespace MWGui
         if (mPtr.isEmpty())
             return;
 
+        if (mControllerNavUpDelay > 0.f)
+        {
+            mControllerNavUpDelay -= dt;
+            if (mControllerNavUpDelay < 0.f)
+                mControllerNavUpDelay = 0.f;
+        }
+
         updateDisposition();
         deleteLater();
 
@@ -1198,6 +1219,9 @@ namespace MWGui
             }
             return MyGUI::ITEM_NONE;
         };
+
+        if (mControllerNavUpDelay > 0.f && arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+            return true;
 
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
