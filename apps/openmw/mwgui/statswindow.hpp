@@ -153,6 +153,7 @@ namespace MWGui
         MyGUI::Widget* mRaceRow = nullptr;
         MyGUI::Widget* mClassRow = nullptr;
         MyGUI::Widget* mNameRow = nullptr;
+        MyGUI::IntSize mLastSkillViewSize = MyGUI::IntSize(0, 0);
 
     protected:
         void onPinToggled() override;

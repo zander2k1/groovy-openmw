@@ -214,6 +214,16 @@ namespace MWGui
         resetFixedWindowGeometry();
         onWindowResize(mMainWidget->castType<MyGUI::Window>());
 
+        const MyGUI::IntSize skillViewSize = mSkillView ? mSkillView->getSize() : MyGUI::IntSize(0, 0);
+        if (!mSkillWidgets.empty() && skillViewSize == mLastSkillViewSize)
+            return;
+
+        if (!mMajorSkills.empty() || !mMinorSkills.empty())
+        {
+            updateSkillArea();
+            return;
+        }
+
         MWWorld::Ptr player = MWMechanics::getPlayer();
         if (player.isEmpty() || !player.getClass().isNpc())
             return;
@@ -1024,6 +1034,7 @@ namespace MWGui
         mSkillView->setVisibleVScroll(false);
         mSkillView->setCanvasSize(mSkillView->getWidth(), std::max(mSkillView->getHeight(), coord1.top));
         mSkillView->setVisibleVScroll(true);
+        mLastSkillViewSize = mSkillView->getSize();
 
         if (Settings::gui().mControllerMenus && mActiveControllerWindow && !mControllerItems.empty())
         {
