@@ -394,9 +394,10 @@ namespace MWGui
                 active && Settings::gui().mControllerTooltips);
         }
 
-        if (!active)
-            setEffectsFocusActive(false);
-        mSpellView->setActiveControllerWindow(active);
+        if (mEffectsFocusActive)
+            mSpellView->setActiveControllerWindow(false);
+        else
+            mSpellView->setActiveControllerWindow(active);
 
         WindowBase::setActiveControllerWindow(active);
     }
