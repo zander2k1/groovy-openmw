@@ -31,8 +31,8 @@ namespace
 {
     constexpr float kLeftStickAxisMax = 32768.0f;
     constexpr float kGuiJoystickDeadzone = 0.6f;
-    constexpr float kLeftStickDpadDeadzone = kGuiJoystickDeadzone;
-    constexpr float kLeftStickDpadReleaseDeadzone = kGuiJoystickDeadzone;
+    constexpr float kLeftStickDpadDeadzone = 0.85f;
+    constexpr float kLeftStickDpadReleaseDeadzone = 0.85f;
     constexpr int kLeftStickDpadNone = -1;
     constexpr float kGuiTurboRepeatStartDelay = 0.25f;
     constexpr int kTriggerPressThreshold = 16000;
