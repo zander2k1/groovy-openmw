@@ -2403,10 +2403,9 @@ namespace MWGui
 
                                 const ESM::MagicEffect* magicEffect
                                     = store->get<ESM::MagicEffect>().find(spellEffect.mData.mEffectID);
-                                const ESM::Attribute* attribute = store->get<ESM::Attribute>().search(
-                                    ESM::Attribute::indexToRefId(spellEffect.mData.mAttribute));
-                                const ESM::Skill* skill = store->get<ESM::Skill>().search(
-                                    ESM::Skill::indexToRefId(spellEffect.mData.mSkill));
+                                const ESM::Attribute* attribute
+                                    = store->get<ESM::Attribute>().search(spellEffect.mData.mAttribute);
+                                const ESM::Skill* skill = store->get<ESM::Skill>().search(spellEffect.mData.mSkill);
                                 if (!magicEffect)
                                     continue;
 
@@ -2633,8 +2632,8 @@ namespace MWGui
                         {
                             Widgets::SpellEffectParams params;
                             params.mEffectID = spellEffect.mData.mEffectID;
-                            params.mSkill = ESM::Skill::indexToRefId(spellEffect.mData.mSkill);
-                            params.mAttribute = ESM::Attribute::indexToRefId(spellEffect.mData.mAttribute);
+                            params.mSkill = spellEffect.mData.mSkill;
+                            params.mAttribute = spellEffect.mData.mAttribute;
                             params.mDuration = spellEffect.mData.mDuration;
                             params.mMagnMin = spellEffect.mData.mMagnMin;
                             params.mMagnMax = spellEffect.mData.mMagnMax;

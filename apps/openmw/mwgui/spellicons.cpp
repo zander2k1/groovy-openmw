@@ -131,7 +131,9 @@ namespace MWGui
                     widget.setNeedMouseFocus(true);
                     widget.setUserString("ToolTipType", "ActiveEffect");
                     widget.setUserString("ActiveEffectIcon", effect.mIcon);
-                    const std::string nameTag = "#{" + ESM::MagicEffect::refIdToGmstString(effectId) + "}";
+                    std::string nameTag = "#{";
+                    nameTag += ESM::MagicEffect::refIdToGmstString(effectId);
+                    nameTag += "}";
                     widget.setUserString("ActiveEffectName", nameTag);
                     if (source.mDuration >= fadeTime && fadeTime > 0.f)
                         widget.setAlpha(std::min(source.mTimeLeft / fadeTime, 1.f));
@@ -173,8 +175,7 @@ namespace MWGui
 
             const auto it = maxDisplayDuration.find(effectId);
             if (Settings::game().mShowEffectDuration && it != maxDisplayDuration.end())
-                widget->setUserString(
-                    "ActiveEffectDuration", ToolTips::getDurationString(it->second, "#{sDuration}"));
+                widget->setUserString("ActiveEffectDuration", ToolTips::getDurationString(it->second, "#{sDuration}"));
             else
                 widget->setUserString("ActiveEffectDuration", {});
         }
@@ -198,5 +199,16 @@ namespace MWGui
             if (widget && widget->getVisible())
                 out.push_back(widget);
         }
+        std::sort(out.begin(), out.end(), [](const MyGUI::ImageBox* left, const MyGUI::ImageBox* right) {
+            if (!left || !right)
+                return left != nullptr;
+            const MyGUI::IntCoord leftCoord = left->getCoord();
+            const MyGUI::IntCoord rightCoord = right->getCoord();
+            if (leftCoord.left != rightCoord.left)
+                return leftCoord.left < rightCoord.left;
+            if (leftCoord.top != rightCoord.top)
+                return leftCoord.top < rightCoord.top;
+            return left < right;
+        });
     }
 }
