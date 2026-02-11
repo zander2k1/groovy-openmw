@@ -53,6 +53,7 @@
 
 #include <components/l10n/manager.hpp>
 
+#include <components/lua_ui/element.hpp>
 #include <components/lua_ui/util.hpp>
 #include <components/lua_ui/widget.hpp>
 
@@ -727,8 +728,16 @@ namespace MWGui
             return; // UI not created yet
 
         bool gameMode = !isGuiMode();
-        mHud->setVisible(mHudEnabled && !loading && gameMode);
+        const bool hudVisible = mHudEnabled && !loading && gameMode;
+        mHud->setVisible(hudVisible);
         mToolTips->setVisible(mHudEnabled && !loading);
+        const bool luaHudAdjustmentsEnabled = Settings::gui().mLuaHudHideInMenus;
+        const bool luaHudVisible = luaHudAdjustmentsEnabled ? hudVisible : true;
+        if (luaHudVisible != mLuaHudLayerVisible)
+        {
+            mLuaHudLayerVisible = luaHudVisible;
+            LuaUi::Element::setLayerVisible("HUD", luaHudVisible);
+        }
 
         MWBase::Environment::get().getInputManager()->changeInputMode(!gameMode);
 

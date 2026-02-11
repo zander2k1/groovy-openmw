@@ -1,6 +1,8 @@
 #ifndef OPENMW_LUAUI_ELEMENT
 #define OPENMW_LUAUI_ELEMENT
 
+#include <string_view>
+
 #include "widget.hpp"
 
 namespace LuaUi
@@ -17,6 +19,8 @@ namespace LuaUi
             for (auto& [_, element] : container)
                 callback(element.get());
         }
+
+        static void setLayerVisible(std::string_view layer, bool visible);
 
         WidgetExtension* mRoot;
         sol::main_object mLayout;
@@ -44,6 +48,7 @@ namespace LuaUi
     private:
         Element(sol::table layout);
         sol::table layout() { return LuaUtil::cast<sol::table>(mLayout); }
+        void applyLayerVisibility();
         static std::map<Element*, std::shared_ptr<Element>> sGameElements;
         static std::map<Element*, std::shared_ptr<Element>> sMenuElements;
     };

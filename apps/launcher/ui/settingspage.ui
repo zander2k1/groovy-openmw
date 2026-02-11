@@ -1512,6 +1512,16 @@
               </property>
              </widget>
             </item>
+            <item row="9" column="1">
+             <widget class="QCheckBox" name="luaAdjustmentsCheckBox">
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hides LUA-based HUD elements when GUIs are open.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="text">
+               <string>Enable LUA Adjustments</string>
+              </property>
+             </widget>
+            </item>
              <item row="4" column="0">
               <widget class="QLabel" name="showOwnedLabel">
                <property name="text">

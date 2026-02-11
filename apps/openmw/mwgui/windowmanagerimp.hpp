@@ -491,6 +491,7 @@ namespace MWGui
         MyGUI::Widget* mInputBlocker;
 
         bool mHudEnabled;
+        bool mLuaHudLayerVisible = true;
         bool mCursorVisible;
         bool mCursorActive;
 

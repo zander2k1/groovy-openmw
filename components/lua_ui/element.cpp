@@ -2,6 +2,8 @@
 
 #include <MyGUI_Gui.h>
 
+#include <unordered_map>
+
 #include "content.hpp"
 #include "util.hpp"
 #include "widget.hpp"
@@ -240,6 +242,7 @@ namespace LuaUi
 
     std::map<Element*, std::shared_ptr<Element>> Element::sMenuElements;
     std::map<Element*, std::shared_ptr<Element>> Element::sGameElements;
+    std::unordered_map<std::string, bool> sLayerVisibility;
 
     Element::Element(sol::table layout)
         : mRoot(nullptr)
@@ -271,6 +274,7 @@ namespace LuaUi
             assert(!mRoot);
             mRoot = createWidget(layout(), true, depth);
             mLayer = setLayer(mRoot, layout());
+            applyLayerVisibility();
             updateRootCoord(mRoot);
             mState = Created;
         }
@@ -310,6 +314,7 @@ namespace LuaUi
                 updateWidget(mRoot, layout(), 0);
             }
             mLayer = setLayer(mRoot, layout());
+            applyLayerVisibility();
             updateRootCoord(mRoot);
             mState = Created;
         }
@@ -331,5 +336,26 @@ namespace LuaUi
             mLayout.reset();
         }
         mState = Destroyed;
+    }
+
+    void Element::setLayerVisible(std::string_view layer, bool visible)
+    {
+        std::string key(layer);
+        auto [it, inserted] = sLayerVisibility.insert({ key, visible });
+        if (!inserted && it->second == visible)
+            return;
+        it->second = visible;
+        forEach(false, [](Element* element) { element->applyLayerVisibility(); });
+    }
+
+    void Element::applyLayerVisibility()
+    {
+        if (!mRoot)
+            return;
+        bool visible = true;
+        auto it = sLayerVisibility.find(mLayer);
+        if (it != sLayerVisibility.end())
+            visible = it->second;
+        mRoot->setGlobalVisible(visible);
     }
 }

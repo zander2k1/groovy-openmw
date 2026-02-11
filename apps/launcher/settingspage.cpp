@@ -437,6 +437,7 @@ bool Launcher::SettingsPage::loadSettings()
         showOwnedComboBox->setCurrentIndex(Settings::game().mShowOwned);
         loadSettingBool(Settings::gui().mStretchMenuBackground, *stretchBackgroundCheckBox);
         loadSettingBool(Settings::gui().mUnskippableIntroVideos, *unskippableIntroVideosCheckBox);
+        loadSettingBool(Settings::gui().mLuaHudHideInMenus, *luaAdjustmentsCheckBox);
         connect(controllerMenusCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotControllerMenusToggled);
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
@@ -695,6 +696,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingInt(*showOwnedComboBox, Settings::game().mShowOwned);
         saveSettingBool(*stretchBackgroundCheckBox, Settings::gui().mStretchMenuBackground);
         saveSettingBool(*unskippableIntroVideosCheckBox, Settings::gui().mUnskippableIntroVideos);
+        saveSettingBool(*luaAdjustmentsCheckBox, Settings::gui().mLuaHudHideInMenus);
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
         saveSettingBool(*controllerMenuJoystickDpadCheckBox, Settings::gui().mControllerJoystickDpad);

@@ -1562,6 +1562,14 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Hides LUA-based HUD elements when GUIs are open.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable LUA Adjustments</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose which controller button icons to show.</source>
         <translation type="unfinished"></translation>
     </message>
