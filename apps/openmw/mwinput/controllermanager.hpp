@@ -8,6 +8,11 @@
 #include <components/sdlutil/events.hpp>
 #include <components/settings/settings.hpp>
 
+namespace MWGui
+{
+    class WindowBase;
+}
+
 namespace MWInput
 {
     class BindingsManager;
@@ -85,6 +90,8 @@ namespace MWInput
         float mRightTriggerRepeatTime;
         float mPendingDialogueTriggerScrollTicks;
         int mLastControllerDeviceId = -1;
+        MWGui::WindowBase* mLastActiveControllerWindow = nullptr;
+        bool mLastGuiMode = false;
 
         void resetGuiNavState();
         void syncControllerAxisState();

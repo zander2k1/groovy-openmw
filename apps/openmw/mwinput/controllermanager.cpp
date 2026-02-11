@@ -297,6 +297,35 @@ namespace MWInput
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         bool leftStickDpadActive = false;
 
+        const bool inGuiMode = winMgr->isGuiMode();
+        MWGui::WindowBase* activeWindow = inGuiMode ? winMgr->getActiveControllerWindow() : nullptr;
+        if (inGuiMode != mLastGuiMode || activeWindow != mLastActiveControllerWindow)
+        {
+            mLastGuiMode = inGuiMode;
+            mLastActiveControllerWindow = activeWindow;
+            if (inGuiMode && activeWindow && activeWindow->isVisible())
+            {
+                SDL_GameController* cntrl = mBindingsManager->getControllerOrNull();
+                if (cntrl)
+                {
+                    float xAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTX) / kLeftStickAxisMax;
+                    float yAxis = SDL_GameControllerGetAxis(cntrl, SDL_CONTROLLER_AXIS_LEFTY) / kLeftStickAxisMax;
+                    applyRadialDeadzone(xAxis, yAxis, kLeftStickDpadDeadzone, xAxis, yAxis);
+                    if (xAxis != 0.f || yAxis != 0.f)
+                    {
+                        if (mGuiNavHeldButton != kLeftStickDpadNone)
+                        {
+                            const MyGUI::KeyCode releaseKey = dpadButtonToKey(mGuiNavHeldButton);
+                            if (releaseKey != MyGUI::KeyCode::None)
+                                winMgr->injectKeyRelease(releaseKey);
+                        }
+                        resetGuiNavState();
+                        mIgnoreGuiNavUntilRelease = true;
+                    }
+                }
+            }
+        }
+
         const bool settingsVisible = winMgr->isSettingsWindowVisible();
         const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible);
 
