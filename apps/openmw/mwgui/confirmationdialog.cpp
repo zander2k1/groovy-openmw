@@ -31,6 +31,7 @@ namespace MWGui
     void ConfirmationDialog::askForConfirmation(const std::string& message)
     {
         setVisible(true);
+        mTooltipSourceWindow = nullptr;
 
         mMessage->setCaptionWithReplacing(message);
 
@@ -57,6 +58,7 @@ namespace MWGui
     bool ConfirmationDialog::exit()
     {
         setVisible(false);
+        mTooltipSourceWindow = nullptr;
         eventCancelClicked();
         return true;
     }
@@ -69,6 +71,7 @@ namespace MWGui
     void ConfirmationDialog::onOkButtonClicked(MyGUI::Widget* /*sender*/)
     {
         setVisible(false);
+        mTooltipSourceWindow = nullptr;
 
         eventOkClicked();
     }

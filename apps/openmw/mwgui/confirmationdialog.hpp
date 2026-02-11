@@ -11,6 +11,8 @@ namespace MWGui
         ConfirmationDialog();
         void askForConfirmation(const std::string& message);
         bool exit() override;
+        void setTooltipSourceWindow(WindowBase* window) { mTooltipSourceWindow = window; }
+        WindowBase* getTooltipSourceWindow() const { return mTooltipSourceWindow; }
 
         typedef MyGUI::delegates::MultiDelegate<> EventHandle_Void;
 
@@ -24,6 +26,7 @@ namespace MWGui
         MyGUI::EditBox* mMessage;
         MyGUI::Button* mOkButton;
         MyGUI::Button* mCancelButton;
+        WindowBase* mTooltipSourceWindow = nullptr;
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onOkButtonClicked(MyGUI::Widget* sender);

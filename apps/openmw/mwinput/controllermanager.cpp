@@ -813,6 +813,18 @@ namespace MWInput
                 return true;
             return true;
         }
+        if (MyGUI::InputManager::getInstance().isModalAny()
+            && (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
+        {
+            mLeftTriggerPressed = false;
+            mRightTriggerPressed = false;
+            mLeftTriggerHoldTime = 0.f;
+            mRightTriggerHoldTime = 0.f;
+            mLeftTriggerRepeatTime = 0.f;
+            mRightTriggerRepeatTime = 0.f;
+            mPendingDialogueTriggerScrollTicks = 0.f;
+            return true;
+        }
 
         if (Settings::gui().mControllerMenus)
         {

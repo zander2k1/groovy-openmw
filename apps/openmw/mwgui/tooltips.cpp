@@ -203,6 +203,8 @@ namespace MWGui
         bool guiMode = winMgr->isGuiMode();
         CountDialog* countDialog = winMgr->getCountDialog();
         const bool countDialogVisible = countDialog && countDialog->isVisible();
+        ConfirmationDialog* confirmDialog = winMgr->getConfirmationDialog();
+        const bool confirmDialogVisible = confirmDialog && confirmDialog->isVisible();
         WindowBase* activeControllerWindow
             = Settings::gui().mControllerMenus ? winMgr->getActiveControllerWindow() : nullptr;
         const bool controllerAlchemy = Settings::gui().mControllerMenus && mode == GM_Alchemy;
@@ -249,6 +251,12 @@ namespace MWGui
                 }
             }
             if (tooltipWindow)
+                activeControllerWindow = tooltipWindow;
+        }
+        if (Settings::gui().mControllerMenus && confirmDialogVisible && controllerInventory)
+        {
+            WindowBase* tooltipWindow = confirmDialog->getTooltipSourceWindow();
+            if (tooltipWindow && tooltipWindow->isVisible())
                 activeControllerWindow = tooltipWindow;
         }
         if (Settings::gui().mControllerMenus && controllerInventory && winMgr->isInteractiveMessageBoxActive())
@@ -377,9 +385,8 @@ namespace MWGui
 
             if (winMgr->isInteractiveMessageBoxActive())
                 return !controllerInventory;
-            if (ConfirmationDialog* confirmDialog = winMgr->getConfirmationDialog();
-                confirmDialog && confirmDialog->isVisible())
-                return true;
+            if (confirmDialogVisible)
+                return confirmDialog->getTooltipSourceWindow() == nullptr;
             return false;
         }();
         auto getOwningWindow = [](MyGUI::Widget* widget) -> MyGUI::Window* {
