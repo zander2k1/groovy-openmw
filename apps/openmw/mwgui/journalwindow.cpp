@@ -734,8 +734,10 @@ namespace
             else
                 mControllerButtons.mB = "#{Interface:Close}";
 
-            mControllerButtons.mL1 = "#{Interface:Prev}";
-            mControllerButtons.mR1 = "#{Interface:Next}";
+            mControllerButtons.mL1.clear();
+            mControllerButtons.mR1.clear();
+            mControllerButtons.mL2 = "#{Interface:Prev}";
+            mControllerButtons.mR2 = "#{Interface:Next}";
             mControllerButtons.mR3.clear();
             return &mControllerButtons;
         }
@@ -936,13 +938,29 @@ namespace
                 if (mQuestMode)
                     notifyTopics(getWidget<MyGUI::Widget>(TopicsBTN));
             }
-            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
                 notifyPrevPage(getWidget<MyGUI::Widget>(PrevPageBTN));
-            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT
-                || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
                 notifyNextPage(getWidget<MyGUI::Widget>(NextPageBTN));
 
             return true;
+        }
+
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override
+        {
+            if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+            {
+                if (!mOptionsMode)
+                    notifyPrevPage(getWidget<MyGUI::Widget>(PrevPageBTN));
+                return true;
+            }
+            if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+            {
+                if (!mOptionsMode)
+                    notifyNextPage(getWidget<MyGUI::Widget>(NextPageBTN));
+                return true;
+            }
+            return false;
         }
 
         void setControllerFocusedQuest(size_t index)

@@ -42,7 +42,6 @@ namespace MWGui
 
         mControllerScrollWidget = mTextView;
         mControllerButtons.mB = "#{Interface:Close}";
-        mControllerButtons.mDpad = "#{Interface:ScrollDown}";
 
         center();
     }
@@ -79,6 +78,10 @@ namespace MWGui
         mTextView->setViewOffset(MyGUI::IntPoint(0, 0));
 
         setTakeButtonShow(showTakeButton);
+
+        updateControllerScrollButtons();
+        if (Settings::gui().mControllerMenus)
+            MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCloseButton);
     }
@@ -131,6 +134,7 @@ namespace MWGui
 
     ControllerButtons* ScrollWindow::getControllerButtons()
     {
+        updateControllerScrollButtons();
         if (canTake())
             mControllerButtons.mA = "#{Interface:Take}";
         else
@@ -153,8 +157,39 @@ namespace MWGui
         return true;
     }
 
+    bool ScrollWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        const bool isTrigger
+            = arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT;
+        if (!isTrigger)
+            return false;
+
+        if (!isScrollable())
+            return true;
+
+        const int direction = (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT) ? 1 : -1;
+        constexpr int kScrollStep = 1;
+        mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, direction * kScrollStep));
+        return true;
+    }
+
     bool ScrollWindow::canTake() const
     {
         return mTakeButtonShow && mTakeButtonAllowed;
+    }
+
+    void ScrollWindow::updateControllerScrollButtons()
+    {
+        const bool scrollable = isScrollable();
+        mControllerButtons.mL2 = scrollable ? "#{Interface:ScrollUp}" : "";
+        mControllerButtons.mR2 = scrollable ? "#{Interface:ScrollDown}" : "";
+        mControllerButtons.mDpad.clear();
+    }
+
+    bool ScrollWindow::isScrollable() const
+    {
+        if (!mTextView)
+            return false;
+        return mTextView->getCanvasSize().height > mTextView->getHeight();
     }
 }

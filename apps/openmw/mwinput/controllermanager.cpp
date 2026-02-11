@@ -18,6 +18,8 @@
 #include "../mwbase/luamanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwgui/bookwindow.hpp"
+#include "../mwgui/journalwindow.hpp"
 #include "../mwgui/mapwindow.hpp"
 #include "../mwgui/windowbase.hpp"
 
@@ -106,6 +108,29 @@ namespace
     bool isDialogueMode(MWGui::GuiMode mode)
     {
         return mode == MWGui::GM_Dialogue;
+    }
+
+    bool usesTriggerScroll(MWGui::WindowBase* window, MWBase::WindowManager* winMgr)
+    {
+        if (!window || !window->isVisible())
+            return false;
+        if (!winMgr->isGuiMode() || winMgr->isSettingsWindowVisible())
+            return false;
+        if (window->getControllerScrollWidget() == nullptr)
+            return false;
+
+        MWGui::ControllerButtons* buttons = window->getControllerButtons();
+        if (!buttons)
+            return false;
+        return !buttons->mL2.empty() || !buttons->mR2.empty();
+    }
+
+    bool usesTriggerPaging(MWGui::WindowBase* window)
+    {
+        if (!window || !window->isVisible())
+            return false;
+        return dynamic_cast<MWGui::BookWindow*>(window) != nullptr
+            || dynamic_cast<MWGui::JournalWindow*>(window) != nullptr;
     }
 
     enum class ControllerIconStyle
@@ -352,12 +377,10 @@ namespace MWInput
             }
         }
 
-        if (Settings::gui().mControllerMenus && winMgr->isGuiMode() && !settingsVisible
-            && isDialogueMode(winMgr->getMode()))
+        if (Settings::gui().mControllerMenus && winMgr->isGuiMode() && !settingsVisible)
         {
             MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
-            const bool canRepeatScroll
-                = topWin && topWin->isVisible() && topWin->getControllerScrollWidget() != nullptr;
+            const bool canRepeatScroll = usesTriggerScroll(topWin, winMgr);
             if (!canRepeatScroll)
                 mPendingDialogueTriggerScrollTicks = 0.f;
             const float repeatRate = Settings::gui().mControllerMenuTurboRepeat * 7.5f;
@@ -765,8 +788,8 @@ namespace MWInput
         if (Settings::gui().mControllerMenus)
         {
             MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
-            const bool useDialogueTriggerScroll = topWin && topWin->isVisible() && isDialogueMode(winMgr->getMode())
-                && topWin->getControllerScrollWidget() != nullptr;
+            const bool useTriggerScroll = usesTriggerScroll(topWin, winMgr);
+            const bool useTriggerPaging = usesTriggerPaging(topWin);
             auto scrollDialogueByTrigger = [&](Sint16 axisValue) {
                 SDL_ControllerAxisEvent scrollEvent = arg;
                 scrollEvent.axis = static_cast<Uint8>(
@@ -776,6 +799,14 @@ namespace MWInput
                     topWin->onControllerThumbstickEvent(scrollEvent);
                 const int queuedTicks = std::max(0, kDialogueTriggerScrollTicks - kDialogueTriggerImmediateTicks);
                 mPendingDialogueTriggerScrollTicks += axisValue < 0 ? -queuedTicks : queuedTicks;
+            };
+            auto triggerPaging = [&](Uint8 axis) {
+                if (!topWin)
+                    return;
+                SDL_ControllerAxisEvent pagingEvent = arg;
+                pagingEvent.axis = axis;
+                pagingEvent.value = 32767;
+                topWin->onControllerThumbstickEvent(pagingEvent);
             };
             const float triggerPressThresholdNorm = static_cast<float>(kTriggerPressThreshold) / kLeftStickAxisMax;
             auto cancelTriggerState = [](bool& pressed, float& holdTime, float& repeatTime) {
@@ -787,7 +818,7 @@ namespace MWInput
             // Left and right triggers toggle through open GUI windows.
             if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
             {
-                if (useDialogueTriggerScroll)
+                if (useTriggerScroll)
                 {
                     if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
@@ -802,6 +833,18 @@ namespace MWInput
                         scrollDialogueByTrigger(32767);
                     }
                 }
+                else if (useTriggerPaging)
+                {
+                    if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
+                    {
+                        if (mLeftTriggerPressed)
+                            cancelTriggerState(mLeftTriggerPressed, mLeftTriggerHoldTime, mLeftTriggerRepeatTime);
+                        mRightTriggerPressed = true;
+                        mRightTriggerHoldTime = 0.f;
+                        mRightTriggerRepeatTime = 0.f;
+                        triggerPaging(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+                    }
+                }
                 else if (!mRightTriggerPressed && arg.value >= kTriggerPressThreshold)
                 {
                     mRightTriggerPressed = true;
@@ -811,7 +854,7 @@ namespace MWInput
                 if (mRightTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
                     cancelTriggerState(mRightTriggerPressed, mRightTriggerHoldTime, mRightTriggerRepeatTime);
-                    if (useDialogueTriggerScroll)
+                    if (useTriggerScroll)
                     {
                         const float leftAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
                         if (!mLeftTriggerPressed && leftAxis >= triggerPressThresholdNorm)
@@ -822,12 +865,23 @@ namespace MWInput
                             scrollDialogueByTrigger(-32767);
                         }
                     }
+                    else if (useTriggerPaging)
+                    {
+                        const float leftAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+                        if (!mLeftTriggerPressed && leftAxis >= triggerPressThresholdNorm)
+                        {
+                            mLeftTriggerPressed = true;
+                            mLeftTriggerHoldTime = 0.f;
+                            mLeftTriggerRepeatTime = 0.f;
+                            triggerPaging(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+                        }
+                    }
                 }
                 return true;
             }
             else if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
             {
-                if (useDialogueTriggerScroll)
+                if (useTriggerScroll)
                 {
                     if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
                     {
@@ -842,6 +896,18 @@ namespace MWInput
                         scrollDialogueByTrigger(-32767);
                     }
                 }
+                else if (useTriggerPaging)
+                {
+                    if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
+                    {
+                        if (mRightTriggerPressed)
+                            cancelTriggerState(mRightTriggerPressed, mRightTriggerHoldTime, mRightTriggerRepeatTime);
+                        mLeftTriggerPressed = true;
+                        mLeftTriggerHoldTime = 0.f;
+                        mLeftTriggerRepeatTime = 0.f;
+                        triggerPaging(SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+                    }
+                }
                 else if (!mLeftTriggerPressed && arg.value >= kTriggerPressThreshold)
                 {
                     mLeftTriggerPressed = true;
@@ -851,7 +917,7 @@ namespace MWInput
                 if (mLeftTriggerPressed && arg.value <= kTriggerReleaseThreshold)
                 {
                     cancelTriggerState(mLeftTriggerPressed, mLeftTriggerHoldTime, mLeftTriggerRepeatTime);
-                    if (useDialogueTriggerScroll)
+                    if (useTriggerScroll)
                     {
                         const float rightAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
                         if (!mRightTriggerPressed && rightAxis >= triggerPressThresholdNorm)
@@ -860,6 +926,17 @@ namespace MWInput
                             mRightTriggerHoldTime = kGuiTurboRepeatStartDelay;
                             mRightTriggerRepeatTime = 0.f;
                             scrollDialogueByTrigger(32767);
+                        }
+                    }
+                    else if (useTriggerPaging)
+                    {
+                        const float rightAxis = getAxisValue(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+                        if (!mRightTriggerPressed && rightAxis >= triggerPressThresholdNorm)
+                        {
+                            mRightTriggerPressed = true;
+                            mRightTriggerHoldTime = 0.f;
+                            mRightTriggerRepeatTime = 0.f;
+                            triggerPaging(SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
                         }
                     }
                 }

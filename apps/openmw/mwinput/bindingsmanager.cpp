@@ -365,6 +365,10 @@ namespace MWInput
         std::map<int, int> defaultButtonBindings;
 
         defaultButtonBindings[A_Activate] = SDL_CONTROLLER_BUTTON_A;
+        defaultButtonBindings[A_MoveBackward] = SDL_CONTROLLER_BUTTON_DPAD_DOWN;
+        defaultButtonBindings[A_MoveForward] = SDL_CONTROLLER_BUTTON_DPAD_UP;
+        defaultButtonBindings[A_MoveLeft] = SDL_CONTROLLER_BUTTON_DPAD_LEFT;
+        defaultButtonBindings[A_MoveRight] = SDL_CONTROLLER_BUTTON_DPAD_RIGHT;
         defaultButtonBindings[A_ToggleWeapon] = SDL_CONTROLLER_BUTTON_X;
         defaultButtonBindings[A_ToggleSpell] = SDL_CONTROLLER_BUTTON_Y;
         // defaultButtonBindings[A_QuickButtonsMenu] = SDL_GetButtonFromScancode(SDL_SCANCODE_F1); // Need to implement,

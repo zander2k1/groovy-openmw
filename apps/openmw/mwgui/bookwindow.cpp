@@ -73,8 +73,8 @@ namespace MWGui
         }
 
         mControllerButtons = {};
-        mControllerButtons.mL1 = "#{Interface:Prev}";
-        mControllerButtons.mR1 = "#{Interface:Next}";
+        mControllerButtons.mL2 = "#{Interface:Prev}";
+        mControllerButtons.mR2 = "#{Interface:Next}";
         mControllerButtons.mB = "#{Interface:Close}";
 
         mTakeButton->setEnabled(false);
@@ -251,15 +251,26 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
             onCloseButtonClicked(mCloseButton);
-        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
-            prevPage();
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
-            nextPage();
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
             nextPage();
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
             prevPage();
 
         return true;
+    }
+
+    bool BookWindow::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+        {
+            prevPage();
+            return true;
+        }
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+        {
+            nextPage();
+            return true;
+        }
+        return false;
     }
 }
