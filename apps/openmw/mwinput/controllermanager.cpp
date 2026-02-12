@@ -110,6 +110,12 @@ namespace
         return mode == MWGui::GM_Dialogue;
     }
 
+    bool isInventoryMode(MWGui::GuiMode mode)
+    {
+        return mode == MWGui::GM_Inventory || mode == MWGui::GM_Container || mode == MWGui::GM_Companion
+            || mode == MWGui::GM_Barter;
+    }
+
     bool usesTriggerScroll(MWGui::WindowBase* window, MWBase::WindowManager* winMgr)
     {
         if (!window || !window->isVisible())
@@ -562,6 +568,19 @@ namespace MWInput
         if (!Settings::input().mEnableController || mBindingsManager->isDetectingBindingState())
             return;
 
+        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            if (winMgr->isGuiMode() && isInventoryMode(winMgr->getMode()))
+            {
+                bool& held
+                    = (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) ? mLeftShoulderHeld : mRightShoulderHeld;
+                if (held)
+                    return;
+                held = true;
+            }
+        }
+
         mLastControllerDeviceId = deviceID;
         MWBase::Environment::get().getLuaManager()->inputEvent(
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
@@ -631,6 +650,10 @@ namespace MWInput
             return;
 
         mJoystickLastUsed = true;
+        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+            mLeftShoulderHeld = false;
+        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            mRightShoulderHeld = false;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode() && Settings::gui().mControllerMenus)
         {
             if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)

@@ -90,6 +90,8 @@ namespace MWInput
         float mLeftTriggerRepeatTime;
         float mRightTriggerRepeatTime;
         float mPendingDialogueTriggerScrollTicks;
+        bool mLeftShoulderHeld = false;
+        bool mRightShoulderHeld = false;
         int mLastControllerDeviceId = -1;
         MWGui::WindowBase* mLastActiveControllerWindow = nullptr;
         bool mLastGuiMode = false;
