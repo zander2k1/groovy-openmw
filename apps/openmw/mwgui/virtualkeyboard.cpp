@@ -902,18 +902,27 @@ namespace MWGui
 
     bool VirtualKeyboard::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
-        auto rememberRow2 = [this]() {
-            if (mNavRow == 2 && mNavRow < mRowMemory.size())
+        const size_t memoryRow = [this]() {
+            for (size_t row = 2; row > 0; --row)
             {
-                mRowMemory[mNavRow] = mNavCol;
-                mRowMemoryValid[mNavRow] = true;
+                if (isNavRowUsable(row))
+                    return row;
+            }
+            return static_cast<size_t>(0);
+        }();
+
+        auto rememberMemoryRow = [this, memoryRow]() {
+            if (mNavRow == memoryRow && memoryRow < mRowMemory.size())
+            {
+                mRowMemory[memoryRow] = mNavCol;
+                mRowMemoryValid[memoryRow] = true;
             }
         };
-        auto selectRow = [this](size_t targetRow, bool useMemory) {
+        auto selectRow = [this, memoryRow](size_t targetRow, bool useMemory) {
             size_t targetCol = mapColumn(mNavRow, targetRow);
-            if (useMemory && targetRow == 2 && targetRow < mRowMemory.size() && mRowMemoryValid[targetRow])
-                targetCol = mRowMemory[targetRow];
-            if (useMemory && targetRow == 2 && targetRow < mNavRows.size() && !mNavRows[targetRow].empty())
+            if (useMemory && targetRow == memoryRow && memoryRow < mRowMemory.size() && mRowMemoryValid[memoryRow])
+                targetCol = mRowMemory[memoryRow];
+            if (useMemory && targetRow == memoryRow && targetRow < mNavRows.size() && !mNavRows[targetRow].empty())
             {
                 targetCol = std::min(targetCol, mNavRows[targetRow].size() - 1);
                 if (targetCol >= 8 && mNavRows[targetRow].size() > 7)
@@ -938,7 +947,7 @@ namespace MWGui
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             size_t targetRow = findNextNavRow(mNavRow, -1);
-            bool useMemory = (mNavRow == 3 && targetRow == 2);
+            bool useMemory = (mNavRow == 3 && targetRow == memoryRow);
             if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
             {
                 const size_t currentIndex = mNavRows[mNavRow][mNavCol];
@@ -955,7 +964,7 @@ namespace MWGui
                         mSpaceReturnValid = true;
                     }
                 }
-                if (mNavRow == 3 && targetRow == 2 && currentIndex == mKeyMore)
+                if (mNavRow == 3 && targetRow == memoryRow && currentIndex == mKeyMore)
                 {
                     useMemory = false;
                     size_t targetCol = std::min<size_t>(8, mNavRows[targetRow].size() - 1);
@@ -975,8 +984,8 @@ namespace MWGui
         }
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
-            if (mNavRow == 2)
-                rememberRow2();
+            if (mNavRow == memoryRow)
+                rememberMemoryRow();
             if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
             {
                 const size_t currentIndex = mNavRows[mNavRow][mNavCol];
@@ -996,9 +1005,9 @@ namespace MWGui
                 }
             }
             size_t targetRow = findNextNavRow(mNavRow, 1);
-            if (mNavRow == 2 && targetRow == 3)
+            if (mNavRow == memoryRow && targetRow == 3)
             {
-                // Prefer Space for columns 6-8 when moving from row 3 to the Space/More row.
+                // Prefer Space for columns 6-8 when moving from the last text row to the Space/More row.
                 if (mNavCol >= 5 && mNavCol <= 7)
                 {
                     mNextReturnValid = false;
@@ -1025,9 +1034,9 @@ namespace MWGui
                     }
                 }
                 // When moving from Space/More to the action row, choose Shift for row-3 cols 1-3, otherwise Backspace.
-                if (mNavCol == 0 && mRowMemoryValid.size() > 2 && mRowMemoryValid[2])
+                if (mNavCol == 0 && memoryRow < mRowMemoryValid.size() && mRowMemoryValid[memoryRow])
                 {
-                    if (mRowMemory[2] <= 2)
+                    if (mRowMemory[memoryRow] <= 2)
                         selectNav(targetRow, 0);
                     else
                         selectNav(targetRow, 1);
