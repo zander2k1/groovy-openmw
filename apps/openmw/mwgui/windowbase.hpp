@@ -41,6 +41,7 @@ namespace MWGui
         std::string mView;
         std::string mX;
         std::string mY;
+        bool mXAfterB = false;
     };
 
     class WindowBase : public Layout

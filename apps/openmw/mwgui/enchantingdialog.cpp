@@ -132,6 +132,9 @@ namespace MWGui
             setControllerFocusWidget(mName);
         mKeyboardWasVisible = keyboardVisible;
 
+        if (mControllerEffectsFocusActive)
+            setControllerEffectsFocus(true);
+
         updateControllerFocusHighlight();
         updateEditStaticState();
     }
@@ -417,6 +420,9 @@ namespace MWGui
         if (!widget)
             return;
 
+        if (widget == mItemBox || widget == mSoulBox)
+            mNameReturnFocus = widget;
+
         if (mControllerEffectsFocusActive)
             setControllerEffectsFocusActive(false);
         else
@@ -621,9 +627,23 @@ namespace MWGui
             {
                 setControllerEffectsFocusActive(false);
                 if (isControllerEffectsRightColumn())
+                {
+                    mTypeReturnToEffects = true;
+                    mTypeReturnEffectsRightColumn = true;
+                    mTypeReturnFocus = nullptr;
                     setControllerFocusWidget(mTypeButton);
+                }
                 else
                     setControllerFocusWidget(mItemBox);
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT && mEffects.empty())
+            {
+                setControllerEffectsFocusActive(false);
+                mTypeReturnToEffects = true;
+                mTypeReturnEffectsRightColumn = false;
+                mTypeReturnFocus = nullptr;
+                setControllerFocusWidget(mTypeButton);
                 return true;
             }
             if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN
@@ -659,22 +679,36 @@ namespace MWGui
         {
             if (focus == mName)
             {
-                setControllerFocusWidget(mItemBox);
+                MyGUI::Widget* target = mNameReturnFocus ? mNameReturnFocus : mItemBox;
+                setControllerFocusWidget(target);
                 return true;
             }
             if (focus == mItemBox || focus == mSoulBox || focus == mTypeButton)
             {
+                if (focus == mTypeButton)
+                {
+                    if (mEffects.empty())
+                        return true;
+                    setControllerEffectsRightColumn(true);
+                }
+                else
+                {
+                    setControllerEffectsRightColumn(false);
+                }
                 setControllerEffectsFocusActive(true);
                 return true;
             }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
-            if (focus == mItemBox || focus == mSoulBox || focus == mTypeButton)
+            if (focus == mItemBox || focus == mSoulBox)
             {
+                mNameReturnFocus = focus;
                 setControllerFocusWidget(mName);
                 return true;
             }
+            if (focus == mTypeButton)
+                return true;
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
         {
@@ -685,6 +719,18 @@ namespace MWGui
             }
             if (focus == mTypeButton)
             {
+                if (mEffects.empty() && mTypeReturnToEffects)
+                {
+                    mTypeReturnToEffects = false;
+                    setControllerEffectsRightColumn(mTypeReturnEffectsRightColumn);
+                    setControllerEffectsFocusActive(true);
+                    return true;
+                }
+                if (mEffects.empty() && mTypeReturnFocus)
+                {
+                    setControllerFocusWidget(mTypeReturnFocus);
+                    return true;
+                }
                 setControllerFocusWidget(mSoulBox);
                 return true;
             }
@@ -698,6 +744,8 @@ namespace MWGui
         {
             if (focus == mName)
             {
+                mTypeReturnToEffects = false;
+                mTypeReturnFocus = mName;
                 setControllerFocusWidget(mTypeButton);
                 return true;
             }
@@ -708,6 +756,8 @@ namespace MWGui
             }
             if (focus == mSoulBox)
             {
+                mTypeReturnToEffects = false;
+                mTypeReturnFocus = mSoulBox;
                 setControllerFocusWidget(mTypeButton);
                 return true;
             }

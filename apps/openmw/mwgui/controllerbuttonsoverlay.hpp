@@ -3,6 +3,7 @@
 
 #include <array>
 #include <string_view>
+#include <vector>
 
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_TextBox.h>
@@ -78,9 +79,12 @@ namespace MWGui
 
         std::array<ButtonWidgets, Button::Button_Max> mButtons;
         Gui::HBox* mHBox;
+        std::vector<MyGUI::Widget*> mDefaultOrder;
+        bool mXAfterB = false;
 
         void setIcon(MyGUI::ImageBox* image, const std::string& imagePath);
         int updateButton(Button button, const std::string& buttonStr);
+        void updateButtonOrder(bool xAfterB);
     };
 }
 

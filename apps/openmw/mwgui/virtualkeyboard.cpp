@@ -329,6 +329,8 @@ namespace MWGui
             mUseSecondaryLayout = false;
             mRightTriggerPressed = false;
             std::fill(mRowMemoryValid.begin(), mRowMemoryValid.end(), false);
+            mSpaceReturnValid = false;
+            mNextReturnValid = false;
             reloadLayout();
             ensureRowsVisible();
             selectNav(0, 0);
@@ -757,6 +759,9 @@ namespace MWGui
         if (!isNavRowUsable(row))
             return;
 
+        if (row == 2)
+            mSpaceReturnValid = false;
+
         col = std::min(col, mNavRows[row].size() - 1);
         if (mNavRow < mNavRows.size())
         {
@@ -908,6 +913,12 @@ namespace MWGui
             size_t targetCol = mapColumn(mNavRow, targetRow);
             if (useMemory && targetRow == 2 && targetRow < mRowMemory.size() && mRowMemoryValid[targetRow])
                 targetCol = mRowMemory[targetRow];
+            if (useMemory && targetRow == 2 && targetRow < mNavRows.size() && !mNavRows[targetRow].empty())
+            {
+                targetCol = std::min(targetCol, mNavRows[targetRow].size() - 1);
+                if (targetCol >= 8 && mNavRows[targetRow].size() > 7)
+                    targetCol = 7;
+            }
             selectNav(targetRow, targetCol);
         };
 
@@ -927,16 +938,38 @@ namespace MWGui
         if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             size_t targetRow = findNextNavRow(mNavRow, -1);
+            bool useMemory = (mNavRow == 3 && targetRow == 2);
             if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
             {
                 const size_t currentIndex = mNavRows[mNavRow][mNavCol];
+                if (mNavRow == 4 && targetRow == 3)
+                {
+                    if (currentIndex == mKeyShift)
+                    {
+                        mSpaceReturnCol = 0;
+                        mSpaceReturnValid = true;
+                    }
+                    else if (currentIndex == mKeyBackspace)
+                    {
+                        mSpaceReturnCol = 1;
+                        mSpaceReturnValid = true;
+                    }
+                }
+                if (mNavRow == 3 && targetRow == 2 && currentIndex == mKeyMore)
+                {
+                    useMemory = false;
+                    size_t targetCol = std::min<size_t>(8, mNavRows[targetRow].size() - 1);
+                    if (mNextReturnValid)
+                        targetCol = std::min(mNextReturnCol, mNavRows[targetRow].size() - 1);
+                    selectNav(targetRow, targetCol);
+                    return true;
+                }
                 if (currentIndex == mKeyBackspace)
                 {
                     selectNav(targetRow, 0);
                     return true;
                 }
             }
-            const bool useMemory = (mNavRow == 3 && targetRow == 2);
             selectRow(targetRow, useMemory);
             return true;
         }
@@ -967,12 +1000,30 @@ namespace MWGui
             {
                 // Prefer Space for columns 6-8 when moving from row 3 to the Space/More row.
                 if (mNavCol >= 5 && mNavCol <= 7)
+                {
+                    mNextReturnValid = false;
                     selectNav(targetRow, 0);
+                }
                 else
+                {
+                    mNextReturnValid = mNavCol >= 8;
+                    if (mNextReturnValid)
+                        mNextReturnCol = mNavCol;
                     selectRow(targetRow, false);
+                }
             }
             else if (mNavRow == 3 && targetRow == 4)
             {
+                if (mNavRow < mNavRows.size() && !mNavRows[mNavRow].empty())
+                {
+                    const size_t currentIndex = mNavRows[mNavRow][mNavCol];
+                    if (currentIndex == mKeySpace && mSpaceReturnValid)
+                    {
+                        const size_t returnCol = std::min(mSpaceReturnCol, mNavRows[targetRow].size() - 1);
+                        selectNav(targetRow, returnCol);
+                        return true;
+                    }
+                }
                 // When moving from Space/More to the action row, choose Shift for row-3 cols 1-3, otherwise Backspace.
                 if (mNavCol == 0 && mRowMemoryValid.size() > 2 && mRowMemoryValid[2])
                 {

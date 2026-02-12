@@ -1,6 +1,8 @@
 #include "spellcreationdialog.hpp"
 
+#include <algorithm>
 #include <format>
+#include <sstream>
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
@@ -113,6 +115,15 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Cancel}";
             mControllerButtons.mX = "#{Interface:OK}";
+
+            MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
+            if (!highlightParent)
+                highlightParent = mMainWidget;
+            mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
+                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+            mControllerFocusHighlight->setNeedMouseFocus(false);
+            mControllerFocusHighlight->setDepth(1);
+            mControllerFocusHighlight->setVisible(false);
         }
     }
 
@@ -125,6 +136,7 @@ namespace MWGui
     {
         WindowModal::onOpen();
         center();
+        updateRangeButtonWidth();
     }
 
     bool EditEffectDialog::exit()
@@ -180,6 +192,7 @@ namespace MWGui
             mOkButton->setStateSelected(false);
             mCancelButton->setStateSelected(false);
             mControllerFocus = 0;
+            updateControllerFocus(-1, mControllerFocus);
         }
 
         setVisible(true);
@@ -209,6 +222,7 @@ namespace MWGui
         else if (mEffect.mRange == ESM::RT_Touch)
             mRangeButton->setCaptionWithReplacing("#{sRangeTouch}");
 
+        updateRangeButtonWidth();
         onMagnitudeMinChanged(mMagnitudeMinSlider, effect.mMagnMin - 1);
         onMagnitudeMaxChanged(mMagnitudeMinSlider, effect.mMagnMax - 1);
         onAreaChanged(mAreaSlider, effect.mArea);
@@ -222,6 +236,7 @@ namespace MWGui
             mOkButton->setStateSelected(false);
             mCancelButton->setStateSelected(false);
             mControllerFocus = 0;
+            updateControllerFocus(-1, mControllerFocus);
         }
 
         updateBoxes();
@@ -286,6 +301,13 @@ namespace MWGui
                 mButtons.emplace_back(mDeleteButton);
             mButtons.emplace_back(mOkButton);
             mButtons.emplace_back(mCancelButton);
+
+            if (mBottomRowReturnButton)
+            {
+                const auto it = std::find(mButtons.begin(), mButtons.end(), mBottomRowReturnButton);
+                if (it == mButtons.end())
+                    mBottomRowReturnButton = nullptr;
+            }
         }
     }
 
@@ -319,8 +341,54 @@ namespace MWGui
         else if (mEffect.mRange == ESM::RT_Touch)
             mRangeButton->setCaptionWithReplacing("#{sRangeTouch}");
 
+        updateRangeButtonWidth();
         updateBoxes();
         eventEffectModified(mEffect);
+    }
+
+    void EditEffectDialog::updateRangeButtonWidth()
+    {
+        if (!mRangeButton)
+            return;
+
+        const MyGUI::UString currentCaption = mRangeButton->getCaption();
+        int padding = 24;
+        if (mRangeButton->isUserString("TextPadding"))
+        {
+            const std::string paddingText(mRangeButton->getUserString("TextPadding"));
+            std::istringstream paddingStream(paddingText);
+            int padWidth = 0;
+            int padHeight = 0;
+            if (paddingStream >> padWidth >> padHeight)
+                padding = padWidth;
+        }
+
+        const int currentWidth = mRangeButton->getTextSize().width + padding;
+        if (!shouldForceRangeWidth())
+        {
+            mRangeButton->setSize(currentWidth, mRangeButton->getSize().height);
+            return;
+        }
+        const std::string_view targetText
+            = MWBase::Environment::get().getWindowManager()->getGameSettingString("sRangeTarget", "Target");
+        mRangeButton->setCaption(MyGUI::UString(targetText));
+        const int targetWidth = mRangeButton->getTextSize().width + std::max(padding, 0);
+        mRangeButton->setCaption(currentCaption);
+
+        if (mRangeButton->getSize().width < targetWidth)
+            mRangeButton->setSize(targetWidth, mRangeButton->getSize().height);
+    }
+
+    bool EditEffectDialog::shouldForceRangeWidth() const
+    {
+        if (!mMagicEffect)
+            return false;
+
+        const bool allowSelf = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastSelf) != 0 || mConstantEffect;
+        const bool allowTouch = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastTouch) && !mConstantEffect;
+        const bool allowTarget = (mMagicEffect->mData.mFlags & ESM::MagicEffect::CastTarget) && !mConstantEffect;
+        const int allowed = static_cast<int>(allowSelf) + static_cast<int>(allowTouch) + static_cast<int>(allowTarget);
+        return allowed > 1;
     }
 
     void EditEffectDialog::onDeleteButtonClicked(MyGUI::Widget* /*sender*/)
@@ -437,7 +505,27 @@ namespace MWGui
             if (button == mDeleteButton || button == mOkButton || button == mCancelButton)
                 mControllerFocus = 0;
             else
-                mControllerFocus++;
+            {
+                const int bottomStart = [this]() -> int {
+                    for (size_t i = 0; i < mButtons.size(); ++i)
+                    {
+                        MyGUI::TextBox* entry = mButtons[i];
+                        if (entry == mDeleteButton || entry == mOkButton || entry == mCancelButton)
+                            return static_cast<int>(i);
+                    }
+                    return -1;
+                }();
+                if (bottomStart > 0 && mControllerFocus == bottomStart - 1 && mBottomRowReturnButton)
+                {
+                    const auto it = std::find(mButtons.begin(), mButtons.end(), mBottomRowReturnButton);
+                    if (it != mButtons.end())
+                        mControllerFocus = static_cast<int>(std::distance(mButtons.begin(), it));
+                    else
+                        mControllerFocus++;
+                }
+                else
+                    mControllerFocus++;
+            }
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
         {
@@ -555,6 +643,38 @@ namespace MWGui
     void EditEffectDialog::updateControllerFocus(int prevFocus, int newFocus)
     {
         const TextColours& textColours{ MWBase::Environment::get().getWindowManager()->getTextColours() };
+        auto resetValueText = [&]() {
+            if (mMagnitudeMinValue)
+                mMagnitudeMinValue->setTextColour(textColours.normal);
+            if (mMagnitudeMaxValue)
+                mMagnitudeMaxValue->setTextColour(textColours.normal);
+            if (mDurationValue)
+                mDurationValue->setTextColour(textColours.normal);
+            if (mAreaValue)
+                mAreaValue->setTextColour(textColours.normal);
+        };
+        resetValueText();
+        auto getSliderHighlightCoord = [](MyGUI::ScrollBar* slider) -> std::optional<MyGUI::IntCoord> {
+            if (!slider)
+                return std::nullopt;
+
+            if (MyGUI::Widget* background = slider->findWidget("Background"))
+                return background->getAbsoluteCoord();
+
+            MyGUI::IntCoord sliderCoord = slider->getAbsoluteCoord();
+            int leftMargin = 0;
+            int rightMargin = 0;
+            if (slider->isUserString("TrackRangeMargins"))
+            {
+                const std::string marginText(slider->getUserString("TrackRangeMargins"));
+                std::istringstream marginStream(marginText);
+                marginStream >> leftMargin >> rightMargin;
+            }
+
+            sliderCoord.left += leftMargin;
+            sliderCoord.width = std::max(0, sliderCoord.width - leftMargin - rightMargin);
+            return sliderCoord;
+        };
 
         if (prevFocus >= 0 && prevFocus < static_cast<int>(mButtons.size()))
         {
@@ -582,7 +702,38 @@ namespace MWGui
             {
                 static_cast<MyGUI::Button*>(button)->setStateSelected(true);
             }
+
+            if (button == mDeleteButton || button == mOkButton || button == mCancelButton)
+                mBottomRowReturnButton = button;
         }
+
+        if (!mControllerFocusHighlight || !Settings::gui().mControllerMenus)
+            return;
+
+        if (newFocus < 0 || newFocus >= static_cast<int>(mButtons.size()))
+        {
+            mControllerFocusHighlight->setVisible(false);
+            return;
+        }
+
+        MyGUI::Widget* focus = mButtons[newFocus];
+        std::optional<MyGUI::IntCoord> sliderCoord;
+        if (focus == mMagnitudeMinValue)
+            sliderCoord = getSliderHighlightCoord(mMagnitudeMinSlider);
+        else if (focus == mMagnitudeMaxValue)
+            sliderCoord = getSliderHighlightCoord(mMagnitudeMaxSlider);
+        else if (focus == mDurationValue)
+            sliderCoord = getSliderHighlightCoord(mDurationSlider);
+        else if (focus == mAreaValue)
+            sliderCoord = getSliderHighlightCoord(mAreaSlider);
+
+        const MyGUI::IntCoord focusCoord = sliderCoord ? *sliderCoord : focus->getAbsoluteCoord();
+        MyGUI::Widget* highlightParent = mControllerFocusHighlight->getParent();
+        const MyGUI::IntCoord baseCoord
+            = highlightParent ? highlightParent->getAbsoluteCoord() : mMainWidget->getAbsoluteCoord();
+        mControllerFocusHighlight->setCoord(
+            focusCoord.left - baseCoord.left, focusCoord.top - baseCoord.top, focusCoord.width, focusCoord.height);
+        mControllerFocusHighlight->setVisible(true);
     }
 
     // ------------------------------------------------------------------------------------------------
@@ -1201,8 +1352,17 @@ namespace MWGui
             MyGUI::Widget* highlight = nullptr;
             if (Settings::gui().mControllerMenus)
             {
-                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>("ControllerHighlight",
-                    MyGUI::IntCoord(0, size.height, effect->getRequestedWidth(), 24), MyGUI::Align::Default);
+                int highlightWidth = effect->getRequestedWidth();
+                int paneWidth = 0;
+                if (mUsedEffectsView)
+                {
+                    paneWidth = mUsedEffectsView->getClientCoord().width;
+                    if (paneWidth <= 0)
+                        paneWidth = mUsedEffectsView->getWidth();
+                }
+                highlightWidth = std::max(highlightWidth, paneWidth);
+                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
+                    "ControllerHighlight", MyGUI::IntCoord(0, size.height, highlightWidth, 24), MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setDepth(1);
                 highlight->setVisible(false);
@@ -1214,6 +1374,14 @@ namespace MWGui
 
             mEffectButtons.emplace_back(std::pair(effect, button));
             mEffectHighlights.emplace_back(highlight);
+        }
+
+        if (mUsedEffectsView)
+        {
+            int paneWidth = mUsedEffectsView->getClientCoord().width;
+            if (paneWidth <= 0)
+                paneWidth = mUsedEffectsView->getWidth();
+            size.width = std::max(size.width, paneWidth);
         }
 
         // Canvas size must be expressed with HScroll disabled, otherwise MyGUI would expand the scroll area when the

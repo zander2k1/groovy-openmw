@@ -741,6 +741,7 @@ namespace MWGui
             return;
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(widget);
+        mLastControllerFocusWidget = widget;
         const bool focusInItemView = isFocusInItemView(widget);
         mControllerItemViewFocus = focusInItemView;
         mItemView->setActiveControllerWindow(focusInItemView);
@@ -754,7 +755,11 @@ namespace MWGui
         if (!mControllerFocusHighlight || !Settings::gui().mControllerMenus)
             return;
 
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        CountDialog* countDialog = winMgr->getCountDialog();
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        if (countDialog && countDialog->isVisible() && mLastControllerFocusWidget)
+            focus = mLastControllerFocusWidget;
         const bool shouldHighlight
             = focus == mNameEdit || focus == mBrewCountEdit || focus == mFilterType || focus == mFilterValue;
         if (!shouldHighlight)
@@ -778,6 +783,9 @@ namespace MWGui
             return;
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        CountDialog* countDialog = winMgr->getCountDialog();
+        if (countDialog && countDialog->isVisible())
+            return;
         const bool keyboardVisible = winMgr->isVirtualKeyboardVisible();
         const bool keyboardClosed = mVirtualKeyboardWasVisible && !keyboardVisible;
         mVirtualKeyboardWasVisible = keyboardVisible;

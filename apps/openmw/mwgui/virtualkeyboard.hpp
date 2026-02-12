@@ -66,6 +66,10 @@ namespace MWGui
         std::vector<LayoutSpec> mLayouts;
         std::vector<size_t> mRowMemory;
         std::vector<bool> mRowMemoryValid;
+        size_t mSpaceReturnCol = 0;
+        bool mSpaceReturnValid = false;
+        size_t mNextReturnCol = 0;
+        bool mNextReturnValid = false;
         size_t mNavRow = 0;
         size_t mNavCol = 0;
         size_t mLayoutIndex = 0;

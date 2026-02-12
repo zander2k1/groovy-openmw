@@ -83,6 +83,8 @@ namespace MWGui
         void setMagicEffect(const ESM::MagicEffect* effect);
 
         void updateBoxes();
+        void updateRangeButtonWidth();
+        bool shouldForceRangeWidth() const;
 
     private:
         ESM::ENAMstruct mEffect;
@@ -96,6 +98,8 @@ namespace MWGui
         void updateControllerFocus(int prevFocus, int newFocus);
         int mControllerFocus = 0;
         std::vector<MyGUI::TextBox*> mButtons;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
+        MyGUI::TextBox* mBottomRowReturnButton = nullptr;
     };
 
     class EffectEditorBase

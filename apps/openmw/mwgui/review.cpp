@@ -127,6 +127,7 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Done}";
+            mControllerButtons.mXAfterB = true;
         }
     }
 

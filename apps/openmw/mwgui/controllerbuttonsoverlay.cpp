@@ -1,6 +1,7 @@
 #include "controllerbuttonsoverlay.hpp"
 
 #include <algorithm>
+#include <vector>
 
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_Window.h>
@@ -62,6 +63,12 @@ namespace MWGui
         }
 
         getWidget(mHBox, "ButtonBox");
+        if (mHBox)
+        {
+            mDefaultOrder.reserve(mHBox->getChildCount());
+            for (size_t i = 0; i < mHBox->getChildCount(); ++i)
+                mDefaultOrder.push_back(mHBox->getChildAt(i));
+        }
     }
 
     int ControllerButtonsOverlay::getHeight()
@@ -114,11 +121,14 @@ namespace MWGui
         int buttonCount = 0;
         if (buttons != nullptr)
         {
+            updateButtonOrder(buttons->mXAfterB);
             for (const auto& row : sButtonDefs)
                 buttonCount += updateButton(row.mButton, buttons->*(row.mField));
 
             mHBox->notifyChildrenSizeChanged();
         }
+        else
+            updateButtonOrder(false);
 
         setVisible(buttonCount > 0);
     }
@@ -144,5 +154,38 @@ namespace MWGui
             mButtons[button].mText->setCaptionWithReplacing(buttonStr);
             return 1;
         }
+    }
+
+    void ControllerButtonsOverlay::updateButtonOrder(bool xAfterB)
+    {
+        if (!mHBox || mDefaultOrder.empty())
+            return;
+
+        if (mXAfterB == xAfterB)
+            return;
+
+        mXAfterB = xAfterB;
+        std::vector<MyGUI::Widget*> order = mDefaultOrder;
+        if (xAfterB)
+        {
+            auto xIt = std::find(order.begin(), order.end(), mButtons[Button_X].mHBox);
+            auto bIt = std::find(order.begin(), order.end(), mButtons[Button_B].mHBox);
+            if (xIt != order.end() && bIt != order.end() && xIt != bIt)
+            {
+                MyGUI::Widget* xWidget = *xIt;
+                order.erase(xIt);
+                bIt = std::find(order.begin(), order.end(), mButtons[Button_B].mHBox);
+                order.insert(std::next(bIt), xWidget);
+            }
+        }
+
+        for (MyGUI::Widget* widget : order)
+        {
+            if (widget->getParent() == mHBox)
+                widget->detachFromWidget();
+        }
+        for (MyGUI::Widget* widget : order)
+            widget->attachToWidget(mHBox);
+        mHBox->notifyChildrenSizeChanged();
     }
 }

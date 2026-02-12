@@ -87,12 +87,14 @@ namespace MWGui
             okButton->setCaption(
                 MyGUI::UString(MWBase::Environment::get().getWindowManager()->getGameSettingString("sNext", {})));
             mControllerButtons.mX = "#{Interface:Next}";
+            mControllerButtons.mXAfterB = true;
         }
         else if (Settings::gui().mControllerMenus)
         {
             okButton->setCaption(
                 MyGUI::UString(MWBase::Environment::get().getWindowManager()->getGameSettingString("sDone", {})));
             mControllerButtons.mX = "#{Interface:Done}";
+            mControllerButtons.mXAfterB = true;
         }
         else
             okButton->setCaption(

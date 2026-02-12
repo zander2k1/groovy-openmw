@@ -26,10 +26,12 @@ namespace MWGui
         MyGUI::EditBox* mMessage;
         MyGUI::Button* mOkButton;
         MyGUI::Button* mCancelButton;
+        MyGUI::Widget* mControllerFocusHighlight = nullptr;
         WindowBase* mTooltipSourceWindow = nullptr;
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onOkButtonClicked(MyGUI::Widget* sender);
+        void updateControllerHighlight();
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool mOkButtonFocus = true;

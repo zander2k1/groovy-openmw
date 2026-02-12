@@ -918,10 +918,10 @@ namespace MWGui
         popGuiMode();
     }
 
-    void WindowManager::interactiveMessageBox(
-        std::string_view message, const std::vector<std::string>& buttons, bool block, int defaultFocus)
+    void WindowManager::interactiveMessageBox(std::string_view message, const std::vector<std::string>& buttons,
+        bool block, int defaultFocus, int cancelIndex)
     {
-        mMessageBoxManager->createInteractiveMessageBox(message, buttons, block, defaultFocus);
+        mMessageBoxManager->createInteractiveMessageBox(message, buttons, block, defaultFocus, cancelIndex);
         updateVisible();
 
         if (block)

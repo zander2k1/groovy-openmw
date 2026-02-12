@@ -84,6 +84,10 @@ namespace MWGui
         bool mKeyboardWasVisible = false;
         bool mNameHitLimit = false;
         bool mSuppressNameLimitMessage = false;
+        MyGUI::Widget* mNameReturnFocus = nullptr;
+        MyGUI::Widget* mTypeReturnFocus = nullptr;
+        bool mTypeReturnToEffects = false;
+        bool mTypeReturnEffectsRightColumn = false;
 
         MWMechanics::Enchanting mEnchanting;
         ESM::EffectList mEffectList;
