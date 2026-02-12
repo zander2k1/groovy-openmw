@@ -56,6 +56,7 @@
 #include "quickkeysmenu.hpp"
 #include "recharge.hpp"
 #include "repair.hpp"
+#include "review.hpp"
 #include "spellbuyingwindow.hpp"
 #include "spellcreationdialog.hpp"
 #include "spellview.hpp"
@@ -1599,6 +1600,8 @@ namespace MWGui
                 return nullptr;
             if (auto* statsWindow = dynamic_cast<StatsWindow*>(activeWindow))
                 return statsWindow->getControllerFocusTooltipWidget();
+            if (auto* reviewDialog = dynamic_cast<ReviewDialog*>(activeWindow))
+                return reviewDialog->getControllerFocusTooltipWidget();
             if (auto* spellWindow = dynamic_cast<SpellWindow*>(activeWindow))
                 return spellWindow->getControllerFocusTooltipWidget();
             if (auto* quickKeysMenu = dynamic_cast<QuickKeysMenu*>(activeWindow))

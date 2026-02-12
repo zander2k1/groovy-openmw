@@ -298,7 +298,8 @@ namespace MWGui
 
                     mReviewDialog->setPlayerName(playerNpc->mName);
                     mReviewDialog->setRace(playerNpc->mRace);
-                    mReviewDialog->setClass(*playerClass);
+                    if (playerClass)
+                        mReviewDialog->setClass(*playerClass);
                     mReviewDialog->setBirthSign(player.getBirthSign());
 
                     MWWorld::Ptr playerPtr = MWMechanics::getPlayer();
@@ -742,6 +743,7 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->popGuiMode();
         if (mCreationStage == CSE_ReviewNext)
         {
+            mCreationStage = CSE_BirthSignChosen;
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Review);
         }
         else if (mCreationStage >= currentStage)
