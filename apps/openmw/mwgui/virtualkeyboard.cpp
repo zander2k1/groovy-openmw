@@ -966,7 +966,6 @@ namespace MWGui
                 }
                 if (mNavRow == 3 && targetRow == memoryRow && currentIndex == mKeyMore)
                 {
-                    useMemory = false;
                     size_t targetCol = std::min<size_t>(8, mNavRows[targetRow].size() - 1);
                     if (mNextReturnValid)
                         targetCol = std::min(mNextReturnCol, mNavRows[targetRow].size() - 1);
