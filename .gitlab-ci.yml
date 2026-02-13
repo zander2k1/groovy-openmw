@@ -1331,8 +1331,8 @@ pages:
   image: alpine:3.20
   stage: deploy
   script:
-    - mkdir -p public/xbox-ui
-    - cp -a Website/. public/xbox-ui/
+    - mkdir -p public
+    - cp -a Website/. public/
   artifacts:
     paths:
       - public
