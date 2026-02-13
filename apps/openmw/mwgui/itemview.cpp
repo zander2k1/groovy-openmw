@@ -216,6 +216,35 @@ namespace MWGui
             updateControllerFocus(mControllerFocus, -1);
     }
 
+    void ItemView::setControllerFocusToItem(const MWWorld::Ptr& item)
+    {
+        if (!mModel)
+            return;
+
+        const int itemCount = static_cast<int>(mModel->getItemCount());
+        if (itemCount <= 0)
+            return;
+
+        int newFocus = -1;
+        for (int i = 0; i < itemCount; ++i)
+        {
+            if (mModel->getItem(static_cast<ItemModel::ModelIndex>(i)).mBase == item)
+            {
+                newFocus = i;
+                break;
+            }
+        }
+
+        if (newFocus < 0)
+            return;
+
+        const int prevFocus = mControllerFocus;
+        mControllerFocus = newFocus;
+
+        if (Settings::gui().mControllerMenus && mControllerActiveWindow)
+            updateControllerFocus(prevFocus, mControllerFocus);
+    }
+
     bool ItemView::isControllerFocusTopRow() const
     {
         if (mControllerFocus < 0 || mRows <= 0)

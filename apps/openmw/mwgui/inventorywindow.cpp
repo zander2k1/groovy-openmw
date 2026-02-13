@@ -466,6 +466,9 @@ namespace MWGui
         if (MyGUI::InputManager::getInstance().isControlPressed())
             count = 1;
 
+        if (mPendingControllerAction == ControllerAction::Use && count > 1)
+            count = 1;
+
         if (mTrading)
         {
             // Can't give conjured items to a merchant
@@ -638,8 +641,9 @@ namespace MWGui
 
     void InventoryWindow::equipItem(std::size_t count)
     {
-        const ItemStack& item = mTradeModel->getItem(mSelectedItem);
         ensureSelectedItemUnequipped(static_cast<int>(count));
+        const MWWorld::Ptr focusPtr = mTradeModel->getItem(mSelectedItem).mBase;
+        const ItemStack& item = mTradeModel->getItem(mSelectedItem);
         // Disable the pick up sound as the item will be used immediately
         mDragAndDrop->startDrag(mSelectedItem, mSortModel, mTradeModel, mItemView, count, false);
         notifyContentChanged();
@@ -653,6 +657,10 @@ namespace MWGui
         // This is needed when clicking on a stack of items; we only want to use the first item.
         if (mDragAndDrop->mIsOnDragAndDrop)
             mDragAndDrop->drop(mTradeModel, mItemView, wasEquipped);
+
+        // Equipping can re-sort the view (equipped items are grouped first). Keep focus on the activated item.
+        if (Settings::gui().mControllerMenus)
+            mItemView->setControllerFocusToItem(focusPtr);
     }
 
     void InventoryWindow::updateItemView()
