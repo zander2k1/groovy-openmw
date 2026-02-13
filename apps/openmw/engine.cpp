@@ -937,6 +937,9 @@ void OMW::Engine::go()
 {
     assert(!mContentFiles.empty());
 
+    // Force controller menus on while the game is running.
+    Settings::gui().mControllerMenus.set(true);
+
     Log(Debug::Info) << "OSG version: " << osgGetVersion();
     SDL_version sdlVersion;
     SDL_GetVersion(&sdlVersion);
@@ -1076,6 +1079,7 @@ void OMW::Engine::go()
 
     mLuaWorker->join();
 
+    Settings::gui().mControllerMenus.set(false);
     // Save user settings
     Settings::Manager::saveUser(mCfgMgr.getUserConfigPath() / "settings.cfg");
     Settings::ShaderManager::get().save();

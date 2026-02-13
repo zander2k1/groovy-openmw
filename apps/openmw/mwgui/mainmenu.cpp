@@ -102,6 +102,8 @@ namespace MWGui
     {
         getWidget(mVersionText, "VersionText");
         mVersionText->setCaption(versionDescription);
+        mVersionText->setNeedKeyFocus(false);
+        mVersionText->setNeedMouseFocus(false);
 
         constexpr VFS::Path::NormalizedView menuBackgroundVideo("video/menu_background.bik");
 
