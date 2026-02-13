@@ -641,14 +641,22 @@ namespace MWGui
 
     void InventoryWindow::equipItem(std::size_t count)
     {
+        const int prevFocus = mItemView ? mItemView->getControllerFocus() : -1;
+
+        const ItemStack preItem = mTradeModel->getItem(mSelectedItem);
+        const bool wasEquipped = preItem.mType == ItemStack::Type_Equipped;
+        const MWWorld::Ptr prePtr = preItem.mBase;
+
         ensureSelectedItemUnequipped(static_cast<int>(count));
-        const MWWorld::Ptr focusPtr = mTradeModel->getItem(mSelectedItem).mBase;
-        const ItemStack& item = mTradeModel->getItem(mSelectedItem);
+        const MWWorld::Ptr postPtr
+            = (mSelectedItem >= 0 && static_cast<size_t>(mSelectedItem) < mTradeModel->getItemCount())
+            ? mTradeModel->getItem(mSelectedItem).mBase
+            : MWWorld::Ptr();
+
         // Disable the pick up sound as the item will be used immediately
         mDragAndDrop->startDrag(mSelectedItem, mSortModel, mTradeModel, mItemView, count, false);
         notifyContentChanged();
 
-        const bool wasEquipped = item.mType == ItemStack::Type_Equipped;
         // Drop the item on the avatar to activate or equip it.
         if (!wasEquipped)
             onAvatarClicked(nullptr);
@@ -658,9 +666,21 @@ namespace MWGui
         if (mDragAndDrop->mIsOnDragAndDrop)
             mDragAndDrop->drop(mTradeModel, mItemView, wasEquipped);
 
-        // Equipping can re-sort the view (equipped items are grouped first). Keep focus on the activated item.
         if (Settings::gui().mControllerMenus)
-            mItemView->setControllerFocusToItem(focusPtr);
+        {
+            // Equipping can re-sort the view (equipped items are grouped first). Keep focus on the activated item.
+            if (!wasEquipped)
+                mItemView->setControllerFocusToItem(prePtr);
+            else
+            {
+                // Unequipping should keep focus position stable. If the list shrank (e.g. stack merged), keep focus
+                // on the resulting item instead of clamping to the previous slot.
+                if (mItemView && prevFocus >= 0 && prevFocus < mItemView->getItemCount())
+                    mItemView->setControllerFocusIndex(prevFocus);
+                else if (!postPtr.isEmpty())
+                    mItemView->setControllerFocusToItem(postPtr);
+            }
+        }
     }
 
     void InventoryWindow::updateItemView()

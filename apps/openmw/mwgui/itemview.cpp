@@ -1,5 +1,6 @@
 #include "itemview.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include <MyGUI_FactoryManager.h>
@@ -214,6 +215,24 @@ namespace MWGui
         }
         else
             updateControllerFocus(mControllerFocus, -1);
+    }
+
+    void ItemView::setControllerFocusIndex(int index)
+    {
+        const int prevFocus = mControllerFocus;
+
+        if (index < 0 || mItemCount <= 0)
+            mControllerFocus = -1;
+        else
+            mControllerFocus = std::clamp(index, 0, mItemCount - 1);
+
+        if (Settings::gui().mControllerMenus && mControllerActiveWindow)
+        {
+            if (prevFocus != mControllerFocus)
+                updateControllerFocus(prevFocus, mControllerFocus);
+            else
+                updateControllerFocus(-1, mControllerFocus);
+        }
     }
 
     void ItemView::setControllerFocusToItem(const MWWorld::Ptr& item)

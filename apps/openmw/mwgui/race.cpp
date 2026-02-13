@@ -580,7 +580,7 @@ namespace MWGui
         if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTX)
         {
             constexpr float kAxisMax = 32767.f;
-            constexpr float kDeadzone = 0.3f;
+            constexpr float kDeadzone = 0.6f;
 
             float axis = static_cast<float>(arg.value) / kAxisMax;
             axis = std::clamp(axis, -1.f, 1.f);
