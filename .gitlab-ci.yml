@@ -1326,15 +1326,3 @@ Windows_MSBuild_CacheInit_RelWithDebInfo:
     # When CCache doesn't exist (e.g. first build on a fork), build takes more than 1h, which is the default for forks.
     # Flatpak Builds compile all dependencies aswell so need more time. Build results of libraries are cached
     timeout: 4h
-
-pages:
-  image: alpine:3.20
-  stage: deploy
-  script:
-    - mkdir -p public
-    - cp -a Website/. public/
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_BRANCH == "XBOX-Overhaul"
