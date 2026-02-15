@@ -2397,8 +2397,6 @@ namespace MWGui
                                 y += schoolHeight + spacing;
                             }
 
-                            std::string effectText;
-                            std::string effectIcon;
                             for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
                             {
                                 if (spellEffect.mData.mEffectID.empty())
@@ -2426,7 +2424,8 @@ namespace MWGui
                                 std::string secs
                                     = " " + std::string{ windowManager->getGameSettingString("sseconds", {}) };
 
-                                effectText = MWMechanics::getMagicEffectString(*magicEffect, attribute, skill);
+                                std::string effectText
+                                    = MWMechanics::getMagicEffectString(*magicEffect, attribute, skill);
 
                                 const int magnMin = spellEffect.mData.mMagnMin;
                                 const int magnMax = spellEffect.mData.mMagnMax;
@@ -2594,35 +2593,32 @@ namespace MWGui
                                         effectText += windowManager->getGameSettingString("sRangeTarget", {});
                                 }
 
-                                effectIcon = magicEffect->mIcon;
-                                break;
-                            }
+                                int effectLeft = padding;
+                                const std::string& effectIcon = magicEffect->mIcon;
+                                if (!effectIcon.empty())
+                                {
+                                    const int iconTop = y + 1;
+                                    MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>(
+                                        "ImageBox", MyGUI::IntCoord(effectLeft, iconTop, iconSize, iconSize),
+                                        MyGUI::Align::Left | MyGUI::Align::Top);
+                                    icon->setImageTexture(
+                                        Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effectIcon),
+                                            *MWBase::Environment::get().getResourceSystem()->getVFS()));
+                                    effectLeft += iconSize + spacing;
+                                }
 
-                            int effectLeft = padding;
-                            if (!effectIcon.empty())
-                            {
-                                const int iconTop = y + 1;
-                                MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                                    MyGUI::IntCoord(effectLeft, iconTop, iconSize, iconSize),
+                                Gui::EditBox* effectWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
+                                    MyGUI::IntCoord(effectLeft, y, width - effectLeft - padding, 18),
                                     MyGUI::Align::Left | MyGUI::Align::Top);
-                                icon->setImageTexture(
-                                    Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effectIcon),
-                                        *MWBase::Environment::get().getResourceSystem()->getVFS()));
-                                effectLeft += iconSize + spacing;
+                                effectWidget->setEditStatic(true);
+                                effectWidget->setEditMultiLine(true);
+                                effectWidget->setEditWordWrap(true);
+                                effectWidget->setNeedKeyFocus(false);
+                                effectWidget->setCaptionWithReplacing(effectText);
+                                const int effectsHeight = std::max(iconSize, effectWidget->getTextSize().height);
+                                effectWidget->setSize(width - effectLeft - padding, effectsHeight);
+                                y += effectsHeight + padding;
                             }
-
-                            Gui::EditBox* effects = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
-                                MyGUI::IntCoord(effectLeft, y, width - effectLeft - padding, 18),
-                                MyGUI::Align::Left | MyGUI::Align::Top);
-                            effects->setEditStatic(true);
-                            effects->setEditMultiLine(true);
-                            effects->setEditWordWrap(true);
-                            effects->setNeedKeyFocus(false);
-                            effects->setCaptionWithReplacing(effectText);
-                            const int effectsHeight = std::max(iconSize, effects->getTextSize().height);
-                            effects->setSize(width - effectLeft - padding, effectsHeight);
-                            y += effectsHeight + padding;
-
                             tooltipSize = MyGUI::IntSize(width, y);
                         }
                     }
