@@ -274,7 +274,7 @@ namespace MWInput
         mGuiCursorX += xMove;
         mGuiCursorY += yMove;
         const int wheelDelta = static_cast<int>(mouseWheelMove);
-        mMouseWheel = wheelDelta;
+        mMouseWheel += wheelDelta;
 
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
         mGuiCursorX = std::clamp<float>(mGuiCursorX, 0.f, static_cast<float>(viewSize.width) - 1.f);
@@ -301,8 +301,7 @@ namespace MWInput
         }
 
         MyGUI::InputManager::getInstance().injectMouseMove(
-            static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), wheelDelta);
-        mMouseWheel = 0;
+            static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), mMouseWheel);
     }
 
     void MouseManager::warpMouse()

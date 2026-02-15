@@ -40,7 +40,7 @@ namespace
 {
 
     constexpr int cellSize = Constants::CellSizeInUnits;
-    constexpr float speed = 1.08f; // the zoom speed, it should be greater than 1
+    constexpr float speed = 1.01f; // the zoom speed, it should be greater than 1
 
     enum LocalMapWidgetDepth
     {
