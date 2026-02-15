@@ -71,6 +71,12 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
 
     Settings::Manager::load(cfgMgr);
 
+    if (Settings::gui().mControllerTooltips)
+    {
+        Settings::gui().mControllerTooltips.set(false);
+        Settings::Manager::saveUser(cfgMgr.getUserConfigPath() / "settings.cfg");
+    }
+
     MWGui::DebugWindow::startLogRecording();
 
     engine.setGrabMouse(!variables["no-grab"].as<bool>());
