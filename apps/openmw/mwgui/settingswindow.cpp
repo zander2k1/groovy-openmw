@@ -712,7 +712,7 @@ namespace MWGui
         mControllerButtons = {};
         mControllerButtons.mA = "#{Interface:Select}";
         mControllerButtons.mB = "#{Interface:Back}";
-        mControllerButtons.mRStick = "#{Interface:Mouse}";
+        mControllerButtons.mLStick = "#{Interface:Mouse}";
     }
 
     void SettingsWindow::onTabChanged(MyGUI::TabControl* /*sender*/, size_t /*index*/)

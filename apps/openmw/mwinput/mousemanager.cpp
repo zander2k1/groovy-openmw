@@ -1,5 +1,7 @@
 #include "mousemanager.hpp"
 
+#include <cmath>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_RenderManager.h>
@@ -39,7 +41,7 @@ namespace MWInput
         , mMouseMoveY(0)
     {
         int w, h;
-        SDL_GetWindowSize(window, &w, &h);
+        SDL_GL_GetDrawableSize(window, &w, &h);
 
         float uiScale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
         mGuiCursorX = w / (2.f * uiScale);
@@ -306,9 +308,29 @@ namespace MWInput
 
     void MouseManager::warpMouse()
     {
-        float guiUiScale = Settings::gui().mScalingFactor;
-        mInputWrapper->warpMouse(
-            static_cast<int>(mGuiCursorX * guiUiScale), static_cast<int>(mGuiCursorY * guiUiScale));
+        if (Settings::gui().mControllerMenus)
+        {
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
+            if (winMgr->getCursorVisible() && inputMgr->joystickLastUsed())
+            {
+                MyGUI::InputManager::getInstance().injectMouseMove(
+                    static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), mMouseWheel);
+                return;
+            }
+        }
+
+        const float uiScale = MWBase::Environment::get().getWindowManager()->getScalingFactor();
+        const float windowToDrawableX = mInputWrapper->getWindowToDrawableScaleX();
+        const float windowToDrawableY = mInputWrapper->getWindowToDrawableScaleY();
+
+        const float drawableX = mGuiCursorX * uiScale;
+        const float drawableY = mGuiCursorY * uiScale;
+
+        const float windowX = windowToDrawableX > 0.f ? drawableX / windowToDrawableX : drawableX;
+        const float windowY = windowToDrawableY > 0.f ? drawableY / windowToDrawableY : drawableY;
+
+        mInputWrapper->warpMouse(static_cast<int>(std::lround(windowX)), static_cast<int>(std::lround(windowY)));
     }
 
     void MouseManager::warpMouseToWidget(MyGUI::Widget* widget)

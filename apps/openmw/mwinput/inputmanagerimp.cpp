@@ -7,6 +7,10 @@
 #include <components/sdlutil/sdlinputwrapper.hpp>
 #include <components/settings/values.hpp>
 
+#include <MyGUI_Gui.h>
+#include <MyGUI_ImageBox.h>
+#include <MyGUI_InputManager.h>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -24,6 +28,52 @@
 
 namespace MWInput
 {
+    namespace
+    {
+        bool ensureWaylandSoftwareCursor(MyGUI::ImageBox*& cursor)
+        {
+            if (cursor != nullptr)
+                return true;
+
+            if (MyGUI::Gui::getInstancePtr() == nullptr)
+                return false;
+
+            constexpr int sourceWidth = 32;
+            constexpr int sourceHeight = 32;
+            constexpr int renderWidth = (sourceWidth * 5) / 8;
+            constexpr int renderHeight = (sourceHeight * 5) / 8;
+
+            cursor = MyGUI::Gui::getInstance().createWidget<MyGUI::ImageBox>(
+                "ImageBox", 0, 0, renderWidth, renderHeight, MyGUI::Align::Default, "Pointer");
+            cursor->setImageTexture("textures\\tx_cursor.dds");
+            cursor->setImageCoord(MyGUI::IntCoord(0, 0, sourceWidth, sourceHeight));
+            cursor->setNeedMouseFocus(false);
+            cursor->setNeedKeyFocus(false);
+            cursor->setVisible(false);
+            return true;
+        }
+
+        void updateWaylandSoftwareCursor(MyGUI::ImageBox* cursor, bool visible)
+        {
+            if (cursor == nullptr)
+                return;
+
+            cursor->setVisible(visible);
+            if (!visible)
+                return;
+
+            constexpr int sourceWidth = 32;
+            constexpr int sourceHeight = 32;
+            constexpr int cursorWidth = (sourceWidth * 5) / 8;
+            constexpr int cursorHeight = (sourceHeight * 5) / 8;
+            constexpr int hotspotX = (7 * cursorWidth + sourceWidth / 2) / sourceWidth;
+            constexpr int hotspotY = 0;
+
+            const MyGUI::IntPoint pos = MyGUI::InputManager::getInstance().getMousePosition();
+            cursor->setCoord(pos.left - hotspotX, pos.top - hotspotY, cursorWidth, cursorHeight);
+        }
+    }
+
     InputManager::InputManager(SDL_Window* window, osg::ref_ptr<osgViewer::Viewer> viewer,
         osg::ref_ptr<osgViewer::ScreenCaptureHandler> screenCaptureHandler, const std::filesystem::path& userFile,
         bool userFileExists, const std::filesystem::path& userControllerBindingsFile,
@@ -53,20 +103,31 @@ namespace MWInput
         mControlSwitch->clear();
     }
 
-    InputManager::~InputManager() {}
+    InputManager::~InputManager()
+    {
+        if (mWaylandSoftwareCursor != nullptr && MyGUI::Gui::getInstancePtr() != nullptr)
+            MyGUI::Gui::getInstance().destroyWidget(mWaylandSoftwareCursor);
+        mWaylandSoftwareCursor = nullptr;
+    }
 
     void InputManager::update(float dt, bool disableControls, bool disableEvents)
     {
         mControlsDisabled = disableControls;
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
+        const bool cursorVisible = winMgr->getCursorVisible();
+        const bool wantSoftwareCursor
+            = Settings::gui().mControllerMenus && cursorVisible && mControllerManager->joystickLastUsed();
+        const bool controllerCursorActive = wantSoftwareCursor && ensureWaylandSoftwareCursor(mWaylandSoftwareCursor);
+
+        mInputWrapper->setMouseVisible(cursorVisible && !controllerCursorActive);
         mInputWrapper->capture(disableEvents);
 
         if (disableControls)
         {
             mMouseManager->updateCursorMode();
-            mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
+            mInputWrapper->setMouseVisible(cursorVisible && !controllerCursorActive);
+            updateWaylandSoftwareCursor(mWaylandSoftwareCursor, controllerCursorActive);
             return;
         }
 
@@ -90,7 +151,8 @@ namespace MWInput
             }
         }
 
-        mInputWrapper->setMouseVisible(winMgr->getCursorVisible());
+        mInputWrapper->setMouseVisible(cursorVisible && !controllerCursorActive);
+        updateWaylandSoftwareCursor(mWaylandSoftwareCursor, controllerCursorActive);
     }
 
     void InputManager::setDragDrop(bool dragDrop)
