@@ -766,19 +766,22 @@ namespace MWInput
             if (arg.button == SDL_CONTROLLER_BUTTON_START && winMgr->isVirtualKeyboardVisible())
                 return true;
 
+            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+            const bool mapWindowActive = dynamic_cast<MWGui::MapWindow*>(topWin) != nullptr;
+            const bool isMapDpad = mapWindowActive && isDpadButton(arg.button);
+
             // Update cursor state.
             bool treatAsMouse = winMgr->getCursorVisible();
-            winMgr->setCursorActive(false);
+            if (!isMapDpad)
+                winMgr->setCursorActive(false);
 
             if (arg.button == SDL_CONTROLLER_BUTTON_Y)
             {
                 const bool enable = (arg.state == SDL_PRESSED);
-                MWGui::WindowBase* activeWindow = winMgr->getActiveControllerWindow();
-                if (!dynamic_cast<MWGui::MapWindow*>(activeWindow))
+                if (!mapWindowActive)
                     winMgr->setControllerTooltipEnabled(enable);
             }
 
-            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
             if (topWin && topWin->isVisible())
             {
                 // When the inventory tooltip is visible, we don't actually want the A button to
@@ -1174,6 +1177,8 @@ namespace MWInput
                 else if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTX || arg.axis == SDL_CONTROLLER_AXIS_RIGHTY)
                 {
                     // Only right-stick scroll if mouse is visible or there's a widget to scroll.
+                    if (mapWindowActive && Settings::map().mAllowZooming && arg.axis == SDL_CONTROLLER_AXIS_RIGHTY)
+                        return false;
                     return !winMgr->getCursorVisible() && topWin->getControllerScrollWidget() == nullptr;
                 }
             }
