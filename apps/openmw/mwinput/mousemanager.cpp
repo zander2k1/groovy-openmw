@@ -1,5 +1,6 @@
 #include "mousemanager.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include <MyGUI_Button.h>
@@ -265,10 +266,106 @@ namespace MWInput
             static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), SDLUtil::sdlMouseButtonToMyGui(button));
     }
 
+    bool MouseManager::injectMouseButtonPressWithFocusAssist(Uint8 button, int left, int up, int right, int down)
+    {
+        mRestoreCursorAfterButtonRelease = false;
+
+        if (left <= 0 && up <= 0 && right <= 0 && down <= 0)
+            return injectMouseButtonPress(button);
+
+        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        if (viewSize.width <= 0 || viewSize.height <= 0)
+            return injectMouseButtonPress(button);
+
+        const int baseX = std::clamp(static_cast<int>(mGuiCursorX), 0, viewSize.width - 1);
+        const int baseY = std::clamp(static_cast<int>(mGuiCursorY), 0, viewSize.height - 1);
+
+        auto tryMoveAndHasFocus = [&](int x, int y) -> bool {
+            MyGUI::InputManager::getInstance().injectMouseMove(x, y, mMouseWheel);
+            return MyGUI::InputManager::getInstance().getMouseFocusWidget() != nullptr;
+        };
+
+        if (tryMoveAndHasFocus(baseX, baseY))
+            return MyGUI::InputManager::getInstance().injectMousePress(
+                baseX, baseY, SDLUtil::sdlMouseButtonToMyGui(button));
+
+        const int clampedLeft = std::max(0, left);
+        const int clampedUp = std::max(0, up);
+        const int clampedRight = std::max(0, right);
+        const int clampedDown = std::max(0, down);
+
+        const int step = 2;
+        int clickX = baseX;
+        int clickY = baseY;
+
+        auto tryOffset = [&](int dx, int dy) -> bool {
+            if (dx < -clampedLeft || dx > clampedRight || dy < -clampedUp || dy > clampedDown)
+                return false;
+
+            const int cx = std::clamp(baseX + dx, 0, viewSize.width - 1);
+            const int cy = std::clamp(baseY + dy, 0, viewSize.height - 1);
+            if (!tryMoveAndHasFocus(cx, cy))
+                return false;
+
+            clickX = cx;
+            clickY = cy;
+            return true;
+        };
+
+        const int maxRadius = std::max(std::max(clampedLeft, clampedRight), std::max(clampedUp, clampedDown));
+        bool found = false;
+        for (int r = step; r <= maxRadius && !found; r += step)
+        {
+            for (int dx = -r; dx <= r && !found; dx += step)
+                found = tryOffset(dx, -r);
+            for (int dy = -r + step; dy <= r - step && !found; dy += step)
+                found = tryOffset(r, dy);
+            for (int dx = r; dx >= -r && !found; dx -= step)
+                found = tryOffset(dx, r);
+            for (int dy = r - step; dy >= -r + step && !found; dy -= step)
+                found = tryOffset(-r, dy);
+        }
+
+        if (!found)
+        {
+            tryMoveAndHasFocus(baseX, baseY);
+            return MyGUI::InputManager::getInstance().injectMousePress(
+                baseX, baseY, SDLUtil::sdlMouseButtonToMyGui(button));
+        }
+
+        mRestoreCursorAfterButtonRelease = true;
+        mRestoreCursorButton = button;
+        mRestoreCursorX = mGuiCursorX;
+        mRestoreCursorY = mGuiCursorY;
+        mRestoreCursorCheckX = static_cast<float>(clickX);
+        mRestoreCursorCheckY = static_cast<float>(clickY);
+
+        mGuiCursorX = static_cast<float>(clickX);
+        mGuiCursorY = static_cast<float>(clickY);
+        return MyGUI::InputManager::getInstance().injectMousePress(
+            clickX, clickY, SDLUtil::sdlMouseButtonToMyGui(button));
+    }
+
     bool MouseManager::injectMouseButtonRelease(Uint8 button)
     {
-        return MyGUI::InputManager::getInstance().injectMouseRelease(
+        const bool released = MyGUI::InputManager::getInstance().injectMouseRelease(
             static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), SDLUtil::sdlMouseButtonToMyGui(button));
+
+        if (mRestoreCursorAfterButtonRelease && mRestoreCursorButton == button)
+        {
+            const bool cursorUnchangedSincePress = std::abs(mGuiCursorX - mRestoreCursorCheckX) < 0.5f
+                && std::abs(mGuiCursorY - mRestoreCursorCheckY) < 0.5f;
+            if (cursorUnchangedSincePress)
+            {
+                mGuiCursorX = mRestoreCursorX;
+                mGuiCursorY = mRestoreCursorY;
+                MyGUI::InputManager::getInstance().injectMouseMove(
+                    static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), mMouseWheel);
+            }
+            mRestoreCursorAfterButtonRelease = false;
+        }
+
+        return released;
     }
 
     void MouseManager::injectMouseMove(float xMove, float yMove, float mouseWheelMove)
@@ -312,7 +409,7 @@ namespace MWInput
         {
             MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
             MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
-            if (winMgr->getCursorVisible() && inputMgr->joystickLastUsed())
+            if (Settings::input().mEnableSoftwareMouse && winMgr->getCursorVisible() && inputMgr->joystickLastUsed())
             {
                 MyGUI::InputManager::getInstance().injectMouseMove(
                     static_cast<int>(mGuiCursorX), static_cast<int>(mGuiCursorY), mMouseWheel);

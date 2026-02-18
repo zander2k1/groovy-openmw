@@ -1624,7 +1624,7 @@
               </property>
              </widget>
             </item>
-             <item row="4" column="0">
+            <item row="4" column="0">
              <widget class="QCheckBox" name="controllerMenuJoystickDpadCheckBox">
               <property name="enabled">
                <bool>false</bool>
@@ -1637,6 +1637,19 @@
               </property>
               <property name="visible">
                <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QCheckBox" name="enableSoftwareMouseCheckBox">
+              <property name="toolTip">
+               <string>Use the software cursor (drawn by the UI) instead of the hardware cursor when using the controller.</string>
+              </property>
+              <property name="text">
+               <string>Enable Software Mouse</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>

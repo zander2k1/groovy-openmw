@@ -116,8 +116,8 @@ namespace MWInput
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         const bool cursorVisible = winMgr->getCursorVisible();
-        const bool wantSoftwareCursor
-            = Settings::gui().mControllerMenus && cursorVisible && mControllerManager->joystickLastUsed();
+        const bool wantSoftwareCursor = Settings::input().mEnableSoftwareMouse && Settings::gui().mControllerMenus
+            && cursorVisible && mControllerManager->joystickLastUsed();
         const bool controllerCursorActive = wantSoftwareCursor && ensureWaylandSoftwareCursor(mWaylandSoftwareCursor);
 
         mInputWrapper->setMouseVisible(cursorVisible && !controllerCursorActive);

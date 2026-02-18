@@ -1645,5 +1645,13 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <source>XBOX Styled Fonts</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use the software cursor (drawn by the UI) instead of the hardware cursor when using the controller.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Software Mouse</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

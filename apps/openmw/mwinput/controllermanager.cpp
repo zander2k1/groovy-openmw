@@ -30,7 +30,7 @@
 namespace
 {
     constexpr float kLeftStickAxisMax = 32768.0f;
-    constexpr float kGuiJoystickDeadzone = 0.6f;
+    constexpr float kGuiJoystickDeadzone = 0.15f;
     constexpr float kLeftStickDpadDeadzone = 0.85f;
     constexpr float kLeftStickDpadReleaseDeadzone = 0.85f;
     constexpr int kLeftStickDpadNone = -1;
@@ -605,7 +605,20 @@ namespace MWInput
                 // Temporary mouse binding until keyboard controls are available:
                 if (arg.button == SDL_CONTROLLER_BUTTON_A) // We'll pretend that A is left click.
                 {
-                    bool mousePressSuccess = mMouseManager->injectMouseButtonPress(SDL_BUTTON_LEFT);
+                    constexpr int kSoftwareMouseFocusAssistSize = 32;
+                    constexpr int kSoftwareMouseFocusAssistLeft = kSoftwareMouseFocusAssistSize / 2;
+                    constexpr int kSoftwareMouseFocusAssistUp = kSoftwareMouseFocusAssistSize / 2;
+                    constexpr int kSoftwareMouseFocusAssistRight
+                        = kSoftwareMouseFocusAssistSize - 1 - kSoftwareMouseFocusAssistLeft;
+                    constexpr int kSoftwareMouseFocusAssistDown
+                        = kSoftwareMouseFocusAssistSize - 1 - kSoftwareMouseFocusAssistUp;
+                    const bool useFocusAssist
+                        = Settings::input().mEnableSoftwareMouse && Settings::gui().mControllerMenus;
+                    bool mousePressSuccess = useFocusAssist
+                        ? mMouseManager->injectMouseButtonPressWithFocusAssist(SDL_BUTTON_LEFT,
+                            kSoftwareMouseFocusAssistLeft, kSoftwareMouseFocusAssistUp, kSoftwareMouseFocusAssistRight,
+                            kSoftwareMouseFocusAssistDown)
+                        : mMouseManager->injectMouseButtonPress(SDL_BUTTON_LEFT);
                     mGamepadMousePressed = true;
                     if (MyGUI::InputManager::getInstance().getMouseFocusWidget())
                     {
