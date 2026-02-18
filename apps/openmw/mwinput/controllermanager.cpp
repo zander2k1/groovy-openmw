@@ -620,6 +620,7 @@ namespace MWInput
                             kSoftwareMouseFocusAssistDown)
                         : mMouseManager->injectMouseButtonPress(SDL_BUTTON_LEFT);
                     mGamepadMousePressed = true;
+                    MWBase::Environment::get().getWindowManager()->setCursorActive(true);
                     if (MyGUI::InputManager::getInstance().getMouseFocusWidget())
                     {
                         MyGUI::Button* b
