@@ -25,7 +25,7 @@
         <Widget type="Widget" skin="" position="228 0 350 223" align="Left Top" name="RightPane">
 
             <!-- Items in inventory -->
-            <Widget type="ItemView" skin="MW_ItemView" position="0 38 350 185" align="Left Top Stretch" name="ItemView">
+            <Widget type="ItemView" skin="MW_ItemView" position="0 38 349 185" align="Left Top Stretch" name="ItemView">
             </Widget>
 
             <!-- Categories -->
