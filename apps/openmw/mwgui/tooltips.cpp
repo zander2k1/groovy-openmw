@@ -3028,8 +3028,9 @@ namespace MWGui
 
         if (!info.effects.empty())
         {
+            const int effectAreaTop = totalSize.height;
             MyGUI::Widget* effectArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
-                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height,
+                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, effectAreaTop,
                     (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
@@ -3046,14 +3047,18 @@ namespace MWGui
             const bool centerEffects = menuMode ? true : (info.isPotion || info.isIngredient);
             effectsWidget->createEffectWidgets(effectItems, effectArea, coord, centerEffects, flag);
 
+            if (menuMode)
+                effectArea->setSize(effectArea->getWidth(), std::max(effectArea->getHeight(), coord.top));
+
             totalSize.height += coord.top - 6;
             totalSize.width = std::max(totalSize.width, coord.width);
         }
 
         if (enchant)
         {
+            const int enchantAreaTop = totalSize.height;
             MyGUI::Widget* enchantArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
-                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, totalSize.height,
+                MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, enchantAreaTop,
                     (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
@@ -3071,6 +3076,8 @@ namespace MWGui
 
             totalSize.height += coord.top - 6;
             totalSize.width = std::max(totalSize.width, coord.width);
+
+            int enchantAreaHeight = coord.top;
 
             if (enchant->mData.mType == ESM::Enchantment::WhenStrikes
                 || enchant->mData.mType == ESM::Enchantment::WhenUsed)
@@ -3108,7 +3115,12 @@ namespace MWGui
                     "MW_ChargeBar", chargeCoord, MyGUI::Align::Default);
                 chargeWidget->setValue(charge, maxCharge);
                 totalSize.height += 24;
+
+                enchantAreaHeight += 24;
             }
+
+            if (menuMode)
+                enchantArea->setSize(enchantArea->getWidth(), std::max(enchantArea->getHeight(), enchantAreaHeight));
         }
 
         Gui::EditBox* extraWidget = nullptr;
