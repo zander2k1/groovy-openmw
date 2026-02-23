@@ -350,6 +350,10 @@ namespace MWInput
             }
         }
 
+        const bool mapWindowActive = inGuiMode && dynamic_cast<MWGui::MapWindow*>(activeWindow) != nullptr;
+        if (mapWindowActive)
+            mIgnoreGuiCursorUntilRelease = false;
+
         const bool settingsVisible = winMgr->isSettingsWindowVisible();
         const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible);
 
