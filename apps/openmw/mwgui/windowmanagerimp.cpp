@@ -138,6 +138,53 @@ namespace MWGui
 {
     namespace
     {
+        MyGUI::IntSize getWindowTrackingSize(MyGUI::Window* window)
+        {
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            if (!window || !window->getLayer())
+                return viewSize;
+
+            const MyGUI::IntSize layerSize = window->getLayer()->getSize();
+            if (layerSize.width <= 0 || layerSize.height <= 0)
+                return viewSize;
+
+            return layerSize;
+        }
+
+        float convertLegacyNormalizedValue(float value, int viewSize, int layerSize)
+        {
+            if (layerSize <= 0 || viewSize <= 0)
+                return value;
+            return value * (static_cast<float>(viewSize) / static_cast<float>(layerSize));
+        }
+
+        void sanitizeNormalizedWindowRect(float& x, float& y, float& w, float& h, float defaultW, float defaultH)
+        {
+            constexpr float minSize = 0.05f;
+            constexpr float maxSize = 0.98f; // keep draggable
+
+            if (!(w > 0.f) || !(h > 0.f))
+            {
+                w = defaultW;
+                h = defaultH;
+            }
+
+            w = std::clamp(w, minSize, maxSize);
+            h = std::clamp(h, minSize, maxSize);
+
+            if (!(x >= 0.f) || !(y >= 0.f))
+            {
+                x = 0.1f;
+                y = 0.1f;
+            }
+
+            x = std::clamp(x, 0.f, 1.f - w);
+            y = std::clamp(y, 0.f, 1.f - h);
+        }
+    }
+
+    namespace
+    {
         float getDialogueScaleMultiplier()
         {
             const float interfaceScaling = Settings::gui().mScalingFactor;
@@ -1610,8 +1657,11 @@ namespace MWGui
         for (const auto& [window, settings] : mTrackedWindows)
         {
             const WindowRectSettingValues& rect = settings.mIsMaximized ? settings.mMaximized : settings.mRegular;
-            window->setPosition(MyGUI::IntPoint(static_cast<int>(rect.mX * x), static_cast<int>(rect.mY * y)));
-            window->setSize(MyGUI::IntSize(static_cast<int>(rect.mW * x), static_cast<int>(rect.mH * y)));
+            const MyGUI::IntSize trackingSize = getWindowTrackingSize(window);
+            window->setPosition(MyGUI::IntPoint(static_cast<int>(rect.mX.get() * trackingSize.width),
+                static_cast<int>(rect.mY.get() * trackingSize.height)));
+            window->setSize(MyGUI::IntSize(static_cast<int>(rect.mW.get() * trackingSize.width),
+                static_cast<int>(rect.mH.get() * trackingSize.height)));
 
             WindowBase::clampWindowCoordinates(window);
         }
@@ -2241,15 +2291,51 @@ namespace MWGui
 
     void WindowManager::trackWindow(Layout* layout, const WindowSettingValues& settings)
     {
-        MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-
         const WindowRectSettingValues& rect = settings.mIsMaximized ? settings.mMaximized : settings.mRegular;
 
         MyGUI::Window* window = layout->mMainWidget->castType<MyGUI::Window>();
+        const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        const MyGUI::IntSize trackingSize = getWindowTrackingSize(window);
+
+        float x = rect.mX.get();
+        float y = rect.mY.get();
+        float w = rect.mW.get();
+        float h = rect.mH.get();
+        const float originalX = x;
+        const float originalY = y;
+        const float originalW = w;
+        const float originalH = h;
+
+        // Backward compatibility: some windows (notably Settings) are tracked on a ScalingLayer whose size can
+        // differ from RenderManager::getViewSize(). Older code stored normalized values relative to viewSize,
+        // which can yield values > 1 when later interpreted relative to the layer size.
+        if ((x > 1.f || y > 1.f || w > 1.f || h > 1.f)
+            && (trackingSize.width != viewSize.width || trackingSize.height != viewSize.height))
+        {
+            x = convertLegacyNormalizedValue(x, viewSize.width, trackingSize.width);
+            y = convertLegacyNormalizedValue(y, viewSize.height, trackingSize.height);
+            w = convertLegacyNormalizedValue(w, viewSize.width, trackingSize.width);
+            h = convertLegacyNormalizedValue(h, viewSize.height, trackingSize.height);
+
+            rect.mX.set(x);
+            rect.mY.set(y);
+            rect.mW.set(w);
+            rect.mH.set(h);
+        }
+
+        sanitizeNormalizedWindowRect(x, y, w, h, 0.8f, 0.8f);
+        if (x != originalX || y != originalY || w != originalW || h != originalH)
+        {
+            rect.mX.set(x);
+            rect.mY.set(y);
+            rect.mW.set(w);
+            rect.mH.set(h);
+        }
+
         window->setPosition(
-            MyGUI::IntPoint(static_cast<int>(rect.mX * viewSize.width), static_cast<int>(rect.mY * viewSize.height)));
+            MyGUI::IntPoint(static_cast<int>(x * trackingSize.width), static_cast<int>(y * trackingSize.height)));
         window->setSize(
-            MyGUI::IntSize(static_cast<int>(rect.mW * viewSize.width), static_cast<int>(rect.mH * viewSize.height)));
+            MyGUI::IntSize(static_cast<int>(w * trackingSize.width), static_cast<int>(h * trackingSize.height)));
 
         window->eventWindowChangeCoord += MyGUI::newDelegate(this, &WindowManager::onWindowChangeCoord);
         WindowBase::clampWindowCoordinates(window);
@@ -2267,11 +2353,11 @@ namespace MWGui
         const WindowSettingValues& settings = it->second;
         const WindowRectSettingValues& rect = settings.mIsMaximized ? settings.mRegular : settings.mMaximized;
 
-        MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        const int x = static_cast<int>(rect.mX * viewSize.width);
-        const int y = static_cast<int>(rect.mY * viewSize.height);
-        const int w = static_cast<int>(rect.mW * viewSize.width);
-        const int h = static_cast<int>(rect.mH * viewSize.height);
+        const MyGUI::IntSize trackingSize = getWindowTrackingSize(window);
+        const int x = static_cast<int>(rect.mX.get() * trackingSize.width);
+        const int y = static_cast<int>(rect.mY.get() * trackingSize.height);
+        const int w = static_cast<int>(rect.mW.get() * trackingSize.width);
+        const int h = static_cast<int>(rect.mH.get() * trackingSize.height);
         window->setCoord(x, y, w, h);
 
         settings.mIsMaximized.set(!settings.mIsMaximized.get());
@@ -2294,11 +2380,11 @@ namespace MWGui
 
         const WindowSettingValues& settings = it->second;
 
-        MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        settings.mRegular.mX.set(window->getPosition().left / static_cast<float>(viewSize.width));
-        settings.mRegular.mY.set(window->getPosition().top / static_cast<float>(viewSize.height));
-        settings.mRegular.mW.set(window->getSize().width / static_cast<float>(viewSize.width));
-        settings.mRegular.mH.set(window->getSize().height / static_cast<float>(viewSize.height));
+        const MyGUI::IntSize trackingSize = getWindowTrackingSize(window);
+        settings.mRegular.mX.set(window->getPosition().left / static_cast<float>(trackingSize.width));
+        settings.mRegular.mY.set(window->getPosition().top / static_cast<float>(trackingSize.height));
+        settings.mRegular.mW.set(window->getSize().width / static_cast<float>(trackingSize.width));
+        settings.mRegular.mH.set(window->getSize().height / static_cast<float>(trackingSize.height));
 
         settings.mIsMaximized.set(false);
     }

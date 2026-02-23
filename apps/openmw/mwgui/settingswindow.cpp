@@ -8,6 +8,7 @@
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_Gui.h>
+#include <MyGUI_InputManager.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_ScrollBar.h>
 #include <MyGUI_ScrollView.h>
@@ -539,8 +540,6 @@ namespace MWGui
         mScalingRestartHint->setVisible(Settings::gui().mUseRecommendedScalingDefaults);
 
         computeMinimumWindowSize();
-
-        center();
 
         mResetControlsButton->eventMouseButtonClick
             += MyGUI::newDelegate(this, &SettingsWindow::onResetDefaultBindings);
@@ -1091,7 +1090,7 @@ namespace MWGui
 
     void SettingsWindow::onResChange(int /*width*/, int /*height*/)
     {
-        center();
+        WindowBase::clampWindowCoordinates(mMainWidget->castType<MyGUI::Window>());
         highlightCurrentResolution();
     }
 
@@ -1430,6 +1429,7 @@ namespace MWGui
 
     void SettingsWindow::onOpen()
     {
+        MyGUI::InputManager::getInstance().addWidgetModal(mMainWidget);
         highlightCurrentResolution();
         mScalingRestartHint->setVisible(Settings::gui().mUseRecommendedScalingDefaults);
         updateControlsBox();
@@ -1438,12 +1438,13 @@ namespace MWGui
         updateVSyncModeSettings();
         resetScrollbars();
         renderScriptSettings();
-        center();
+        WindowBase::clampWindowCoordinates(mMainWidget->castType<MyGUI::Window>());
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
     }
 
     void SettingsWindow::onClose()
     {
+        MyGUI::InputManager::getInstance().removeWidgetModal(mMainWidget);
         // Save user settings
         Settings::Manager::saveUser(mCfgMgr.getUserConfigPath() / "settings.cfg");
         MWBase::Environment::get().getLuaManager()->savePermanentStorage(mCfgMgr.getUserConfigPath());
