@@ -1,5 +1,8 @@
 #include "inputmanagerimp.hpp"
 
+#include <string>
+#include <string_view>
+
 #include <osgViewer/ViewerEventHandlers>
 
 #include <components/esm3/esmreader.hpp>
@@ -10,6 +13,8 @@
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_InputManager.h>
+#include <MyGUI_PointerManager.h>
+#include <MyGUI_Widget.h>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -30,6 +35,51 @@ namespace MWInput
 {
     namespace
     {
+        std::string sSoftwareCursorPointer = "arrow";
+        bool sSoftwareCursorHookedPointerChange = false;
+
+        void onSoftwareCursorPointerChanged(std::string_view name)
+        {
+            sSoftwareCursorPointer.assign(name.data(), name.size());
+        }
+
+        void ensureSoftwareCursorTracksPointer()
+        {
+            if (sSoftwareCursorHookedPointerChange)
+                return;
+            sSoftwareCursorHookedPointerChange = true;
+
+            MyGUI::PointerManager::getInstance().eventChangeMousePointer
+                += MyGUI::newDelegate(&onSoftwareCursorPointerChanged);
+
+            sSoftwareCursorPointer = MyGUI::PointerManager::getInstance().getDefaultPointer();
+        }
+
+        struct SoftwareCursorStyle
+        {
+            const char* mTexture;
+            int mHotspotX;
+            int mHotspotY;
+        };
+
+        int scaleHotspot(int sourceHotspot, int renderSize, int sourceSize)
+        {
+            return (sourceHotspot * renderSize + sourceSize / 2) / sourceSize;
+        }
+
+        SoftwareCursorStyle getSoftwareCursorStyle(std::string_view pointerName)
+        {
+            if (pointerName == "hresize")
+                return { "textures\\H-RESIZE.dds", 16, 14 };
+            if (pointerName == "vresize")
+                return { "textures\\V-RESIZE.dds", 17, 16 };
+            if (pointerName == "dresize" || pointerName == "dresize2")
+                return { "textures\\H-RESIZE.dds", 16, 14 };
+
+            // Fall back to normal cursor for unknown pointers.
+            return { "textures\\tx_cursor.dds", 7, 0 };
+        }
+
         bool ensureWaylandSoftwareCursor(MyGUI::ImageBox*& cursor)
         {
             if (cursor != nullptr)
@@ -37,6 +87,8 @@ namespace MWInput
 
             if (MyGUI::Gui::getInstancePtr() == nullptr)
                 return false;
+
+            ensureSoftwareCursorTracksPointer();
 
             constexpr int sourceWidth = 32;
             constexpr int sourceHeight = 32;
@@ -46,6 +98,7 @@ namespace MWInput
             cursor = MyGUI::Gui::getInstance().createWidget<MyGUI::ImageBox>(
                 "ImageBox", 0, 0, renderWidth, renderHeight, MyGUI::Align::Default, "Pointer");
             cursor->setImageTexture("textures\\tx_cursor.dds");
+            cursor->setUserString("SoftwareCursorTexture", "textures\\tx_cursor.dds");
             cursor->setImageCoord(MyGUI::IntCoord(0, 0, sourceWidth, sourceHeight));
             cursor->setNeedMouseFocus(false);
             cursor->setNeedKeyFocus(false);
@@ -66,8 +119,24 @@ namespace MWInput
             constexpr int sourceHeight = 32;
             constexpr int cursorWidth = (sourceWidth * 5) / 8;
             constexpr int cursorHeight = (sourceHeight * 5) / 8;
-            constexpr int hotspotX = (7 * cursorWidth + sourceWidth / 2) / sourceWidth;
-            constexpr int hotspotY = 0;
+
+            std::string_view pointerName = sSoftwareCursorPointer;
+            if (const MyGUI::Widget* widget = MyGUI::InputManager::getInstance().getMouseFocusWidget())
+            {
+                const std::string& widgetPointer = widget->getPointer();
+                if (!widgetPointer.empty())
+                    pointerName = widgetPointer;
+            }
+
+            const SoftwareCursorStyle style = getSoftwareCursorStyle(pointerName);
+            if (cursor->getUserString("SoftwareCursorTexture") != style.mTexture)
+            {
+                cursor->setImageTexture(style.mTexture);
+                cursor->setUserString("SoftwareCursorTexture", style.mTexture);
+            }
+
+            const int hotspotX = scaleHotspot(style.mHotspotX, cursorWidth, sourceWidth);
+            const int hotspotY = scaleHotspot(style.mHotspotY, cursorHeight, sourceHeight);
 
             const MyGUI::IntPoint pos = MyGUI::InputManager::getInstance().getMousePosition();
             cursor->setCoord(pos.left - hotspotX, pos.top - hotspotY, cursorWidth, cursorHeight);
