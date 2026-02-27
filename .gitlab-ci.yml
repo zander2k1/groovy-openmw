@@ -564,9 +564,6 @@ Ubuntu_GCC_integration_tests_asan:
   image: macos-15-xcode-16
   tags:
     - saas-macos-medium-m1
-  cache:
-    paths:
-    - ccache/
   script:
     - CI/before_install.macos.sh
     - brew install ccache
@@ -602,7 +599,12 @@ Ubuntu_GCC_integration_tests_asan:
 macOS15_Xcode16_amd64:
   extends: .MacOS
   cache:
-    key: macOS15_Xcode16_amd64.v2
+    key:
+      prefix: macOS15_Xcode16_amd64.v3
+      files:
+        - CI/macos/deps_versions.sh
+    paths:
+      - ccache/
   variables:
     CCACHE_SIZE: 3G
     DMG_IDENTIFIER: amd64
@@ -614,7 +616,12 @@ macOS15_Xcode16_amd64:
 macOS15_Xcode16_arm64:
   extends: .MacOS
   cache:
-    key: macOS15_Xcode16_arm64.v2
+    key:
+      prefix: macOS15_Xcode16_arm64.v3
+      files:
+        - CI/macos/deps_versions.sh
+    paths:
+      - ccache/
   variables:
     DMG_IDENTIFIER: arm64
     CCACHE_SIZE: 3G
