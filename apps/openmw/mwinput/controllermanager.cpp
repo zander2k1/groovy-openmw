@@ -1299,10 +1299,14 @@ namespace MWInput
         switch (button)
         {
             case SDL_CONTROLLER_BUTTON_A:
+                if (isSwitch)
+                    return "textures/omw_switch_button_a.dds";
                 if (isPsx)
                     return "textures/omw_psx_button_x.dds";
                 return "textures/omw_steam_button_a.dds";
             case SDL_CONTROLLER_BUTTON_B:
+                if (isSwitch)
+                    return "textures/omw_switch_button_b.dds";
                 if (isPsx)
                     return "textures/omw_psx_button_circle.dds";
                 return "textures/omw_steam_button_b.dds";
@@ -1338,10 +1342,14 @@ namespace MWInput
             case SDL_CONTROLLER_BUTTON_START:
                 return "textures/omw_steam_button_menu.dds";
             case SDL_CONTROLLER_BUTTON_X:
+                if (isSwitch)
+                    return "textures/omw_switch_button_x.dds";
                 if (isPsx)
                     return "textures/omw_psx_button_square.dds";
                 return "textures/omw_steam_button_x.dds";
             case SDL_CONTROLLER_BUTTON_Y:
+                if (isSwitch)
+                    return "textures/omw_switch_button_y.dds";
                 if (isPsx)
                     return "textures/omw_psx_button_triangle.dds";
                 return "textures/omw_steam_button_y.dds";

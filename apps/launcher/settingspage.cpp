@@ -92,6 +92,8 @@ namespace
             return 2;
         if (value == "playstation")
             return 3;
+        if (value == "switch")
+            return 4;
         return 0;
     }
 
@@ -105,6 +107,8 @@ namespace
                 return "xbox";
             case 3:
                 return "playstation";
+            case 4:
+                return "switch";
             default:
                 return "auto";
         }
