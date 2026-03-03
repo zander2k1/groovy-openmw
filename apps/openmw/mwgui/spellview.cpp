@@ -238,7 +238,10 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
-            mControllerFocus = std::min(mControllerFocus, mButtons.size());
+            if (mButtons.empty())
+                mControllerFocus = 0;
+            else
+                mControllerFocus = std::min(mControllerFocus, mButtons.size() - 1);
             updateControllerFocus(mButtons.size(), mControllerFocus);
         }
 
@@ -376,6 +379,10 @@ namespace MWGui
     {
         if (mButtons.empty())
             return;
+
+        // Keep controller focus in a valid range. If it ever ends up out-of-range (e.g. due to a rebuild),
+        // navigation via wrap() can otherwise "jump" unexpectedly.
+        mControllerFocus = std::min(mControllerFocus, mButtons.size() - 1);
 
         size_t prevFocus = mControllerFocus;
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
