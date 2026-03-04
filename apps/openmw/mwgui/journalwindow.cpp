@@ -542,7 +542,7 @@ namespace
             }
         }
 
-        void notifyIndexLinkClicked(Utf8Stream::UnicodeChar index)
+        void notifyIndexLinkClicked(Utf8Stream::UnicodeChar indexChar)
         {
             setVisible(LeftTopicIndex, false);
             setVisible(CenterTopicIndex, false);
@@ -556,7 +556,7 @@ namespace
 
             AddNamesToList add(list);
 
-            mModel->visitTopicNamesStartingWith(index, add);
+            mModel->visitTopicNamesStartingWith(indexChar, add);
 
             if (Settings::gui().mControllerMenus)
             {
@@ -569,8 +569,8 @@ namespace
             if (Settings::gui().mControllerMenus)
             {
                 addControllerButtons(list, mSelectedQuest);
-                const size_t index = mButtons.empty() ? 0 : std::min(mSelectedQuest, mButtons.size() - 1);
-                setControllerFocusedQuest(index);
+                const size_t focusedIndex = mButtons.empty() ? 0 : std::min(mSelectedQuest, mButtons.size() - 1);
+                setControllerFocusedQuest(focusedIndex);
             }
 
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("book page"));
@@ -656,8 +656,8 @@ namespace
             if (Settings::gui().mControllerMenus)
             {
                 addControllerButtons(list, mSelectedQuest);
-                const size_t index = mButtons.empty() ? 0 : std::min(mSelectedQuest, mButtons.size() - 1);
-                setControllerFocusedQuest(index);
+                const size_t focusedIndex = mButtons.empty() ? 0 : std::min(mSelectedQuest, mButtons.size() - 1);
+                setControllerFocusedQuest(focusedIndex);
             }
 
             if (Settings::gui().mControllerMenus && mQuestFilterFocused)
