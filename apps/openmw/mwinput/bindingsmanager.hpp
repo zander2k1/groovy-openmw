@@ -75,6 +75,8 @@ namespace MWInput
 
         std::filesystem::path mUserFile;
 
+        std::vector<bool> mControlLoadedFromFile;
+
         bool mDragDrop;
         bool mToggleWeaponChorded = false;
         bool mToggleSpellChorded = false;

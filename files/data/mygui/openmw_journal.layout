@@ -66,23 +66,20 @@
       <Widget type="BookPage" skin="MW_BookPage" position="75 10 92 260" name="CenterTopicIndex"/>
       <Widget type="BookPage" skin="MW_BookPage" position="130 10 92 260" name="RightTopicIndex"/>
 
-      <Widget type="ImageButton" skin="ImageBox" position="0 0 0 0" Align="Top|Left" name="ShowActiveBTN">
+      <Widget type="ImageButton" skin="ImageBox" position="76 15 96 32" Align="Top|Left" name="ShowActiveBTN">
         <!-- Image set at runtime since it may not be available in all versions of the game -->
         <Property key="TextureRect" value="0 0 96 32"/>
-		<Property key="Visible" value="False"/>
       </Widget>
 
-      <Widget type="ImageButton" skin="ImageBox" position="0 0 0 0" Align="Top|Left" name="ShowAllBTN">
+      <Widget type="ImageButton" skin="ImageBox" position="83 15 72 32" Align="Top|Left" name="ShowAllBTN">
         <!-- Image set at runtime since it may not be available in all versions of the game -->
         <Property key="TextureRect" value="0 0 72 32"/>
-		<Property key="Visible" value="False"/>
-		<Property key="Enabled" value="False"/>
       </Widget>
 
-      <Widget type="MWList" skin="MW_QuestList" position="8 20 226 212" name="TopicsList" align="Right VStretch">
+      <Widget type="MWList" skin="MW_QuestList" position="8 40 226 212" name="TopicsList" align="Right VStretch">
       </Widget>
 
-      <Widget type="MWList" skin="MW_QuestList" position="8 20 226 212" name="QuestsList" align="Right VStretch">
+      <Widget type="MWList" skin="MW_QuestList" position="8 40 226 212" name="QuestsList" align="Right VStretch">
       </Widget>
 
       <Widget type="ImageButton" skin="ImageBox" position="20 265 56 32" Align="Top|Left" name="TopicsBTN">

@@ -1642,5 +1642,9 @@ de ordinarie fonterna i Morrowind. Bocka denna ruta om du ändå föredrar ordin
         <source>Enable Software Mouse</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Nintendo Switch</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

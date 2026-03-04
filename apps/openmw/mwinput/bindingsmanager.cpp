@@ -22,6 +22,99 @@ namespace MWInput
     static const int sFakeDeviceId = 1; // As we only support one controller at a time, use a fake deviceID so we don't
                                         // lose bindings when switching controllers
 
+    namespace
+    {
+        std::vector<ICS::Control*> findControlsBoundToKey(ICS::InputControlSystem* inputBinder, SDL_Scancode key)
+        {
+            std::vector<ICS::Control*> result;
+            const int controlCount = inputBinder->getControlCount();
+            result.reserve(static_cast<std::size_t>(controlCount));
+            for (int i = 0; i < controlCount; ++i)
+            {
+                ICS::Control* control = inputBinder->getControl(i);
+                if (inputBinder->getKeyBinding(control, ICS::Control::INCREASE) == key
+                    || inputBinder->getKeyBinding(control, ICS::Control::DECREASE) == key)
+                    result.push_back(control);
+            }
+            return result;
+        }
+
+        std::vector<ICS::Control*> findControlsBoundToMouseButton(
+            ICS::InputControlSystem* inputBinder, unsigned int button)
+        {
+            std::vector<ICS::Control*> result;
+            const int controlCount = inputBinder->getControlCount();
+            result.reserve(static_cast<std::size_t>(controlCount));
+            for (int i = 0; i < controlCount; ++i)
+            {
+                ICS::Control* control = inputBinder->getControl(i);
+                if (inputBinder->getMouseButtonBinding(control, ICS::Control::INCREASE) == button
+                    || inputBinder->getMouseButtonBinding(control, ICS::Control::DECREASE) == button)
+                    result.push_back(control);
+            }
+            return result;
+        }
+
+        std::vector<ICS::Control*> findControlsBoundToMouseWheel(
+            ICS::InputControlSystem* inputBinder, ICS::InputControlSystem::MouseWheelClick click)
+        {
+            std::vector<ICS::Control*> result;
+            const int controlCount = inputBinder->getControlCount();
+            result.reserve(static_cast<std::size_t>(controlCount));
+            for (int i = 0; i < controlCount; ++i)
+            {
+                ICS::Control* control = inputBinder->getControl(i);
+                if (inputBinder->getMouseWheelBinding(control, ICS::Control::INCREASE) == click
+                    || inputBinder->getMouseWheelBinding(control, ICS::Control::DECREASE) == click)
+                    result.push_back(control);
+            }
+            return result;
+        }
+
+        std::vector<ICS::Control*> findControlsBoundToJoystickButton(
+            ICS::InputControlSystem* inputBinder, int deviceID, unsigned int button)
+        {
+            std::vector<ICS::Control*> result;
+            const int controlCount = inputBinder->getControlCount();
+            result.reserve(static_cast<std::size_t>(controlCount));
+            for (int i = 0; i < controlCount; ++i)
+            {
+                ICS::Control* control = inputBinder->getControl(i);
+                if (inputBinder->getJoystickButtonBinding(control, deviceID, ICS::Control::INCREASE) == button
+                    || inputBinder->getJoystickButtonBinding(control, deviceID, ICS::Control::DECREASE) == button)
+                    result.push_back(control);
+            }
+            return result;
+        }
+
+        std::vector<ICS::Control*> findControlsBoundToJoystickAxis(
+            ICS::InputControlSystem* inputBinder, int deviceID, int axis)
+        {
+            std::vector<ICS::Control*> result;
+            const int controlCount = inputBinder->getControlCount();
+            result.reserve(static_cast<std::size_t>(controlCount));
+            for (int i = 0; i < controlCount; ++i)
+            {
+                ICS::Control* control = inputBinder->getControl(i);
+                if (inputBinder->getJoystickAxisBinding(control, deviceID, ICS::Control::INCREASE) == axis
+                    || inputBinder->getJoystickAxisBinding(control, deviceID, ICS::Control::DECREASE) == axis)
+                    result.push_back(control);
+            }
+            return result;
+        }
+
+        void resetControlsToInitialValue(const std::vector<ICS::Control*>& controls, const ICS::Control* exclude)
+        {
+            for (ICS::Control* control : controls)
+            {
+                if (control == nullptr || control == exclude)
+                    continue;
+                control->setChangingDirection(ICS::Control::STOP);
+                control->setValue(control->getInitialValue());
+            }
+        }
+    }
+
     void clearAllKeyBindings(ICS::InputControlSystem* inputBinder, ICS::Control* control)
     {
         // right now we don't really need multiple bindings for the same action, so remove all others first
@@ -98,9 +191,11 @@ namespace MWInput
             if (!mDetectingKeyboard)
                 return;
 
+            const auto controlsPreviouslyBoundToKey = findControlsBoundToKey(mInputBinder, key);
             clearAllKeyBindings(mInputBinder, control);
             control->setInitialValue(0.0f);
             ICS::DetectingBindingListener::keyBindingDetected(ics, control, key, direction);
+            resetControlsToInitialValue(controlsPreviouslyBoundToKey, control);
             MWBase::Environment::get().getWindowManager()->notifyInputActionBound();
         }
 
@@ -116,9 +211,11 @@ namespace MWInput
         {
             if (!mDetectingKeyboard)
                 return;
+            const auto controlsPreviouslyBoundToButton = findControlsBoundToMouseButton(mInputBinder, button);
             clearAllKeyBindings(mInputBinder, control);
             control->setInitialValue(0.0f);
             ICS::DetectingBindingListener::mouseButtonBindingDetected(ics, control, button, direction);
+            resetControlsToInitialValue(controlsPreviouslyBoundToButton, control);
             MWBase::Environment::get().getWindowManager()->notifyInputActionBound();
         }
 
@@ -127,9 +224,11 @@ namespace MWInput
         {
             if (!mDetectingKeyboard)
                 return;
+            const auto controlsPreviouslyBoundToWheel = findControlsBoundToMouseWheel(mInputBinder, click);
             clearAllKeyBindings(mInputBinder, control);
             control->setInitialValue(0.0f);
             ICS::DetectingBindingListener::mouseWheelBindingDetected(ics, control, click, direction);
+            resetControlsToInitialValue(controlsPreviouslyBoundToWheel, control);
             MWBase::Environment::get().getWindowManager()->notifyInputActionBound();
         }
 
@@ -142,10 +241,12 @@ namespace MWInput
             if (mDetectingKeyboard)
                 return;
 
+            const auto controlsPreviouslyBoundToAxis = findControlsBoundToJoystickAxis(mInputBinder, deviceID, axis);
             clearAllControllerBindings(mInputBinder, control);
             control->setValue(0.5f); // axis bindings must start at 0.5
             control->setInitialValue(0.5f);
             ICS::DetectingBindingListener::joystickAxisBindingDetected(ics, deviceID, control, axis, direction);
+            resetControlsToInitialValue(controlsPreviouslyBoundToAxis, control);
             MWBase::Environment::get().getWindowManager()->notifyInputActionBound();
         }
 
@@ -154,9 +255,12 @@ namespace MWInput
         {
             if (mDetectingKeyboard)
                 return;
+            const auto controlsPreviouslyBoundToButton
+                = findControlsBoundToJoystickButton(mInputBinder, deviceID, button);
             clearAllControllerBindings(mInputBinder, control);
             control->setInitialValue(0.0f);
             ICS::DetectingBindingListener::joystickButtonBindingDetected(ics, deviceID, control, button, direction);
+            resetControlsToInitialValue(controlsPreviouslyBoundToButton, control);
             MWBase::Environment::get().getWindowManager()->notifyInputActionBound();
         }
 
@@ -173,12 +277,16 @@ namespace MWInput
 
     BindingsManager::BindingsManager(const std::filesystem::path& userFile, bool userFileExists)
         : mUserFile(userFile)
+        , mControlLoadedFromFile(A_Last, false)
         , mDragDrop(false)
     {
         const auto file = userFileExists ? userFile : std::filesystem::path();
         mInputBinder = std::make_unique<InputControlSystem>(file);
         mListener = std::make_unique<BindingsListener>(mInputBinder.get(), this);
         mInputBinder->setDetectingBindingListener(mListener.get());
+
+        for (int i = 0; i < A_Last; ++i)
+            mControlLoadedFromFile[i] = mInputBinder->getChannel(i)->getControlsCount() != 0;
 
         loadKeyDefaults();
         loadControllerDefaults();
@@ -315,11 +423,9 @@ namespace MWInput
                 control = mInputBinder->getChannel(i)->getAttachedControls().front().control;
             }
 
-            if (!controlExists || force
-                || (mInputBinder->getKeyBinding(control, ICS::Control::INCREASE) == SDL_SCANCODE_UNKNOWN
-                    && mInputBinder->getMouseButtonBinding(control, ICS::Control::INCREASE) == ICS_MAX_DEVICE_BUTTONS
-                    && mInputBinder->getMouseWheelBinding(control, ICS::Control::INCREASE)
-                        == ICS::InputControlSystem::MouseWheelClick::UNASSIGNED))
+            // Only apply defaults for actions that were missing from the loaded config file (e.g. newly added actions),
+            // or when explicitly forced. Existing actions without bindings are treated as intentionally unbound.
+            if (force || !mControlLoadedFromFile[static_cast<std::size_t>(i)])
             {
                 clearAllKeyBindings(mInputBinder.get(), control);
 
@@ -409,11 +515,24 @@ namespace MWInput
                 control = mInputBinder->getChannel(i)->getAttachedControls().front().control;
             }
 
-            if (!controlExists || force
-                || (mInputBinder->getJoystickAxisBinding(control, sFakeDeviceId, ICS::Control::INCREASE)
-                        == ICS::InputControlSystem::UNASSIGNED
-                    && mInputBinder->getJoystickButtonBinding(control, sFakeDeviceId, ICS::Control::INCREASE)
-                        == ICS_MAX_DEVICE_BUTTONS))
+            const bool controlWasLoadedFromFile = mControlLoadedFromFile[static_cast<std::size_t>(i)];
+            const bool isHiddenAxisAction
+                = (i == A_LookUpDown || i == A_LookLeftRight || i == A_MoveForwardBackward || i == A_MoveLeftRight);
+            const bool hasControllerBinding
+                = mInputBinder->getJoystickAxisBinding(control, sFakeDeviceId, ICS::Control::INCREASE)
+                    != ICS::InputControlSystem::UNASSIGNED
+                || mInputBinder->getJoystickAxisBinding(control, sFakeDeviceId, ICS::Control::DECREASE)
+                    != ICS::InputControlSystem::UNASSIGNED
+                || mInputBinder->getJoystickButtonBinding(control, sFakeDeviceId, ICS::Control::INCREASE)
+                    != ICS_MAX_DEVICE_BUTTONS
+                || mInputBinder->getJoystickButtonBinding(control, sFakeDeviceId, ICS::Control::DECREASE)
+                    != ICS_MAX_DEVICE_BUTTONS;
+
+            // Only apply defaults for actions that were missing from the loaded config file (e.g. newly added actions),
+            // or when explicitly forced. Existing actions without bindings are treated as intentionally unbound.
+            //
+            // Hidden joystick axes (movement/look) are not exposed in the UI, so make sure they always have bindings.
+            if (force || !controlWasLoadedFromFile || (isHiddenAxisAction && !hasControllerBinding))
             {
                 clearAllControllerBindings(mInputBinder.get(), control);
 
@@ -682,6 +801,9 @@ namespace MWInput
 
     void BindingsManager::actionValueChanged(int action, float currentValue, float previousValue)
     {
+        if (isDetectingBindingState())
+            return;
+
         auto manager = MWBase::Environment::get().getInputManager();
         manager->resetIdleTime();
 

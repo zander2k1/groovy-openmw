@@ -1638,5 +1638,9 @@ to default Morrowind fonts. Check this box if you still prefer original fonts ov
         <source>Enable Software Mouse</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Nintendo Switch</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

@@ -2037,6 +2037,19 @@ namespace MWGui
                             focus = controllerFocus;
                     }
                 }
+                // In controller inventory modes, item tooltips should be based on the controller-focused item, not
+                // whichever widget currently has mouse focus (which can desync in scroll views).
+                if (controllerInventory && controllerActive && !winMgr->getCursorVisible())
+                {
+                    ItemStack item;
+                    bool allowedToUse = true;
+                    if (getControllerFocusedItem(activeControllerWindow, item, allowedToUse))
+                    {
+                        (void)item;
+                        (void)allowedToUse;
+                        focus = nullptr;
+                    }
+                }
                 if (controllerActive && !winMgr->getCursorVisible())
                 {
                     if (auto* alchemyWindow = dynamic_cast<AlchemyWindow*>(activeControllerWindow))

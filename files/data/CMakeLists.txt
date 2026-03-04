@@ -34,8 +34,12 @@ set(BUILTIN_DATA_FILES
     textures/omw_steam_button_view.dds
     textures/omw_steam_button_x.dds
     textures/omw_steam_button_y.dds
+    textures/omw_switch_button_a.dds
+    textures/omw_switch_button_b.dds
     textures/omw_switch_button_l.dds
     textures/omw_switch_button_r.dds
+    textures/omw_switch_button_x.dds
+    textures/omw_switch_button_y.dds
     textures/omw_switch_button_zl.dds
     textures/omw_switch_button_zr.dds
     textures/omw_xbox_button_lb.dds

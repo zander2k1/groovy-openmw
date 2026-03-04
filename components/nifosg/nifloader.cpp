@@ -282,14 +282,14 @@ namespace NifOsg
     {
     public:
         /// @param filename used for warning messages.
-        LoaderImpl(const std::filesystem::path& filename, unsigned int ver, unsigned int userver, unsigned int bethver)
+        LoaderImpl(const VFS::Path::Normalized& filename, unsigned int ver, unsigned int userver, unsigned int bethver)
             : mFilename(filename)
             , mVersion(ver)
             , mUserVersion(userver)
             , mBethVersion(bethver)
         {
         }
-        std::filesystem::path mFilename;
+        VFS::Path::Normalized mFilename;
         unsigned int mVersion, mUserVersion, mBethVersion;
         Resource::BgsmFileManager* mMaterialManager{ nullptr };
         Resource::ImageManager* mImageManager{ nullptr };
@@ -329,7 +329,7 @@ namespace NifOsg
             }
 
             Nif::ExtraList extraList = seq->getExtraList();
-            if (extraList.empty())
+            if (extraList.empty() || extraList[0].empty())
             {
                 Log(Debug::Warning) << "NIFFile Warning: NiSequenceStreamHelper has no text keys. File: "
                                     << nif.getFilename();
@@ -350,6 +350,9 @@ namespace NifOsg
             for (size_t i = 1; i < extraList.size() && !ctrl.empty(); i++, (ctrl = ctrl->mNext))
             {
                 Nif::ExtraPtr extra = extraList[i];
+                if (extra.empty())
+                    continue;
+
                 if (extra->mRecordType != Nif::RC_NiStringExtraData
                     || ctrl->mRecordType != Nif::RC_NiKeyframeController)
                 {
@@ -696,6 +699,9 @@ namespace NifOsg
 
             for (const auto& e : nifNode->getExtraList())
             {
+                if (e.empty())
+                    continue;
+
                 if (e->mRecordType == Nif::RC_NiTextKeyExtraData && args.mTextKeys)
                 {
                     const Nif::NiTextKeyExtraData* tk = static_cast<const Nif::NiTextKeyExtraData*>(e.getPtr());
@@ -1747,7 +1753,7 @@ namespace NifOsg
                 if (hasColors)
                     colors.emplace_back(elem.mVertColor[0], elem.mVertColor[1], elem.mVertColor[2], elem.mVertColor[3]);
                 if (hasUV)
-                    uvlist.emplace_back(halfToFloat(elem.mUV[0]), 1.0f - halfToFloat(elem.mUV[1]));
+                    uvlist.emplace_back(halfToFloat(elem.mUV[0]), halfToFloat(elem.mUV[1]));
             }
 
             if (!vertices.empty())
@@ -2051,7 +2057,6 @@ namespace NifOsg
             }
 
             image->setMipmapLevels(mipmapOffsets);
-            image->flipVertical();
 
             return image;
         }

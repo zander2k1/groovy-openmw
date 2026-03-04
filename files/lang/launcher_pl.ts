@@ -1653,5 +1653,9 @@ do domyślnych czcionek Morrowind. Zaznacz to pole, jeśli nadal wolisz oryginal
         <source>Enable Software Mouse</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Nintendo Switch</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

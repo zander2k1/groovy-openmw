@@ -818,7 +818,7 @@
             </Widget>
         </Widget>
         <Widget name="ScalingRestartHint" type="TextBox" skin="SandText" position="8 420 600 16" align="Left Bottom">
-            <Property key="Caption" value="Note: The game must be restarted for scaling changes to be applied after adjusting the resolution."/>
+            <Property key="Caption" value="Note: The game must be restarted for the new scaling preset to apply after adjusting the resolution."/>
             <Property key="TextAlign" value="Left"/>
         </Widget>
         <Widget type="AutoSizedButton" skin="MW_Button" position="320 420 56 24" align="Right Bottom" name="OkButton">
