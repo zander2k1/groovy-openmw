@@ -96,6 +96,7 @@ namespace MWGui
         void onKeyClicked(MyGUI::Widget* sender);
         void updateKeyCaptions();
         void updateActionCaptions();
+        void toggleMorePage();
         void updateControllerButtons();
         void reloadLayout();
         void toggleKeyboardLayout();

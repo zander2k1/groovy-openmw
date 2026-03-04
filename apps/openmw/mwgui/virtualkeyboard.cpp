@@ -440,11 +440,7 @@ namespace MWGui
                 updateKeyCaptions();
                 break;
             case Action::More:
-                mPage = mPage == 0 ? 1 : 0;
-                mShifted = false;
-                applyLayout();
-                updateActionCaptions();
-                updateControllerButtons();
+                toggleMorePage();
                 break;
             case Action::Space:
                 injectText(" ");
@@ -472,6 +468,16 @@ namespace MWGui
         mKeys[mKeyDone].mButton->setCaption(mCaptionDone);
     }
 
+    void VirtualKeyboard::toggleMorePage()
+    {
+        mPage = mPage == 0 ? 1 : 0;
+        mShifted = false;
+        applyLayout();
+        updateActionCaptions();
+        selectNav(mNavRow, mNavCol);
+        updateControllerButtons();
+    }
+
     void VirtualKeyboard::updateControllerButtons()
     {
         if (!Settings::gui().mControllerMenus)
@@ -484,20 +490,17 @@ namespace MWGui
         mControllerButtons.mY = "#{Interface:KeyboardSpace}";
 
         if (mPage == 0)
-        {
-            mControllerButtons.mR1 = "#{Interface:KeyboardNext}";
-            mControllerButtons.mL1.clear();
-        }
+            mControllerButtons.mR2 = "#{Interface:KeyboardNext}";
         else
-        {
-            mControllerButtons.mL1 = "#{Interface:KeyboardPrev}";
-            mControllerButtons.mR1.clear();
-        }
+            mControllerButtons.mR2 = "#{Interface:KeyboardPrev}";
 
         if (hasSecondaryLayout())
-            mControllerButtons.mR2 = "#{Interface:KeyboardLanguage}";
+            mControllerButtons.mR1 = "#{Interface:KeyboardLanguage}";
         else
-            mControllerButtons.mR2.clear();
+            mControllerButtons.mR1.clear();
+
+        mControllerButtons.mL1.clear();
+        mControllerButtons.mL2.clear();
 
         MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
     }
@@ -883,14 +886,12 @@ namespace MWGui
     {
         if (arg.axis != SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
             return false;
-        if (!hasSecondaryLayout())
-            return false;
 
         const bool pressed = arg.value >= 32000;
         if (pressed && !mRightTriggerPressed)
         {
             mRightTriggerPressed = true;
-            toggleKeyboardLayout();
+            toggleMorePage();
         }
         else if (!pressed && arg.value <= 16000)
         {
@@ -1051,13 +1052,14 @@ namespace MWGui
             }
             return true;
         }
-        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
-            mPage = mPage == 0 ? 1 : 0;
-            mShifted = false;
-            applyLayout();
-            updateActionCaptions();
-            updateControllerButtons();
+            if (hasSecondaryLayout())
+                toggleKeyboardLayout();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        {
             return true;
         }
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
