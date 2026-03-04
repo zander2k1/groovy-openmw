@@ -550,6 +550,7 @@ namespace
             setVisible(TopicsList, true);
 
             mTopicsMode = true;
+            mSelectedQuest = 0;
 
             Gui::MWList* list = getWidget<Gui::MWList>(TopicsList);
             list->clear();
@@ -565,12 +566,12 @@ namespace
             }
 
             list->adjustSize();
+            list->scrollToTop();
 
             if (Settings::gui().mControllerMenus)
             {
-                addControllerButtons(list, mSelectedQuest);
-                const size_t focusedIndex = mButtons.empty() ? 0 : std::min(mSelectedQuest, mButtons.size() - 1);
-                setControllerFocusedQuest(focusedIndex);
+                addControllerButtons(list, 0);
+                setControllerFocusedQuest(0);
             }
 
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("book page"));
