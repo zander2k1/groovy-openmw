@@ -841,6 +841,47 @@ void OMW::Engine::prepareEngine()
     mEnvironment.setWorldModel(mWorld->getWorldModel());
     mEnvironment.setESMStore(mWorld->getStore());
 
+    const MWWorld::Store<ESM::GameSetting>* gmst = &mWorld->getStore().get<ESM::GameSetting>();
+    mL10nManager->setGmstLoader([gmst, misses = std::set<std::string, Misc::StringUtils::CiComp>()](
+                                    std::string_view gmstName) mutable -> const std::string* {
+        const ESM::GameSetting* res = gmst->search(gmstName);
+        if (res && res->mValue.getType() == ESM::VT_String)
+            return &res->mValue.getString();
+        if (misses.emplace(gmstName).second)
+            Log(Debug::Error) << "GMST " << gmstName << " not found";
+        return nullptr;
+    });
+
+    mWindowManager->setStore(mWorld->getStore());
+
+    // Load translation data
+    mTranslationDataStorage.setEncoder(mEncoder.get());
+    for (auto& mContentFile : mContentFiles)
+        mTranslationDataStorage.loadTranslationData(mFileCollections, mContentFile);
+
+    Compiler::registerExtensions(mExtensions);
+
+    // Create script system
+    mScriptContext = std::make_unique<MWScript::CompilerContext>(MWScript::CompilerContext::Type_Full);
+    mScriptContext->setExtensions(&mExtensions);
+
+    mScriptManager = std::make_unique<MWScript::ScriptManager>(mWorld->getStore(), *mScriptContext, mWarningsMode);
+    mEnvironment.setScriptManager(*mScriptManager);
+
+    // Create game mechanics system
+    mMechanicsManager = std::make_unique<MWMechanics::MechanicsManager>();
+    mEnvironment.setMechanicsManager(*mMechanicsManager);
+
+    // Create dialog system
+    mJournal = std::make_unique<MWDialogue::Journal>();
+    mEnvironment.setJournal(*mJournal);
+
+    mDialogueManager = std::make_unique<MWDialogue::DialogueManager>(mExtensions, mTranslationDataStorage);
+    mEnvironment.setDialogueManager(*mDialogueManager);
+
+    mLuaManager->loadPermanentStorage(mCfgMgr.getUserConfigPath());
+    mLuaManager->initPreLoad();
+
     Loading::Listener* listener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
     Loading::AsyncListener asyncListener(*listener);
     auto dataLoading = std::async(std::launch::async,
@@ -869,45 +910,8 @@ void OMW::Engine::prepareEngine()
     mEnvironment.setWorldScene(mWorld->getWorldScene());
     mWorld->setupPlayer();
     mWorld->setRandomSeed(mRandomSeed);
-
-    const MWWorld::Store<ESM::GameSetting>* gmst = &mWorld->getStore().get<ESM::GameSetting>();
-    mL10nManager->setGmstLoader([gmst, misses = std::set<std::string, Misc::StringUtils::CiComp>()](
-                                    std::string_view gmstName) mutable -> const std::string* {
-        const ESM::GameSetting* res = gmst->search(gmstName);
-        if (res && res->mValue.getType() == ESM::VT_String)
-            return &res->mValue.getString();
-        if (misses.emplace(gmstName).second)
-            Log(Debug::Error) << "GMST " << gmstName << " not found";
-        return nullptr;
-    });
-
-    mWindowManager->setStore(mWorld->getStore());
     mWindowManager->initUI();
-
-    // Load translation data
-    mTranslationDataStorage.setEncoder(mEncoder.get());
-    for (auto& mContentFile : mContentFiles)
-        mTranslationDataStorage.loadTranslationData(mFileCollections, mContentFile);
-
-    Compiler::registerExtensions(mExtensions);
-
-    // Create script system
-    mScriptContext = std::make_unique<MWScript::CompilerContext>(MWScript::CompilerContext::Type_Full);
-    mScriptContext->setExtensions(&mExtensions);
-
-    mScriptManager = std::make_unique<MWScript::ScriptManager>(mWorld->getStore(), *mScriptContext, mWarningsMode);
-    mEnvironment.setScriptManager(*mScriptManager);
-
-    // Create game mechanics system
-    mMechanicsManager = std::make_unique<MWMechanics::MechanicsManager>();
-    mEnvironment.setMechanicsManager(*mMechanicsManager);
-
-    // Create dialog system
-    mJournal = std::make_unique<MWDialogue::Journal>();
-    mEnvironment.setJournal(*mJournal);
-
-    mDialogueManager = std::make_unique<MWDialogue::DialogueManager>(mExtensions, mTranslationDataStorage);
-    mEnvironment.setDialogueManager(*mDialogueManager);
+    mLuaManager->initPostLoad();
 
     // scripts
     if (mCompileAll)
@@ -924,9 +928,6 @@ void OMW::Engine::prepareEngine()
             Log(Debug::Info) << "compiled " << result.second << " of " << result.first << " dialogue scripts ("
                              << 100 * static_cast<double>(result.second) / result.first << "%)";
     }
-
-    mLuaManager->loadPermanentStorage(mCfgMgr.getUserConfigPath());
-    mLuaManager->init();
 
     // starts a separate lua thread if "lua num threads" > 0
     mLuaWorker = std::make_unique<MWLua::Worker>(*mLuaManager);
