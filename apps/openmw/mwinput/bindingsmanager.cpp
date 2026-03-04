@@ -782,6 +782,82 @@ namespace MWInput
 
     void BindingsManager::controllerAxisMoved(int deviceID, const SDL_ControllerAxisEvent& arg)
     {
+        constexpr float triggerPressThreshold = 0.6f;
+        constexpr float triggerReleaseThreshold = 0.5f;
+
+        auto normalizeTriggerValue = [](Sint16 value) -> float {
+            const float max = 32767.f;
+            if (value <= 0)
+                return 0.f;
+            return std::min(1.f, static_cast<float>(value) / max);
+        };
+
+        const bool triggerAxis
+            = arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT;
+        if (triggerAxis)
+        {
+            auto inputManager = MWBase::Environment::get().getInputManager();
+            const bool joystickUsed
+                = inputManager->joystickLastUsed() && inputManager->getControlSwitch("playercontrols");
+
+            const bool toggleWeapon = actionIsActive(A_ToggleWeapon);
+            const bool toggleSpell = actionIsActive(A_ToggleSpell);
+            const bool chordActive = joystickUsed && (toggleWeapon || toggleSpell);
+
+            const float norm = normalizeTriggerValue(arg.value);
+            const bool pressed = norm > triggerPressThreshold;
+            const bool released = norm < triggerReleaseThreshold;
+
+            if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+            {
+                if (chordActive && pressed && !mLeftTriggerChordPressed)
+                {
+                    const int cycleAction = toggleWeapon ? A_CycleWeaponLeft : A_CycleSpellLeft;
+                    inputManager->executeAction(cycleAction);
+                    if (toggleWeapon)
+                        mToggleWeaponChorded = true;
+                    else
+                        mToggleSpellChorded = true;
+                }
+
+                mLeftTriggerChordPressed = pressed;
+                if (chordActive && pressed)
+                    mIgnoreLeftTriggerUntilRelease = true;
+                if (released)
+                    mIgnoreLeftTriggerUntilRelease = false;
+
+                if (chordActive || mIgnoreLeftTriggerUntilRelease)
+                {
+                    if (!released)
+                        return;
+                }
+            }
+            else // SDL_CONTROLLER_AXIS_TRIGGERRIGHT
+            {
+                if (chordActive && pressed && !mRightTriggerChordPressed)
+                {
+                    const int cycleAction = toggleWeapon ? A_CycleWeaponRight : A_CycleSpellRight;
+                    inputManager->executeAction(cycleAction);
+                    if (toggleWeapon)
+                        mToggleWeaponChorded = true;
+                    else
+                        mToggleSpellChorded = true;
+                }
+
+                mRightTriggerChordPressed = pressed;
+                if (chordActive && pressed)
+                    mIgnoreRightTriggerUntilRelease = true;
+                if (released)
+                    mIgnoreRightTriggerUntilRelease = false;
+
+                if (chordActive || mIgnoreRightTriggerUntilRelease)
+                {
+                    if (!released)
+                        return;
+                }
+            }
+        }
+
         mInputBinder->axisMoved(deviceID, arg);
     }
 
@@ -837,26 +913,8 @@ namespace MWInput
                 }
             }
 
-            if (action == A_Use && actionIsActive(A_ToggleWeapon))
-            {
-                action = A_CycleWeaponRight;
-                mToggleWeaponChorded = true;
-            }
-            else if (action == A_Use && actionIsActive(A_ToggleSpell))
-            {
-                action = A_CycleSpellRight;
-                mToggleSpellChorded = true;
-            }
-            else if (action == A_Jump && actionIsActive(A_ToggleWeapon))
-            {
-                action = A_CycleWeaponLeft;
-                mToggleWeaponChorded = true;
-            }
-            else if (action == A_Jump && actionIsActive(A_ToggleSpell))
-            {
-                action = A_CycleSpellLeft;
-                mToggleSpellChorded = true;
-            }
+            // Cycling weapon/spell while holding toggle is bound to the physical controller triggers (LT/RT)
+            // and is handled in controllerAxisMoved. Do not derive this chord from configurable actions like Jump/Use.
         }
 
         if (previousValue <= 0.6 && currentValue > 0.6)

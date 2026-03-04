@@ -80,6 +80,11 @@ namespace MWInput
         bool mDragDrop;
         bool mToggleWeaponChorded = false;
         bool mToggleSpellChorded = false;
+
+        bool mLeftTriggerChordPressed = false;
+        bool mRightTriggerChordPressed = false;
+        bool mIgnoreLeftTriggerUntilRelease = false;
+        bool mIgnoreRightTriggerUntilRelease = false;
     };
 }
 #endif
