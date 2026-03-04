@@ -479,7 +479,7 @@ namespace MWGui
 
         mControllerButtons.mDpad.clear();
         mControllerButtons.mA = "#{Interface:KeyboardSelect}";
-        mControllerButtons.mB = "#{Interface:KeyboardBack}";
+        mControllerButtons.mB = "#{Interface:Back}";
         mControllerButtons.mX = "#{Interface:KeyboardDelete}";
         mControllerButtons.mY = "#{Interface:KeyboardSpace}";
 

@@ -63,12 +63,16 @@ namespace MWGui
         if (mControllerOpensKeyboard)
         {
             mControllerButtons.mA = "#{Interface:ShowKeyboard}";
-            mControllerButtons.mB = "#{Interface:Done}";
+            mControllerButtons.mX = "#{Interface:Done}";
+            mControllerButtons.mB.clear();
+            mControllerButtons.mXAfterB = true;
         }
         else
         {
             mControllerButtons.mA = "#{Interface:OK}";
+            mControllerButtons.mX.clear();
             mControllerButtons.mB.clear();
+            mControllerButtons.mXAfterB = false;
         }
     }
 
@@ -163,7 +167,7 @@ namespace MWGui
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
             return true;
         }
-        if (arg.button == SDL_CONTROLLER_BUTTON_B && mControllerOpensKeyboard)
+        if (arg.button == SDL_CONTROLLER_BUTTON_X && mControllerOpensKeyboard)
         {
             onOkClicked(nullptr);
             MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Menu Click"));
