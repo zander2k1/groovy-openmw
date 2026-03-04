@@ -40,6 +40,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "alchemywindow.hpp"
+#include "birth.hpp"
 #include "class.hpp"
 #include "companionwindow.hpp"
 #include "confirmationdialog.hpp"
@@ -1622,6 +1623,10 @@ namespace MWGui
                 return merchantRepairWindow->getControllerFocusTooltipWidget();
             if (auto* createClassDialog = dynamic_cast<CreateClassDialog*>(activeWindow))
                 return createClassDialog->getControllerFocusTooltipWidget();
+            if (auto* pickClassDialog = dynamic_cast<PickClassDialog*>(activeWindow))
+                return pickClassDialog->getControllerFocusTooltipWidget();
+            if (auto* birthDialog = dynamic_cast<BirthDialog*>(activeWindow))
+                return birthDialog->getControllerFocusTooltipWidget();
             if (auto* selectAttributeDialog = dynamic_cast<SelectAttributeDialog*>(activeWindow))
                 return selectAttributeDialog->getControllerFocusTooltipWidget();
             if (auto* selectSpecializationDialog = dynamic_cast<SelectSpecializationDialog*>(activeWindow))

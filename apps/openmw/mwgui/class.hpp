@@ -123,6 +123,8 @@ namespace MWGui
 
         bool exit() override { return false; }
 
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
+
         // Events
         typedef MyGUI::delegates::MultiDelegate<> EventHandle_Void;
 

@@ -205,6 +205,7 @@ namespace MWGui
         {
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
+            mControllerButtons.mY = "#{Interface:Info}";
         }
 
         updateClasses();
@@ -271,6 +272,11 @@ namespace MWGui
 
         updateStats();
         updateControllerListHighlight(mClassList, mControllerHighlight);
+    }
+
+    MyGUI::Widget* PickClassDialog::getControllerFocusTooltipWidget() const
+    {
+        return mClassList;
     }
 
     // widget controls
@@ -370,6 +376,10 @@ namespace MWGui
         const ESM::Class* currentClass = store.get<ESM::Class>().search(mCurrentClassId);
         if (!currentClass)
             return;
+
+        ToolTips::createClassToolTip(mClassList, *currentClass);
+        mClassList->setUserString("CollapsedLabel", "#{sClass}");
+        mClassList->setUserString("CollapsedValue", currentClass->mName);
 
         ESM::Class::Specialization specialization
             = static_cast<ESM::Class::Specialization>(currentClass->mData.mSpecialization);
