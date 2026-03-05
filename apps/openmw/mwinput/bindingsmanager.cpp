@@ -1,5 +1,6 @@
 #include "bindingsmanager.hpp"
 
+#include <algorithm>
 #include <filesystem>
 
 #include <MyGUI_EditBox.h>
@@ -783,13 +784,15 @@ namespace MWInput
     void BindingsManager::controllerAxisMoved(int deviceID, const SDL_ControllerAxisEvent& arg)
     {
         constexpr float triggerPressThreshold = 0.6f;
-        constexpr float triggerReleaseThreshold = 0.5f;
+        constexpr float triggerReleaseThreshold = 0.55f;
 
         auto normalizeTriggerValue = [](Sint16 value) -> float {
-            const float max = 32767.f;
-            if (value <= 0)
-                return 0.f;
-            return std::min(1.f, static_cast<float>(value) / max);
+            // SDL controller triggers are reported as axes in the range [0..32767]. Our input system normalizes
+            // axes from [-32768..32767] into [0..1], which makes the trigger "rest" position 0.5.
+            constexpr float min = -32768.f;
+            constexpr float range = 65535.f;
+            const float normalized = (static_cast<float>(value) - min) / range;
+            return std::clamp(normalized, 0.f, 1.f);
         };
 
         const bool triggerAxis
@@ -889,6 +892,33 @@ namespace MWInput
         const bool joystickUsed = manager->joystickLastUsed() && manager->getControlSwitch("playercontrols");
         if (joystickUsed)
         {
+            auto isActionBoundToAxis = [this](int actionId, int axis) -> bool {
+                auto* channel = mInputBinder->getChannel(actionId);
+                if (channel->getControlsCount() == 0)
+                    return false;
+
+                for (const auto& attached : channel->getAttachedControls())
+                {
+                    ICS::Control* control = attached.control;
+                    if (mInputBinder->getJoystickAxisBinding(control, sFakeDeviceId, ICS::Control::INCREASE) == axis)
+                        return true;
+                    if (mInputBinder->getJoystickAxisBinding(control, sFakeDeviceId, ICS::Control::DECREASE) == axis)
+                        return true;
+                }
+
+                return false;
+            };
+
+            if (previousValue <= 0.6f && currentValue > 0.6f)
+            {
+                // If a trigger press was used as a chord (X/Y + LT/RT), suppress the normal action bound to that
+                // trigger so it doesn't fire (e.g. jump/attack).
+                if (mIgnoreLeftTriggerUntilRelease && isActionBoundToAxis(action, SDL_CONTROLLER_AXIS_TRIGGERLEFT))
+                    return;
+                if (mIgnoreRightTriggerUntilRelease && isActionBoundToAxis(action, SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
+                    return;
+            }
+
             if (action == A_ToggleWeapon || action == A_ToggleSpell)
             {
                 // Let chorded inputs win: toggle only on release if no chord fired.
