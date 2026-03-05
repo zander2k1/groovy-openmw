@@ -1667,5 +1667,9 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <source>Active Config Directories</source>
         <translation></translation>
     </message>
+    <message>
+        <source>GameCube</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

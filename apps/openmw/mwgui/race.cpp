@@ -124,7 +124,10 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:OK}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Sex}";
-            mControllerButtons.mL1 = "#{Interface:Hair}";
+            if (Settings::input().mControllerIconStyle.get() == "gamecube")
+                mControllerButtons.mY = "#{Interface:Hair}";
+            else
+                mControllerButtons.mL1 = "#{Interface:Hair}";
             mControllerButtons.mR1 = "#{Interface:Face}";
         }
 
@@ -540,6 +543,7 @@ namespace MWGui
 
     bool RaceDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        const bool useGamecubeHairButton = Settings::input().mControllerIconStyle.get() == "gamecube";
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
             onBackClicked(mBackButton);
@@ -552,7 +556,11 @@ namespace MWGui
         {
             onSelectNextGender(nullptr);
         }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        else if (useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_Y)
+        {
+            onSelectNextHair(nullptr);
+        }
+        else if (!useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
         {
             onSelectNextHair(nullptr);
         }

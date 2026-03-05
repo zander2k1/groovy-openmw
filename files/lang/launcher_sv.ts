@@ -1690,5 +1690,9 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <source>Active Config Directories</source>
         <translation>Aktiva konfigurationskataloger</translation>
     </message>
+    <message>
+        <source>GameCube</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

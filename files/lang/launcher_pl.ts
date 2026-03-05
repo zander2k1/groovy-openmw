@@ -1693,5 +1693,9 @@ Logi i ustawienia zmienione za pomocą programu uruchamiającego i w grze zostan
         <source>Active Config Directories</source>
         <translation>Aktywne katalogi konfiguracyjne</translation>
     </message>
+    <message>
+        <source>GameCube</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

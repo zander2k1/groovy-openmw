@@ -1723,15 +1723,20 @@
                   <string>PlayStation</string>
                  </property>
                 </item>
-                <item>
-                 <property name="text">
-                  <string>Nintendo Switch</string>
-                 </property>
-                </item>
-               </widget>
-              </item>
-             </layout>
-            </item>
+                 <item>
+                  <property name="text">
+                   <string>Nintendo Switch</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>GameCube</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+              </layout>
+             </item>
             <item row="8" column="0">
              <widget class="QCheckBox" name="controllerWhiteBlackButtonIconsCheckBox">
               <property name="toolTip">

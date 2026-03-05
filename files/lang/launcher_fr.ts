@@ -1673,5 +1673,9 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <source>Active Config Directories</source>
         <translation>Dossier de configuration actif</translation>
     </message>
+    <message>
+        <source>GameCube</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
