@@ -876,7 +876,7 @@ Windows_Ninja_Release_NoSymbols:
     - .\ActivateMSVC.ps1
     - $env:CCACHE_IGNOREHEADERS = "$env:INCLUDE;$(Get-Location)\deps"
     - '$env:NINJA_STATUS = "[%s/%t %p :: %e] "'
-    - cmake --build . --config $config --target openmw openmw-launcher
+    - cmake --build . --config $config --target openmw openmw-launcher openmw-wizard openmw-iniimporter
     - ccache --show-stats -vv
     - Get-ChildItem -Recurse -Include *.pdb,*.ilk -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
     - cd $config
