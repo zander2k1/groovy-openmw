@@ -1238,9 +1238,9 @@ namespace MWGui
             case MWGui::GM_Container:
                 mControllerButtons.mA = "#{OMWEngine:InventorySelect}";
                 mControllerButtons.mB = "#{Interface:Close}";
-                mControllerButtons.mX = "#{Interface:Container}";
+                mControllerButtons.mX = "#{Interface:TakeAll}";
                 mControllerButtons.mY = "#{Interface:Info}";
-                mControllerButtons.mL2 = "#{Interface:TakeAll}";
+                mControllerButtons.mL2 = "#{Interface:Container}";
                 break;
             case MWGui::GM_Barter:
                 mControllerButtons.mA = "#{Interface:Sell}";

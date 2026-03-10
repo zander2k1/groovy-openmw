@@ -2,6 +2,7 @@
 #define OPENMW_LUAUI_WIDGETLIST
 
 #include <string>
+#include <string_view>
 #include <unordered_map>
 
 namespace LuaUi
@@ -12,6 +13,8 @@ namespace LuaUi
 
     void clearGameInterface();
     void clearMenuInterface();
+
+    bool isAnyElementVisibleOnLayer(std::string_view layerName);
 }
 
 #endif // OPENMW_LUAUI_WIDGETLIST

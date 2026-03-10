@@ -22,6 +22,7 @@
 
 #include <components/esm/records.hpp>
 #include <components/l10n/manager.hpp>
+#include <components/lua_ui/util.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/myguiplatform/scalinglayer.hpp>
@@ -203,6 +204,8 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         const GuiMode mode = winMgr->getMode();
         bool guiMode = winMgr->isGuiMode();
+        const bool luaUiWindowsVisible = LuaUi::isAnyElementVisibleOnLayer("Windows");
+
         CountDialog* countDialog = winMgr->getCountDialog();
         const bool countDialogVisible = countDialog && countDialog->isVisible();
         ConfirmationDialog* confirmDialog = winMgr->getConfirmationDialog();
@@ -1508,6 +1511,8 @@ namespace MWGui
         };
 
         auto showEmptyControllerBar = [&](const MyGUI::IntCoord& winRect, int width) {
+            if (luaUiWindowsVisible)
+                return;
             const int height = 28;
             const int posY = std::max(0, winRect.top - height - 4);
             mDynamicToolTipBox->setVisible(true);

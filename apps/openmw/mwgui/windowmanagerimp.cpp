@@ -1099,11 +1099,16 @@ namespace MWGui
 
             size_t activeIndex = std::clamp<size_t>(mActiveControllerWindows[mode], 0, state.mWindows.size() - 1);
 
-            // If the active window is no longer visible, find the next visible window.
-            if (!state.mWindows[activeIndex]->isVisible())
-                cycleActiveControllerWindow(true);
+            if (WindowBase* active = state.mWindows[activeIndex]; active && active->isVisible())
+                return active;
 
-            return state.mWindows[activeIndex];
+            for (WindowBase* window : state.mWindows)
+            {
+                if (window && window->isVisible())
+                    return window;
+            }
+
+            return nullptr;
         }
 
         return nullptr;
@@ -3114,6 +3119,20 @@ namespace MWGui
     {
         if (!Settings::gui().mControllerMenus || !mControllerButtonsOverlay)
             return;
+
+        static thread_local bool updating = false;
+        if (updating)
+            return;
+        struct UpdatingGuard
+        {
+            bool& mUpdating;
+            UpdatingGuard(bool& updatingFlag)
+                : mUpdating(updatingFlag)
+            {
+                mUpdating = true;
+            }
+            ~UpdatingGuard() { mUpdating = false; }
+        } guard(updating);
 
         if (mWindows.empty())
             return;
