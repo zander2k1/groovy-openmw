@@ -310,6 +310,7 @@ namespace MWGui
         , mInventoryTabsOverlay(nullptr)
         , mTranslationDataStorage(translationDataStorage)
         , mInputBlocker(nullptr)
+        , mLuaUiCursorCenter(nullptr)
         , mHudEnabled(true)
         , mCursorVisible(true)
         , mCursorActive(true)
@@ -402,6 +403,12 @@ namespace MWGui
 
         // hide mygui's pointer
         MyGUI::PointerManager::getInstance().setVisible(false);
+
+        mLuaUiCursorCenter
+            = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>({}, 0, 0, 4, 4, MyGUI::Align::Default, "Pointer");
+        mLuaUiCursorCenter->setVisible(false);
+        mLuaUiCursorCenter->setNeedMouseFocus(false);
+        mLuaUiCursorCenter->setNeedKeyFocus(false);
 
         mVideoBackground = MyGUI::Gui::getInstance().createWidgetReal<MyGUI::ImageBox>(
             "ImageBox", 0, 0, 1, 1, MyGUI::Align::Default, "Video");
@@ -1279,6 +1286,72 @@ namespace MWGui
 
     void WindowManager::update(float frameDuration)
     {
+        const bool luaUiWantsCursorNow = LuaUi::isAnyElementVisibleOnLayer("Windows")
+            || LuaUi::isAnyElementVisibleOnLayer("Dialogue") || LuaUi::isAnyElementVisibleOnLayer("JournalBooks")
+            || LuaUi::isAnyElementVisibleOnLayer("Modal") || LuaUi::isAnyElementVisibleOnLayer("Popup");
+        const bool shouldCenterLuaUiCursor = luaUiWantsCursorNow && !mLuaUiWantsCursor;
+
+        if (luaUiWantsCursorNow != mLuaUiWantsCursor)
+        {
+            mLuaUiWantsCursor = luaUiWantsCursorNow;
+
+            MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager();
+            if (mLuaUiWantsCursor)
+            {
+                if (inputManager != nullptr && !mHasSavedGamepadGuiCursorEnabled)
+                {
+                    mSavedGamepadGuiCursorEnabled = inputManager->isGamepadGuiCursorEnabled();
+                    mHasSavedGamepadGuiCursorEnabled = true;
+                }
+                if (inputManager != nullptr)
+                    inputManager->setGamepadGuiCursorEnabled(true);
+                setCursorActive(true);
+            }
+            else
+            {
+                if (inputManager != nullptr && mHasSavedGamepadGuiCursorEnabled)
+                    inputManager->setGamepadGuiCursorEnabled(mSavedGamepadGuiCursorEnabled);
+                mHasSavedGamepadGuiCursorEnabled = false;
+            }
+
+            updateVisible();
+            updateControllerButtonsOverlay();
+        }
+
+        if (mLuaUiWantsCursor)
+        {
+            if (MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager())
+                inputManager->setGamepadGuiCursorEnabled(true);
+            setCursorActive(true);
+            setCursorVisible(true);
+        }
+
+        auto centerLuaUiCursor = [this]() {
+            if (!mLuaUiWantsCursor || mLuaUiCursorCenter == nullptr)
+                return;
+
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            if (viewSize.width <= 0 || viewSize.height <= 0)
+                return;
+
+            setCursorActive(true);
+            setCursorVisible(true);
+
+            const int centerX = viewSize.width / 2;
+            const int centerY = viewSize.height / 2;
+
+            constexpr int widgetWidth = 4;
+            constexpr int widgetHeight = 4;
+            mLuaUiCursorCenter->setCoord(
+                centerX - widgetWidth / 2, centerY - widgetHeight / 4, widgetWidth, widgetHeight);
+
+            if (MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager())
+                inputManager->warpMouseToWidget(mLuaUiCursorCenter);
+
+            MyGUI::InputManager::getInstance().injectMouseMove(centerX, centerY, 0);
+            MyGUI::InputManager::getInstance().injectMouseMove(centerX, centerY, 0);
+        };
+
         handleScheduledMessageBoxes();
 
         bool gameRunning
@@ -1347,7 +1420,11 @@ namespace MWGui
             mInventoryTabsOverlay->onFrame(frameDuration);
 
         if (!gameRunning)
+        {
+            if (shouldCenterLuaUiCursor)
+                centerLuaUiCursor();
             return;
+        }
 
         // We should display message about crime only once per frame, even if there are several crimes.
         // Otherwise we will get message spam when stealing several items via Take All button.
@@ -1396,6 +1473,9 @@ namespace MWGui
         mStatsWatcher->update();
 
         cleanupGarbage();
+
+        if (shouldCenterLuaUiCursor)
+            centerLuaUiCursor();
     }
 
     void WindowManager::changeCell(const MWWorld::CellStore* cell)
@@ -1505,6 +1585,12 @@ namespace MWGui
 
     void WindowManager::setCursorVisible(bool visible)
     {
+        if (mLuaUiWantsCursor)
+        {
+            mCursorVisible = visible;
+            return;
+        }
+
         if (Settings::gui().mControllerMenus)
         {
             const GuiMode mode = getMode();
@@ -2117,7 +2203,8 @@ namespace MWGui
 
     bool WindowManager::isGuiMode() const
     {
-        return !mGuiModes.empty() || isConsoleMode() || isPostProcessorHudVisible() || isInteractiveMessageBoxActive();
+        return !mGuiModes.empty() || isConsoleMode() || isPostProcessorHudVisible() || isInteractiveMessageBoxActive()
+            || mLuaUiWantsCursor;
     }
 
     bool WindowManager::isConsoleMode() const
@@ -2291,6 +2378,8 @@ namespace MWGui
 
     bool WindowManager::getCursorVisible()
     {
+        if (mLuaUiWantsCursor)
+            return mCursorVisible;
         return mCursorVisible && mCursorActive;
     }
 
