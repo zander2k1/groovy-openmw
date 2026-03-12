@@ -1196,7 +1196,6 @@ namespace MWGui
             if (!mAvailableButtons.empty() && mType == Enchanting)
             {
                 MWBase::WindowManager& winMgr = *MWBase::Environment::get().getWindowManager();
-                winMgr.setCursorVisible(!winMgr.getControllerTooltipVisible());
                 mAvailableButtons[0]->setStateSelected(true);
                 if (Settings::gui().mControllerMenus)
                     mAvailableEffectsList->setItemHighlightVisible(0, true);
@@ -1533,8 +1532,6 @@ namespace MWGui
         }
         else
             return true;
-
-        winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
 
         // Scroll the list to keep the active item in view
         if (mAvailableFocus <= 5)

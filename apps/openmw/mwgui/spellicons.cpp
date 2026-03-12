@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <set>
 #include <sstream>
 
 #include <MyGUI_ImageBox.h>
@@ -89,7 +90,6 @@ namespace MWGui
     {
         for (auto& [effectId, widget] : mWidgetMap)
         {
-            widget->setVisible(false);
             widget->setAlpha(1.f);
             widget->getUserData<ToolTipInfo>()->text.clear();
             widget->setUserString("ActiveEffectText", {});
@@ -103,6 +103,7 @@ namespace MWGui
         const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
         static const float fadeTime = store.get<ESM::GameSetting>().find("fMagicStartIconBlink")->mValue.getFloat();
 
+        std::set<ESM::RefId> activeEffects;
         std::map<ESM::RefId, float> maxDisplayDuration;
 
         const MWWorld::Ptr player = MWMechanics::getPlayer();
@@ -124,7 +125,7 @@ namespace MWGui
                     mWidgetMap[effectId] = createIcon(*parent, effect.mName, effect.mIcon, size);
 
                 MyGUI::ImageBox& widget = *mWidgetMap[effectId];
-                if (!widget.getVisible())
+                if (activeEffects.emplace(effectId).second)
                 {
                     widget.setPosition(horizontalOffset, verticalOffset);
                     widget.setVisible(true);
@@ -187,6 +188,12 @@ namespace MWGui
             parent->setSize(newWidth, parent->getHeight());
             if (anchorRight)
                 parent->setPosition(parent->getLeft() + diff, parent->getTop());
+        }
+
+        for (auto& [effectId, widget] : mWidgetMap)
+        {
+            if (!activeEffects.contains(effectId))
+                widget->setVisible(false);
         }
     }
 

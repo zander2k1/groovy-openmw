@@ -2,6 +2,7 @@
 #define MWGUI_SPELLICONS_H
 
 #include <map>
+#include <vector>
 
 #include <components/esm/refid.hpp>
 
