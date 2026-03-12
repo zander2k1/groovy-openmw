@@ -124,7 +124,7 @@ namespace MWGui
             text = &book.get<ESM4::Book>()->mBase->mText;
         bool shrinkTextAtLastTag = book.getType() == ESM::REC_BOOK;
 
-        Formatting::BookFormatter formatter;
+        Formatting::BookFormatter formatter(/*useDialogueBoldFont=*/true);
         mPages = formatter.markupToWidget(mLeftPage, *text, shrinkTextAtLastTag);
         formatter.markupToWidget(mRightPage, *text, shrinkTextAtLastTag);
 

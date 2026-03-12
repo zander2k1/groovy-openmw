@@ -62,7 +62,20 @@ namespace MWGui
             text = &scroll.get<ESM4::Book>()->mBase->mText;
         bool shrinkTextAtLastTag = scroll.getType() == ESM::REC_BOOK;
 
-        Formatting::BookFormatter formatter;
+        bool isMagicScroll = false;
+        if (scroll.getType() == ESM::REC_BOOK)
+        {
+            const ESM::Book* book = scroll.get<ESM::Book>()->mBase;
+            isMagicScroll = book && book->mData.mIsScroll && !book->mEnchant.empty();
+        }
+        else if (scroll.getType() == ESM::REC_BOOK4)
+        {
+            const ESM4::Book* book = scroll.get<ESM4::Book>()->mBase;
+            isMagicScroll
+                = book && (book->mData.flags & ESM4::Book::Flag_Scroll) && !book->mEnchantment.isZeroOrUnset();
+        }
+
+        Formatting::BookFormatter formatter(/*useDialogueBoldFont=*/!isMagicScroll);
         formatter.markupToWidget(mTextView, *text, 390, mTextView->getHeight(), shrinkTextAtLastTag);
         MyGUI::IntSize size = mTextView->getChildAt(0)->getSize();
 
