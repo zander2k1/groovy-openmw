@@ -583,23 +583,28 @@ namespace MWGui
                 mControllerFocus--;
             else if (button == mMagnitudeMinValue)
             {
-                mMagnitudeMinSlider->setScrollPosition(mMagnitudeMinSlider->getScrollPosition() - 1);
+                const size_t pos = mMagnitudeMinSlider->getScrollPosition();
+                mMagnitudeMinSlider->setScrollPosition(pos > 0 ? pos - 1 : 0);
                 onMagnitudeMinChanged(nullptr, mMagnitudeMinSlider->getScrollPosition());
             }
             else if (button == mMagnitudeMaxValue)
             {
-                mMagnitudeMaxSlider->setScrollPosition(
-                    std::max(mMagnitudeMaxSlider->getScrollPosition() - 1, mMagnitudeMinSlider->getScrollPosition()));
+                const size_t minPos = mMagnitudeMinSlider->getScrollPosition();
+                const size_t maxPos = mMagnitudeMaxSlider->getScrollPosition();
+                const size_t newPos = std::max(maxPos > 0 ? maxPos - 1 : 0, minPos);
+                mMagnitudeMaxSlider->setScrollPosition(newPos);
                 onMagnitudeMaxChanged(nullptr, mMagnitudeMaxSlider->getScrollPosition());
             }
             else if (button == mDurationValue)
             {
-                mDurationSlider->setScrollPosition(mDurationSlider->getScrollPosition() - 1);
+                const size_t pos = mDurationSlider->getScrollPosition();
+                mDurationSlider->setScrollPosition(pos > 0 ? pos - 1 : 0);
                 onDurationChanged(nullptr, mDurationSlider->getScrollPosition());
             }
             else if (button == mAreaValue)
             {
-                mAreaSlider->setScrollPosition(mAreaSlider->getScrollPosition() - 1);
+                const size_t pos = mAreaSlider->getScrollPosition();
+                mAreaSlider->setScrollPosition(pos > 0 ? pos - 1 : 0);
                 onAreaChanged(nullptr, mAreaSlider->getScrollPosition());
             }
         }
@@ -613,23 +618,34 @@ namespace MWGui
                 mControllerFocus++;
             else if (button == mMagnitudeMinValue)
             {
-                mMagnitudeMinSlider->setScrollPosition(
-                    std::min(mMagnitudeMinSlider->getScrollPosition() + 1, mMagnitudeMaxSlider->getScrollPosition()));
+                const size_t maxPos = mMagnitudeMaxSlider->getScrollPosition();
+                const size_t pos = mMagnitudeMinSlider->getScrollPosition();
+                mMagnitudeMinSlider->setScrollPosition(std::min(pos + 1, maxPos));
                 onMagnitudeMinChanged(nullptr, mMagnitudeMinSlider->getScrollPosition());
             }
             else if (button == mMagnitudeMaxValue)
             {
-                mMagnitudeMaxSlider->setScrollPosition(mMagnitudeMaxSlider->getScrollPosition() + 1);
+                const size_t range = mMagnitudeMaxSlider->getScrollRange();
+                const size_t minPos = mMagnitudeMinSlider->getScrollPosition();
+                const size_t pos = mMagnitudeMaxSlider->getScrollPosition();
+                const size_t maxAllowed = range > 0 ? range - 1 : 0;
+                mMagnitudeMaxSlider->setScrollPosition(std::max(minPos, std::min(pos + 1, maxAllowed)));
                 onMagnitudeMaxChanged(nullptr, mMagnitudeMaxSlider->getScrollPosition());
             }
             else if (button == mDurationValue)
             {
-                mDurationSlider->setScrollPosition(mDurationSlider->getScrollPosition() + 1);
+                const size_t range = mDurationSlider->getScrollRange();
+                const size_t pos = mDurationSlider->getScrollPosition();
+                const size_t maxAllowed = range > 0 ? range - 1 : 0;
+                mDurationSlider->setScrollPosition(std::min(pos + 1, maxAllowed));
                 onDurationChanged(nullptr, mDurationSlider->getScrollPosition());
             }
             else if (button == mAreaValue)
             {
-                mAreaSlider->setScrollPosition(mAreaSlider->getScrollPosition() + 1);
+                const size_t range = mAreaSlider->getScrollRange();
+                const size_t pos = mAreaSlider->getScrollPosition();
+                const size_t maxAllowed = range > 0 ? range - 1 : 0;
+                mAreaSlider->setScrollPosition(std::min(pos + 1, maxAllowed));
                 onAreaChanged(nullptr, mAreaSlider->getScrollPosition());
             }
         }
