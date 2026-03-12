@@ -55,29 +55,39 @@ namespace MWGui
         MWWorld::Ptr player = MWMechanics::getPlayer();
         bool showTakeButton = scroll.getContainerStore() != &player.getClass().getContainerStore(player);
 
-        const std::string* text;
-        if (scroll.getType() == ESM::REC_BOOK)
-            text = &scroll.get<ESM::Book>()->mBase->mText;
-        else
-            text = &scroll.get<ESM4::Book>()->mBase->mText;
-        bool shrinkTextAtLastTag = scroll.getType() == ESM::REC_BOOK;
+        static const std::string kEmptyText;
+        const std::string* text = &kEmptyText;
+        const bool shrinkTextAtLastTag = scroll.getType() == ESM::REC_BOOK;
 
         bool isMagicScroll = false;
         if (scroll.getType() == ESM::REC_BOOK)
         {
-            const ESM::Book* book = scroll.get<ESM::Book>()->mBase;
-            isMagicScroll = book && book->mData.mIsScroll && !book->mEnchant.empty();
+            const auto* ref = scroll.get<ESM::Book>();
+            const ESM::Book* book = ref ? ref->mBase : nullptr;
+            if (book)
+            {
+                text = &book->mText;
+                isMagicScroll = book->mData.mIsScroll && !book->mEnchant.empty();
+            }
         }
         else if (scroll.getType() == ESM::REC_BOOK4)
         {
-            const ESM4::Book* book = scroll.get<ESM4::Book>()->mBase;
-            isMagicScroll
-                = book && (book->mData.flags & ESM4::Book::Flag_Scroll) && !book->mEnchantment.isZeroOrUnset();
+            const auto* ref = scroll.get<ESM4::Book>();
+            const ESM4::Book* book = ref ? ref->mBase : nullptr;
+            if (book)
+            {
+                text = &book->mText;
+                isMagicScroll = (book->mData.flags & ESM4::Book::Flag_Scroll) && !book->mEnchantment.isZeroOrUnset();
+            }
         }
 
         Formatting::BookFormatter formatter(/*useDialogueBoldFont=*/!isMagicScroll);
         formatter.markupToWidget(mTextView, *text, 390, mTextView->getHeight(), shrinkTextAtLastTag);
-        MyGUI::IntSize size = mTextView->getChildAt(0)->getSize();
+        MyGUI::IntSize size;
+        if (mTextView->getChildCount() > 0)
+            size = mTextView->getChildAt(0)->getSize();
+        else
+            size = MyGUI::IntSize(0, 0);
 
         // Canvas size must be expressed with VScroll disabled, otherwise MyGUI would expand the scroll area when the
         // scrollbar is hidden
