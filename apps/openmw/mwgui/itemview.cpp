@@ -345,12 +345,6 @@ namespace MWGui
 
     void ItemView::updateControllerFocus(int prevFocus, int newFocus)
     {
-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
-        else
-            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
-
         if (!mItemCount || !mScrollView->getChildCount())
             return;
 
@@ -383,14 +377,10 @@ namespace MWGui
                 else
                     mScrollView->setViewOffset(MyGUI::IntPoint(-42 * (column - 3), 0));
 
+                MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->restoreControllerTooltips();
-
-                MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
-                const MyGUI::IntCoord coord = focused->getAbsoluteCoord();
-                const int mouseX = coord.left + coord.width / 2;
-                const int mouseY = coord.top + coord.height / 4;
-                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+                if (winMgr->getControllerTooltipVisible())
+                    MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
             }
         }
     }

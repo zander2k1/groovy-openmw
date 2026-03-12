@@ -550,13 +550,6 @@ namespace MWGui
         MyGUI::Widget* widget = mEffectWidgets[mEffectsFocus];
         if (!widget || !widget->getVisible())
             return;
-
-        MWBase::Environment::get().getInputManager()->warpMouseToWidget(widget);
-        const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
-        const int mouseX = coord.left + coord.width / 2;
-        const int mouseY = coord.top + coord.height / 2;
-        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
     }
 
     MyGUI::IntCoord SpellWindow::getFixedWindowCoord(const MyGUI::IntSize& viewSize) const

@@ -323,15 +323,6 @@ namespace MWGui
                 mControllerTabHighlight->setVisible(false);
             }
         }
-
-        MWBase::Environment::get().getInputManager()->warpMouseToWidget(widget);
-        const MyGUI::IntCoord coord = widget->getAbsoluteCoord();
-        const int mouseX = coord.left + coord.width / 2;
-        const int mouseY = coord.top + coord.height / 2;
-        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-        MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-        if (Settings::gui().mControllerMenus)
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
     }
 
     void TradeWindow::onNameFilterChanged(MyGUI::EditBox* sender)

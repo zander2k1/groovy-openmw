@@ -1250,18 +1250,6 @@ namespace MWGui
             scrollSkillViewToWidget(item.mTooltipWidget, item.mGroupHeader);
 
         winMgr->restoreControllerTooltips();
-
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
-        if (item.mTooltipWidget != nullptr)
-        {
-            MWBase::Environment::get().getInputManager()->warpMouseToWidget(item.mTooltipWidget);
-            const MyGUI::IntCoord coord = item.mTooltipWidget->getAbsoluteCoord();
-            const int mouseX = coord.left + coord.width / 2;
-            const int mouseY = coord.top + coord.height / 4;
-            MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-            MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-        }
     }
 
     bool ReviewDialog::isControllerWidgetFocused(MyGUI::TextBox* widget) const

@@ -459,12 +459,6 @@ namespace MWGui
 
     void SpellView::updateControllerFocus(size_t prevFocus, size_t newFocus)
     {
-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
-        else
-            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
-
         if (mButtons.empty())
             return;
 
@@ -498,14 +492,10 @@ namespace MWGui
                     mScrollView->setViewOffset(MyGUI::IntPoint(0, -lineHeight * (line - 5)));
                 }
 
+                MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
                 winMgr->restoreControllerTooltips();
-
-                MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
-                const MyGUI::IntCoord coord = focused->getAbsoluteCoord();
-                const int mouseX = coord.left + coord.width / 2;
-                const int mouseY = coord.top + coord.height / 4;
-                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
-                MyGUI::InputManager::getInstance().injectMouseMove(mouseX, mouseY, 0);
+                if (winMgr->getControllerTooltipVisible())
+                    MWBase::Environment::get().getInputManager()->warpMouseToWidget(focused);
             }
         }
     }

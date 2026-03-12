@@ -489,13 +489,15 @@ namespace MWGui
         std::unique_ptr<CharacterCreation> mCharGen;
 
         MyGUI::Widget* mInputBlocker;
-        MyGUI::Widget* mLuaUiCursorCenter;
 
         bool mHudEnabled;
         bool mLuaHudLayerVisible = true;
         bool mCursorVisible;
         bool mCursorActive;
         bool mLuaUiWantsCursor = false;
+        bool mHasSavedLuaUiCursorState = false;
+        bool mSavedLuaUiCursorVisible = true;
+        bool mSavedLuaUiCursorActive = true;
         bool mHasSavedGamepadGuiCursorEnabled = false;
         bool mSavedGamepadGuiCursorEnabled = false;
 
