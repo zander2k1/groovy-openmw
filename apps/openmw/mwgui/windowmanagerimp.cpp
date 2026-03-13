@@ -50,6 +50,7 @@
 #include <components/widgets/widgets.hpp>
 
 #include <components/misc/frameratelimiter.hpp>
+#include <components/misc/resourcehelpers.hpp>
 
 #include <components/l10n/manager.hpp>
 
@@ -1274,7 +1275,11 @@ namespace MWGui
         }
 
         if (winCount > 1)
-            playSound(ESM::RefId::stringRefId("Menu Size"));
+        {
+            MWBase::Environment::get().getSoundManager()->playSound(
+                Misc::ResourceHelpers::correctSoundPath(VFS::Path::Normalized("Fx\\inter\\menuNEWxbx.wav")), 0.6f, 1.0f,
+                MWSound::Type::Sfx, MWSound::PlayMode::NoEnvNoScaling);
+        }
     }
 
     void WindowManager::update(float frameDuration)
