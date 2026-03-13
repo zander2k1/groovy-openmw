@@ -838,8 +838,6 @@ macOS15_Xcode16_arm64:
     - MSVC2022_64_Ninja/**/*.ninja_log
     - "*_to-be-merged.txt"
     - "**/CMakeCache.txt"
-  # When CCache doesn't exist (e.g. first build on a fork), build takes more than 1h, which is the default for forks.
-  # This is capped at 2h by GitLab for Windows Shared Runners
   timeout: 2h
   variables:
     CCACHE_SIZE: 2.5G
@@ -851,12 +849,15 @@ macOS15_Xcode16_arm64:
   variables:
     config: "Release"
 
-Windows_Ninja_Release_NoSymbols:
+Windows_Ninja_Release_NoSymbols_One:
   extends:
     - .Windows_Ninja_Base
+  timeout: 2h
   variables:
     config: "Release"
     CCACHE_SIZE: 2G
+  tags:
+    - saas-windows-medium-amd64
   script:
     - Get-Volume
     - $time = (Get-Date -Format "HH:mm:ss")
@@ -876,7 +877,70 @@ Windows_Ninja_Release_NoSymbols:
     - .\ActivateMSVC.ps1
     - $env:CCACHE_IGNOREHEADERS = "$env:INCLUDE;$(Get-Location)\deps"
     - '$env:NINJA_STATUS = "[%s/%t %p :: %e] "'
-    - cmake --build . --config $config --target openmw openmw-launcher openmw-wizard openmw-iniimporter openmw-navmeshtool
+    - cmake --build . --config $config --target openmw openmw-launcher openmw-wizard openmw-iniimporter
+    - ccache --show-stats -vv
+    - Get-ChildItem -Recurse -Include *.pdb,*.ilk -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+  cache:
+    - key:
+        prefix: ninja-2022
+        files:
+          - CI/deps_versions.msvc.sh
+      paths:
+        - deps
+        - MSVC2022_64_Ninja/deps/Qt
+    - key:
+        prefix: ninja-2022-Release-NoSymbols
+        files:
+          - CI/deps_versions.msvc.sh
+      paths:
+        - ccache
+  artifacts:
+    when: always
+    expire_in: 1 day
+    paths:
+      - MSVC2022_64_Ninja/*.log
+      - MSVC2022_64_Ninja/**/*.log
+      - MSVC2022_64_Ninja/*.ninja_log
+      - MSVC2022_64_Ninja/**/*.ninja_log
+      - "**/CMakeCache.txt"
+      - MSVC2022_64_Ninja/
+    exclude:
+      - MSVC2022_64_Ninja/deps/
+
+Windows_Ninja_Release_NoSymbols_Two:
+  extends:
+    - .Windows_Ninja_Base
+  timeout: 2h
+  variables:
+    config: "Release"
+    CCACHE_SIZE: 2G
+  tags:
+    - local-runner
+    - windows
+    - ninja
+  needs:
+    - job: Windows_Ninja_Release_NoSymbols_One
+      artifacts: true
+  script:
+    - Get-Volume
+    - $time = (Get-Date -Format "HH:mm:ss")
+    - echo ${time}
+    - echo "started by ${GITLAB_USER_NAME}"
+    - $env:CCACHE_DIR = "$(Get-Location)\ccache"
+    - $env:CCACHE_DEPEND = "true"
+    - $env:CCACHE_INODECACHE = "true"
+    - $env:CCACHE_SLOPPINESS = "pch_defines, time_macros"
+    - New-Item -Type Directory -Force -Path $env:CCACHE_DIR
+    - ccache -z -M "${CCACHE_SIZE}"
+    - New-Item -Type Directory -Force -Path MSVC2022_64_Ninja\.cmake\api\v1\query
+    - New-Item -Type File -Force -Path MSVC2022_64_Ninja\.cmake\api\v1\query\codemodel-v2
+    - sh CI/before_script.msvc.sh -c $config -p Win64 -v 2022 -k -V -N -C
+    - cd MSVC2022_64_Ninja
+    - Get-Volume
+    - .\ActivateMSVC.ps1
+    - $env:CCACHE_IGNOREHEADERS = "$env:INCLUDE;$(Get-Location)\deps"
+    - '$env:NINJA_STATUS = "[%s/%t %p :: %e] "'
+    - cmake --build . --config $config
     - ccache --show-stats -vv
     - Get-ChildItem -Recurse -Include *.pdb,*.ilk -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
     - cd $config

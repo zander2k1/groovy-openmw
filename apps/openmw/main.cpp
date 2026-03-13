@@ -15,6 +15,10 @@
 
 #include <boost/program_options/variables_map.hpp>
 
+#if defined(__linux__)
+#include <cstdlib>
+#endif
+
 #if defined(_WIN32)
 #include <components/misc/windows.hpp>
 // makes __argc and __argv available on windows
@@ -258,6 +262,9 @@ extern "C" int SDL_main(int argc, char** argv)
 int main(int argc, char** argv)
 #endif
 {
+#if defined(__linux__)
+    ::setenv("SteamDeck", "0", /*overwrite*/ 1);
+#endif
     return Debug::wrapApplication(&runApplication, argc, argv, "OpenMW");
 }
 

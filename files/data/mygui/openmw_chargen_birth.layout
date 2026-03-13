@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 527 378" align="Center" name="_Main">
+    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 527 413" align="Center" name="_Main">
 
         <!-- Birthsign list -->
         <Widget type="ListBox" skin="MW_List" position="8 8 232 137" name="BirthsignList"/>
@@ -11,7 +11,7 @@
         </Widget>
 
         <!-- Spell list -->
-        <Widget type="ScrollView" skin="MW_ScrollView" position="8 160 507 170" align="Left Top" name="SpellArea">
+        <Widget type="ScrollView" skin="MW_ScrollView" position="8 160 507 205" align="Left Top" name="SpellArea">
             <Property key="CanvasAlign" value="Left"/>
         </Widget>>
 
