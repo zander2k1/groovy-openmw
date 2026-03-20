@@ -124,6 +124,8 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:OK}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Sex}";
+            mControllerButtons.mL2 = "#{Interface:Prev}";
+            mControllerButtons.mR2 = "#{Interface:Next}";
             if (Settings::input().mControllerIconStyle.get() == "gamecube")
                 mControllerButtons.mY = "#{Interface:Hair}";
             else
@@ -241,6 +243,13 @@ namespace MWGui
 
         mHeadRotateAxis = 0.f;
         mHeadRotateCarry = 0.f;
+
+        mLeftTriggerHeld = false;
+        mRightTriggerHeld = false;
+        mHairButtonPending = false;
+        mFaceButtonPending = false;
+        mHairChordUsed = false;
+        mFaceChordUsed = false;
     }
 
     // widget controls
@@ -544,6 +553,66 @@ namespace MWGui
     bool RaceDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
         const bool useGamecubeHairButton = Settings::input().mControllerIconStyle.get() == "gamecube";
+        const bool pressed = arg.state == SDL_PRESSED;
+        const bool released = arg.state == SDL_RELEASED;
+
+        if (!useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        {
+            if (pressed)
+            {
+                mHairButtonPending = true;
+                mHairChordUsed = false;
+                if (mLeftTriggerHeld)
+                {
+                    onSelectPreviousHair(nullptr);
+                    mHairChordUsed = true;
+                }
+                else if (mRightTriggerHeld)
+                {
+                    onSelectNextHair(nullptr);
+                    mHairChordUsed = true;
+                }
+            }
+            else if (released && mHairButtonPending)
+            {
+                if (!mHairChordUsed)
+                    onSelectNextHair(nullptr);
+                mHairButtonPending = false;
+                mHairChordUsed = false;
+            }
+            return true;
+        }
+
+        if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        {
+            if (pressed)
+            {
+                mFaceButtonPending = true;
+                mFaceChordUsed = false;
+                if (mLeftTriggerHeld)
+                {
+                    onSelectPreviousFace(nullptr);
+                    mFaceChordUsed = true;
+                }
+                else if (mRightTriggerHeld)
+                {
+                    onSelectNextFace(nullptr);
+                    mFaceChordUsed = true;
+                }
+            }
+            else if (released && mFaceButtonPending)
+            {
+                if (!mFaceChordUsed)
+                    onSelectNextFace(nullptr);
+                mFaceButtonPending = false;
+                mFaceChordUsed = false;
+            }
+            return true;
+        }
+
+        if (!pressed)
+            return true;
+
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
             onBackClicked(mBackButton);
@@ -559,14 +628,6 @@ namespace MWGui
         else if (useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_Y)
         {
             onSelectNextHair(nullptr);
-        }
-        else if (!useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
-        {
-            onSelectNextHair(nullptr);
-        }
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
-        {
-            onSelectNextFace(nullptr);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
@@ -586,6 +647,55 @@ namespace MWGui
 
     bool RaceDialog::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
+        constexpr int kTriggerPressThreshold = 16000;
+        constexpr int kTriggerReleaseThreshold = 8000;
+
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+        {
+            if (!mLeftTriggerHeld && arg.value >= kTriggerPressThreshold)
+            {
+                mLeftTriggerHeld = true;
+                if (mHairButtonPending)
+                {
+                    onSelectPreviousHair(nullptr);
+                    mHairChordUsed = true;
+                }
+                if (mFaceButtonPending)
+                {
+                    onSelectPreviousFace(nullptr);
+                    mFaceChordUsed = true;
+                }
+            }
+            else if (mLeftTriggerHeld && arg.value <= kTriggerReleaseThreshold)
+            {
+                mLeftTriggerHeld = false;
+            }
+            return true;
+        }
+
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+        {
+            if (!mRightTriggerHeld && arg.value >= kTriggerPressThreshold)
+            {
+                mRightTriggerHeld = true;
+                if (mHairButtonPending)
+                {
+                    onSelectNextHair(nullptr);
+                    mHairChordUsed = true;
+                }
+                if (mFaceButtonPending)
+                {
+                    onSelectNextFace(nullptr);
+                    mFaceChordUsed = true;
+                }
+            }
+            else if (mRightTriggerHeld && arg.value <= kTriggerReleaseThreshold)
+            {
+                mRightTriggerHeld = false;
+            }
+            return true;
+        }
+
         if (arg.axis == SDL_CONTROLLER_AXIS_RIGHTX)
         {
             constexpr float kAxisMax = 32767.f;

@@ -121,6 +121,13 @@ namespace MWGui
         float mHeadRotateCarry = 0.f;
         float mHeadRotateAxis = 0.f;
 
+        bool mLeftTriggerHeld = false;
+        bool mRightTriggerHeld = false;
+        bool mHairButtonPending = false;
+        bool mFaceButtonPending = false;
+        bool mHairChordUsed = false;
+        bool mFaceChordUsed = false;
+
         std::unique_ptr<MWRender::RaceSelectionPreview> mPreview;
         std::unique_ptr<MyGUI::ITexture> mPreviewTexture;
 

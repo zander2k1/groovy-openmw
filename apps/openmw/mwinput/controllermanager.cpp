@@ -21,6 +21,7 @@
 #include "../mwgui/bookwindow.hpp"
 #include "../mwgui/journalwindow.hpp"
 #include "../mwgui/mapwindow.hpp"
+#include "../mwgui/race.hpp"
 #include "../mwgui/windowbase.hpp"
 
 #include "actions.hpp"
@@ -677,6 +678,15 @@ namespace MWInput
             mRightShoulderHeld = false;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode() && Settings::gui().mControllerMenus)
         {
+            if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            {
+                MWGui::WindowBase* activeWindow
+                    = MWBase::Environment::get().getWindowManager()->getActiveControllerWindow();
+                if (activeWindow && activeWindow->isVisible()
+                    && dynamic_cast<MWGui::RaceDialog*>(activeWindow) != nullptr)
+                    activeWindow->onControllerButtonEvent(arg);
+            }
+
             if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
                 MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::ArrowUp);
             else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
@@ -900,6 +910,13 @@ namespace MWInput
         if (MyGUI::InputManager::getInstance().isModalAny()
             && (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
         {
+            if (Settings::gui().mControllerMenus)
+            {
+                MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+                if (topWin && topWin->isVisible())
+                    (void)topWin->onControllerThumbstickEvent(arg);
+            }
+
             mLeftTriggerPressed = false;
             mRightTriggerPressed = false;
             mLeftTriggerHoldTime = 0.f;
