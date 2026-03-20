@@ -199,6 +199,7 @@ namespace MWGui
         EditNoteDialog();
 
         void onOpen() override;
+        void onClose() override;
 
         void showDeleteButton(bool show);
         bool getDeleteButtonShown();
@@ -211,19 +212,19 @@ namespace MWGui
         EventHandle_Void eventOkClicked;
 
         ControllerButtons* getControllerButtons() override;
+        MyGUI::EditBox* getEditBox() const;
 
     private:
         void onCancelButtonClicked(MyGUI::Widget* sender);
         void onOkButtonClicked(MyGUI::Widget* sender);
         void onDeleteButtonClicked(MyGUI::Widget* sender);
 
-        MyGUI::TextBox* mTextEdit;
-        MyGUI::Button* mOkButton;
-        MyGUI::Button* mCancelButton;
-        MyGUI::Button* mDeleteButton;
+        MyGUI::EditBox* mTextEdit = nullptr;
+        MyGUI::Button* mOkButton = nullptr;
+        MyGUI::Button* mCancelButton = nullptr;
+        MyGUI::Button* mDeleteButton = nullptr;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
-        size_t mControllerFocus = 0;
     };
 
     class MapWindow : public MWGui::WindowPinnableBase, public LocalMapBase, public NoDrop
@@ -277,6 +278,7 @@ namespace MWGui
         void onMouseDrag(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onWorldButtonClicked(MyGUI::Widget* sender);
         void onMapDoubleClicked(MyGUI::Widget* sender);
+        void onGlobalMapDoubleClicked(MyGUI::Widget* sender);
         void onMapZoomed(MyGUI::Widget* sender, int rel);
         void zoomOnCursor(float speedDiff);
         void updateGlobalMap();
@@ -329,6 +331,7 @@ namespace MWGui
 
         std::map<std::string, MapMarkerType> mGlobalMapMarkersByName;
         std::map<MapMarkerType, std::vector<MapMarkerType>> mGlobalMapMarkers;
+        std::vector<MarkerWidget*> mGlobalCustomMarkerWidgets;
 
         EditNoteDialog mEditNoteDialog;
         ESM::CustomMarker mEditingMarker;

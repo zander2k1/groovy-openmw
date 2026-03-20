@@ -220,6 +220,8 @@ namespace MWGui
                 return dialog->getNameEdit();
             if (auto* dialog = dynamic_cast<TextInputDialog*>(window))
                 return dialog->getEditBox();
+            if (auto* dialog = dynamic_cast<EditNoteDialog*>(window))
+                return dialog->getEditBox();
             if (auto* dialog = dynamic_cast<CreateClassDialog*>(window))
                 return dialog->getEditName();
             if (auto* dialog = dynamic_cast<DescriptionDialog*>(window))
@@ -1590,14 +1592,9 @@ namespace MWGui
             {
                 if (mode == GM_Inventory)
                 {
-                    WindowBase* activeWindow = nullptr;
-                    auto it = mGuiModeStates.find(mode);
-                    if (it != mGuiModeStates.end() && !it->second.mWindows.empty())
-                    {
-                        const size_t index
-                            = std::clamp<size_t>(mActiveControllerWindows[mode], 0, it->second.mWindows.size() - 1);
-                        activeWindow = it->second.mWindows[index];
-                    }
+                    // Use the actual active controller window so modals (e.g. edit note dialog)
+                    // can override the map cursor visibility.
+                    WindowBase* activeWindow = getActiveControllerWindow();
                     visible = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
                 }
                 else
@@ -3241,6 +3238,7 @@ namespace MWGui
                 hidden->setVisibleNoStateChange(true);
             mVirtualKeyboard->setVisible(false);
             mVirtualKeyboard->clearTargetEdit();
+            mVirtualKeyboard->setTooltipSourceWindow(nullptr);
             mVirtualKeyboardHiddenWindows.clear();
             if (WindowBase* active = getActiveControllerWindow())
                 MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(
@@ -3258,8 +3256,8 @@ namespace MWGui
             || dynamic_cast<CreateClassDialog*>(topWin) != nullptr
             || dynamic_cast<DescriptionDialog*>(topWin) != nullptr || dynamic_cast<InventoryWindow*>(topWin) != nullptr
             || dynamic_cast<SpellWindow*>(topWin) != nullptr || dynamic_cast<TradeWindow*>(topWin) != nullptr
-            || dynamic_cast<SpellCreationDialog*>(topWin) != nullptr
-            || dynamic_cast<SaveGameDialog*>(topWin) != nullptr;
+            || dynamic_cast<SpellCreationDialog*>(topWin) != nullptr || dynamic_cast<SaveGameDialog*>(topWin) != nullptr
+            || dynamic_cast<EditNoteDialog*>(topWin) != nullptr;
         if (!supportsKeyboard)
             return false;
 
@@ -3319,6 +3317,8 @@ namespace MWGui
                 if (edit && !edit->getVisible())
                     edit = nullptr;
             }
+            else if (auto* editNoteDialog = dynamic_cast<EditNoteDialog*>(topWin))
+                edit = editNoteDialog->getEditBox();
         }
         if (!edit)
             return false;
@@ -3353,6 +3353,21 @@ namespace MWGui
         }
         mVirtualKeyboard->setTargetEdit(edit);
         setKeyFocusWidget(edit);
+
+        WindowBase* tooltipSourceWindow = topWin;
+        if (dynamic_cast<EditNoteDialog*>(topWin) != nullptr && getMode() == GM_Inventory)
+        {
+            for (WindowBase* window : getGuiModeWindows(GM_Inventory))
+            {
+                auto* mapWindow = dynamic_cast<MapWindow*>(window);
+                if (!mapWindow || !mapWindow->isVisible())
+                    continue;
+                tooltipSourceWindow = mapWindow;
+                break;
+            }
+        }
+        mVirtualKeyboard->setTooltipSourceWindow(tooltipSourceWindow);
+
         mVirtualKeyboard->setVisible(true);
         setCursorActive(false);
         MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);

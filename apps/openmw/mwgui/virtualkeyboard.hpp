@@ -25,6 +25,8 @@ namespace MWGui
 
         void setTargetEdit(MyGUI::EditBox* edit);
         void clearTargetEdit();
+        void setTooltipSourceWindow(WindowBase* window) { mTooltipSourceWindow = window; }
+        WindowBase* getTooltipSourceWindow() const { return mTooltipSourceWindow; }
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
@@ -58,6 +60,7 @@ namespace MWGui
 
         MyGUI::EditBox* mInputBar = nullptr;
         MyGUI::EditBox* mTargetEdit = nullptr;
+        WindowBase* mTooltipSourceWindow = nullptr;
         MyGUI::Widget* mControllerHighlight = nullptr;
         std::vector<KeySpec> mKeys;
         std::unordered_map<MyGUI::Widget*, size_t> mKeyLookup;

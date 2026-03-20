@@ -66,6 +66,7 @@
 #include "statswindow.hpp"
 #include "tradewindow.hpp"
 #include "trainingwindow.hpp"
+#include "virtualkeyboard.hpp"
 
 #include "itemmodel.hpp"
 
@@ -264,6 +265,15 @@ namespace MWGui
             if (tooltipWindow && tooltipWindow->isVisible())
                 activeControllerWindow = tooltipWindow;
         }
+        if (Settings::gui().mControllerMenus && winMgr->isVirtualKeyboardVisible() && controllerInventory)
+        {
+            if (auto* keyboard = dynamic_cast<VirtualKeyboard*>(winMgr->getActiveControllerWindow()))
+            {
+                WindowBase* tooltipWindow = keyboard->getTooltipSourceWindow();
+                if (tooltipWindow && tooltipWindow->isVisible())
+                    activeControllerWindow = tooltipWindow;
+            }
+        }
         if (Settings::gui().mControllerMenus && controllerInventory && winMgr->isInteractiveMessageBoxActive())
         {
             if (auto* invWindow = winMgr->getInventoryWindow())
@@ -360,6 +370,23 @@ namespace MWGui
             {
                 controllerWinRect = inventoryTooltipRect;
                 controllerTooltipWidth = inventoryTooltipWidth;
+            }
+        }
+
+        // Keep the controller tooltip bar anchored to the map window while editing notes,
+        // so it doesn't jump to the modal dialog's smaller size/position.
+        if (Settings::gui().mControllerMenus && mode == GM_Inventory
+            && dynamic_cast<EditNoteDialog*>(winMgr->getActiveControllerWindow()) != nullptr)
+        {
+            for (WindowBase* window : winMgr->getGuiModeWindows(GM_Inventory))
+            {
+                auto* mapWindow = dynamic_cast<MapWindow*>(window);
+                if (!mapWindow || !mapWindow->isVisible())
+                    continue;
+
+                controllerWinRect = mapWindow->mMainWidget->getAbsoluteCoord();
+                controllerTooltipWidth = controllerWinRect.width;
+                break;
             }
         }
         const bool suppressControllerBar = [&]() {
@@ -1889,7 +1916,7 @@ namespace MWGui
         };
         if (guiMode)
         {
-            const bool controllerActive = Settings::gui().mControllerMenus && !winMgr->isVirtualKeyboardVisible();
+            const bool controllerActive = Settings::gui().mControllerMenus;
             if (countDialogVisible && mode == GM_Alchemy)
             {
                 mFocusObject = MWWorld::Ptr();

@@ -300,6 +300,7 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_screen_fader.layout
     mygui/openmw_screen_fader_hit.layout
     mygui/openmw_edit_note.layout
+    mygui/openmw_edit_note_xbox.layout
     mygui/openmw_debug_window.layout
     mygui/openmw_debug_window.skin.xml
     mygui/openmw_postprocessor_hud.layout
