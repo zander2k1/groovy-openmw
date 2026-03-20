@@ -2267,7 +2267,35 @@ namespace MWGui
                     LocalMapBase::MarkerUserData data = *focus->getUserData<LocalMapBase::MarkerUserData>();
 
                     if (!data.isPositionExplored())
+                    {
+                        // Marker widgets can still receive focus when partially visible or outside explored areas.
+                        // In that case, ignore them for tooltip rendering so we don't hide the controller bar.
+                        if (controllerActive && !suppressControllerBar)
+                        {
+                            std::string cellName;
+                            if (MyGUI::Window* owner = getOwningWindow(focus))
+                            {
+                                const std::string ownerName = owner->getName();
+                                constexpr std::string_view kMainSuffix = "_Main";
+                                if (ownerName.size() > kMainSuffix.size() && ownerName.ends_with(kMainSuffix))
+                                {
+                                    const std::string prefix
+                                        = ownerName.substr(0, ownerName.size() - kMainSuffix.size());
+                                    if (MyGUI::Widget* eventBox = owner->findWidget(prefix + "EventBoxLocal"))
+                                    {
+                                        if (eventBox->isUserString("Caption_TextOneLine"))
+                                            cellName = std::string(eventBox->getUserString("Caption_TextOneLine"));
+                                    }
+                                }
+                            }
+
+                            if (!cellName.empty() && controllerForceCollapsed)
+                                renderCollapsedTextBar(cellName, tooltipWinRect, tooltipWidth);
+                            else
+                                showEmptyControllerBarForActive(activeControllerWindow);
+                        }
                         return;
+                    }
 
                     if (controllerForceCollapsed && renderCollapsedTextBar(data.caption, tooltipWinRect, tooltipWidth))
                         return;
