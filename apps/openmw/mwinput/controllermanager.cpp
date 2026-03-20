@@ -797,10 +797,9 @@ namespace MWInput
                 if (treatAsMouse && arg.button == SDL_CONTROLLER_BUTTON_A && winMgr->getControllerTooltipVisible())
                     treatAsMouse = false;
 
-                if (winMgr->isSettingsWindowVisible())
-                    mGamepadGuiCursorEnabled = true;
-                else
-                    mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
+                const bool settingsCursorOverride
+                    = winMgr->isSettingsWindowVisible() && !MyGUI::InputManager::getInstance().isModalAny();
+                mGamepadGuiCursorEnabled = settingsCursorOverride ? true : topWin->isGamepadCursorAllowed();
 
                 // Fall through to mouse click
                 if (mGamepadGuiCursorEnabled && treatAsMouse && arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -1071,10 +1070,9 @@ namespace MWInput
 
             if (topWin && topWin->isVisible())
             {
-                if (winMgr->isSettingsWindowVisible())
-                    mGamepadGuiCursorEnabled = true;
-                else
-                    mGamepadGuiCursorEnabled = topWin->isGamepadCursorAllowed();
+                const bool settingsCursorOverride
+                    = winMgr->isSettingsWindowVisible() && !MyGUI::InputManager::getInstance().isModalAny();
+                mGamepadGuiCursorEnabled = settingsCursorOverride ? true : topWin->isGamepadCursorAllowed();
 
                 if (!mGamepadGuiCursorEnabled)
                     winMgr->setCursorActive(false);
