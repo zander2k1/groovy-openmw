@@ -1677,5 +1677,13 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <source>GameCube</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use original Xbox tab order: Inventory, Magic, Map, Stats.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Tab Order</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

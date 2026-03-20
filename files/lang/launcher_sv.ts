@@ -1694,5 +1694,13 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <source>GameCube</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use original Xbox tab order: Inventory, Magic, Map, Stats.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Tab Order</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

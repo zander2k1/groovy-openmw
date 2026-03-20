@@ -1671,5 +1671,13 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <source>GameCube</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use original Xbox tab order: Inventory, Magic, Map, Stats.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Tab Order</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

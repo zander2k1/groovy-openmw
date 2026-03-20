@@ -1453,7 +1453,7 @@
               </widget>
              </item>
              <item row="10" column="0">
-              <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
+             <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
                <property name="toolTip">
                 <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
                </property>
@@ -1463,6 +1463,16 @@
               </widget>
              </item>
              <item row="11" column="0">
+              <widget class="QCheckBox" name="xboxTabOrderCheckBox">
+               <property name="toolTip">
+                <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
+               </property>
+               <property name="text">
+                <string>XBOX Tab Order</string>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="0">
               <widget class="QCheckBox" name="useZoomOnMapCheckBox">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

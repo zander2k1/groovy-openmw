@@ -533,6 +533,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledFonts, *xboxStyledFontsCheckBox);
+        loadSettingBool(Settings::gui().mXboxTabOrder, *xboxTabOrderCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         {
@@ -883,6 +884,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
         saveSettingBool(*xboxStyledFontsCheckBox, Settings::gui().mXboxStyledFonts);
+        saveSettingBool(*xboxTabOrderCheckBox, Settings::gui().mXboxTabOrder);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);

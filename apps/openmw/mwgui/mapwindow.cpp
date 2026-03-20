@@ -881,8 +881,16 @@ namespace MWGui
             mControllerButtons = {};
             mControllerButtons.mA = "Move";
             mControllerButtons.mB = "#{Interface:Back}";
-            mControllerButtons.mL2 = "#{sStats}";
-            mControllerButtons.mR2 = "#{Interface:Inventory}";
+            if (Settings::gui().mXboxTabOrder)
+            {
+                mControllerButtons.mL2 = "#{Interface:Magic}";
+                mControllerButtons.mR2 = "#{sStats}";
+            }
+            else
+            {
+                mControllerButtons.mL2 = "#{sStats}";
+                mControllerButtons.mR2 = "#{Interface:Inventory}";
+            }
             mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
             mControllerButtons.mY = "#{Interface:Center}";
         }

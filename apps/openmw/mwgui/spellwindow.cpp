@@ -65,7 +65,7 @@ namespace MWGui
             mControllerButtons.mY = "#{Interface:Info}";
             mControllerButtons.mX = "#{Interface:Delete}";
             mControllerButtons.mL2 = "#{Interface:Inventory}";
-            mControllerButtons.mR2 = "#{sStats}";
+            mControllerButtons.mR2 = Settings::gui().mXboxTabOrder ? "#{Interface:Map}" : "#{sStats}";
             mDisableGamepadCursor = true;
         }
     }

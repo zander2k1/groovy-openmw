@@ -1246,8 +1246,16 @@ namespace MWGui
                 mControllerButtons.mB = "#{Interface:Back}";
                 mControllerButtons.mX = "#{Interface:Drop}";
                 mControllerButtons.mY = "#{Interface:Info}";
-                mControllerButtons.mL2 = "#{sMap}";
-                mControllerButtons.mR2 = "#{sMagicMenu}";
+                if (Settings::gui().mXboxTabOrder)
+                {
+                    mControllerButtons.mL2 = "#{sStats}";
+                    mControllerButtons.mR2 = "#{sMagicMenu}";
+                }
+                else
+                {
+                    mControllerButtons.mL2 = "#{sMap}";
+                    mControllerButtons.mR2 = "#{sMagicMenu}";
+                }
                 break;
         }
         return &mControllerButtons;

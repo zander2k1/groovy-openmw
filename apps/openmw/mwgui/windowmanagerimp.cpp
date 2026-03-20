@@ -252,19 +252,15 @@ namespace MWGui
 
         GuiWindow inventoryIndexToWindow(size_t index)
         {
-            switch (index)
-            {
-                case 0:
-                    return GW_Map;
-                case 1:
-                    return GW_Inventory;
-                case 2:
-                    return GW_Magic;
-                case 3:
-                    return GW_Stats;
-                default:
-                    return GW_None;
-            }
+            static constexpr GuiWindow kDefaultOrder[] = { GW_Map, GW_Inventory, GW_Magic, GW_Stats };
+            static constexpr GuiWindow kXboxOrder[] = { GW_Inventory, GW_Magic, GW_Map, GW_Stats };
+            static constexpr size_t kOrderSize = sizeof(kDefaultOrder) / sizeof(kDefaultOrder[0]);
+
+            const auto& order = Settings::gui().mXboxTabOrder ? kXboxOrder : kDefaultOrder;
+            if (index < kOrderSize)
+                return order[index];
+
+            return GW_None;
         }
     }
 
@@ -475,8 +471,16 @@ namespace MWGui
         mWindows.push_back(std::move(spellWindow));
         trackWindow(mSpellWindow, makeSpellsWindowSettingValues());
 
-        mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
-        mGuiModeStates[GM_None] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
+        if (Settings::gui().mXboxTabOrder)
+        {
+            mGuiModeStates[GM_Inventory] = GuiModeState({ mInventoryWindow, mSpellWindow, mMap, mStatsWindow });
+            mGuiModeStates[GM_None] = GuiModeState({ mInventoryWindow, mSpellWindow, mMap, mStatsWindow });
+        }
+        else
+        {
+            mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
+            mGuiModeStates[GM_None] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
+        }
 
         auto tradeWindow = std::make_unique<TradeWindow>();
         mTradeWindow = tradeWindow.get();
@@ -651,8 +655,8 @@ namespace MWGui
         mWindows.push_back(std::move(virtualKeyboard));
 
         mControllerTooltipEnabled = Settings::gui().mControllerTooltips;
-        mActiveControllerWindows[GM_Inventory] = 1; // Start on Inventory page
-        mLastInventoryControllerWindow = 1;
+        mActiveControllerWindows[GM_Inventory] = Settings::gui().mXboxTabOrder ? 0 : 1; // Start on Inventory page
+        mLastInventoryControllerWindow = mActiveControllerWindows[GM_Inventory];
 
         mInputBlocker = MyGUI::Gui::getInstance().createWidget<MyGUI::Widget>(
             {}, 0, 0, w, h, MyGUI::Align::Stretch, "InputBlocker");
@@ -856,25 +860,25 @@ namespace MWGui
                 mSpellWindow->setVisible(false);
                 mStatsWindow->setVisible(false);
 
-                switch (activeIndex)
+                switch (inventoryIndexToWindow(activeIndex))
                 {
-                    case 0:
+                    case GW_Map:
                         if (canShow(GW_Map))
                             mMap->setVisible(true);
                         break;
-                    case 1:
+                    case GW_Inventory:
                         if (canShow(GW_Inventory))
                             mInventoryWindow->setVisible(true);
                         break;
-                    case 2:
+                    case GW_Magic:
                         if (canShow(GW_Magic))
                             mSpellWindow->setVisible(true);
                         break;
-                    case 3:
+                    case GW_Stats:
                         if (canShow(GW_Stats))
                             mStatsWindow->setVisible(true);
                         break;
-                    default:
+                    case GW_None:
                         break;
                 }
             }

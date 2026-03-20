@@ -197,8 +197,16 @@ namespace MWGui
             mControllerButtons = {};
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mY = "#{Interface:Info}";
-            mControllerButtons.mL2 = "#{Interface:Magic}";
-            mControllerButtons.mR2 = "#{Interface:Map}";
+            if (Settings::gui().mXboxTabOrder)
+            {
+                mControllerButtons.mL2 = "#{Interface:Map}";
+                mControllerButtons.mR2 = "#{Interface:Inventory}";
+            }
+            else
+            {
+                mControllerButtons.mL2 = "#{Interface:Magic}";
+                mControllerButtons.mR2 = "#{Interface:Map}";
+            }
             mDisableGamepadCursor = true;
         }
 
