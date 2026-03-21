@@ -260,6 +260,7 @@ cd "$GAMEDIR" || { echo "Failed to enter $GAMEDIR"; exit 1; }
 export LD_LIBRARY_PATH="$GAMEDIR/lib:${LD_LIBRARY_PATH:-}"
 export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
 export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export OSG_LIBRARY_PATH="$GAMEDIR${OSG_LIBRARY_PATH:+:$OSG_LIBRARY_PATH}"
 
 exec "$GAMEDIR/OpenMW.x86_64" --resources "$GAMEDIR/resources" "$@"
 EOW
