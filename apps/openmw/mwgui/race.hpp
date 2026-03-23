@@ -123,6 +123,8 @@ namespace MWGui
 
         bool mLeftTriggerHeld = false;
         bool mRightTriggerHeld = false;
+        bool mLeftShoulderHeld = false;
+        bool mRightShoulderHeld = false;
         bool mHairButtonPending = false;
         bool mFaceButtonPending = false;
         bool mHairChordUsed = false;

@@ -124,13 +124,16 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:OK}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mX = "#{Interface:Sex}";
-            mControllerButtons.mL2 = "#{Interface:Prev}";
-            mControllerButtons.mR2 = "#{Interface:Next}";
             if (Settings::input().mControllerIconStyle.get() == "gamecube")
-                mControllerButtons.mY = "#{Interface:Hair}";
+            {
+                mControllerButtons.mL2 = "#{Interface:Hair}";
+                mControllerButtons.mR2 = "#{Interface:Face}";
+            }
             else
+            {
                 mControllerButtons.mL1 = "#{Interface:Hair}";
-            mControllerButtons.mR1 = "#{Interface:Face}";
+                mControllerButtons.mR1 = "#{Interface:Face}";
+            }
         }
 
         updateRaces();
@@ -556,7 +559,55 @@ namespace MWGui
         const bool pressed = arg.state == SDL_PRESSED;
         const bool released = arg.state == SDL_RELEASED;
 
-        if (!useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        if (useGamecubeHairButton)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+            {
+                if (pressed)
+                {
+                    mLeftShoulderHeld = true;
+                    if (mHairButtonPending && !mHairChordUsed)
+                    {
+                        onSelectPreviousHair(nullptr);
+                        mHairChordUsed = true;
+                    }
+                    if (mFaceButtonPending && !mFaceChordUsed)
+                    {
+                        onSelectPreviousFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
+                }
+                else if (released)
+                {
+                    mLeftShoulderHeld = false;
+                }
+                return true;
+            }
+
+            if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            {
+                if (pressed)
+                {
+                    mRightShoulderHeld = true;
+                    if (mHairButtonPending && !mHairChordUsed)
+                    {
+                        onSelectNextHair(nullptr);
+                        mHairChordUsed = true;
+                    }
+                    if (mFaceButtonPending && !mFaceChordUsed)
+                    {
+                        onSelectNextFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
+                }
+                else if (released)
+                {
+                    mRightShoulderHeld = false;
+                }
+                return true;
+            }
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
         {
             if (pressed)
             {
@@ -583,7 +634,7 @@ namespace MWGui
             return true;
         }
 
-        if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        if (!useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
             if (pressed)
             {
@@ -625,10 +676,6 @@ namespace MWGui
         {
             onSelectNextGender(nullptr);
         }
-        else if (useGamecubeHairButton && arg.button == SDL_CONTROLLER_BUTTON_Y)
-        {
-            onSelectNextHair(nullptr);
-        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
         {
             MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
@@ -647,6 +694,7 @@ namespace MWGui
 
     bool RaceDialog::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
     {
+        const bool useGamecubeHairButton = Settings::input().mControllerIconStyle.get() == "gamecube";
         constexpr int kTriggerPressThreshold = 16000;
         constexpr int kTriggerReleaseThreshold = 8000;
 
@@ -655,20 +703,45 @@ namespace MWGui
             if (!mLeftTriggerHeld && arg.value >= kTriggerPressThreshold)
             {
                 mLeftTriggerHeld = true;
-                if (mHairButtonPending)
+                if (useGamecubeHairButton)
                 {
-                    onSelectPreviousHair(nullptr);
-                    mHairChordUsed = true;
+                    mHairButtonPending = true;
+                    mHairChordUsed = false;
+                    if (mLeftShoulderHeld)
+                    {
+                        onSelectPreviousHair(nullptr);
+                        mHairChordUsed = true;
+                    }
+                    else if (mRightShoulderHeld)
+                    {
+                        onSelectNextHair(nullptr);
+                        mHairChordUsed = true;
+                    }
                 }
-                if (mFaceButtonPending)
+                else
                 {
-                    onSelectPreviousFace(nullptr);
-                    mFaceChordUsed = true;
+                    if (mHairButtonPending)
+                    {
+                        onSelectPreviousHair(nullptr);
+                        mHairChordUsed = true;
+                    }
+                    if (mFaceButtonPending)
+                    {
+                        onSelectPreviousFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
                 }
             }
             else if (mLeftTriggerHeld && arg.value <= kTriggerReleaseThreshold)
             {
                 mLeftTriggerHeld = false;
+                if (useGamecubeHairButton && mHairButtonPending)
+                {
+                    if (!mHairChordUsed)
+                        onSelectNextHair(nullptr);
+                    mHairButtonPending = false;
+                    mHairChordUsed = false;
+                }
             }
             return true;
         }
@@ -678,20 +751,45 @@ namespace MWGui
             if (!mRightTriggerHeld && arg.value >= kTriggerPressThreshold)
             {
                 mRightTriggerHeld = true;
-                if (mHairButtonPending)
+                if (useGamecubeHairButton)
                 {
-                    onSelectNextHair(nullptr);
-                    mHairChordUsed = true;
+                    mFaceButtonPending = true;
+                    mFaceChordUsed = false;
+                    if (mLeftShoulderHeld)
+                    {
+                        onSelectPreviousFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
+                    else if (mRightShoulderHeld)
+                    {
+                        onSelectNextFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
                 }
-                if (mFaceButtonPending)
+                else
                 {
-                    onSelectNextFace(nullptr);
-                    mFaceChordUsed = true;
+                    if (mHairButtonPending)
+                    {
+                        onSelectNextHair(nullptr);
+                        mHairChordUsed = true;
+                    }
+                    if (mFaceButtonPending)
+                    {
+                        onSelectNextFace(nullptr);
+                        mFaceChordUsed = true;
+                    }
                 }
             }
             else if (mRightTriggerHeld && arg.value <= kTriggerReleaseThreshold)
             {
                 mRightTriggerHeld = false;
+                if (useGamecubeHairButton && mFaceButtonPending)
+                {
+                    if (!mFaceChordUsed)
+                        onSelectNextFace(nullptr);
+                    mFaceButtonPending = false;
+                    mFaceChordUsed = false;
+                }
             }
             return true;
         }
