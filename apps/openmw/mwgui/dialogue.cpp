@@ -44,6 +44,8 @@ namespace MWGui
 {
     void ResponseCallback::addResponse(std::string_view title, std::string_view text)
     {
+        if (mResetHistory && Settings::gui().mXboxStyledDialog)
+            mWindow->mHistoryContents.clear();
         mWindow->addResponse(title, text, mNeedMargin);
     }
 
@@ -387,7 +389,7 @@ namespace MWGui
         , mDispositionBar(nullptr)
         , mDispositionText(nullptr)
         , mGoodbyeButton(nullptr)
-        , mPersuasionDialog(std::make_unique<ResponseCallback>(this))
+        , mPersuasionDialog(std::make_unique<ResponseCallback>(this, true, true))
         , mCallback(std::make_unique<ResponseCallback>(this))
         , mGreetingCallback(std::make_unique<ResponseCallback>(this, false))
     {
@@ -537,6 +539,10 @@ namespace MWGui
         if (mGoodbye || dialogueManager->isInChoice())
             return;
 
+        ResponseCallback serviceRefusalCallback(this, true, true);
+        ResponseCallback* serviceCallback
+            = Settings::gui().mXboxStyledDialog ? &serviceRefusalCallback : mCallback.get();
+
         const MWWorld::Store<ESM::GameSetting>& gmst
             = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
 
@@ -560,28 +566,28 @@ namespace MWGui
             mPersuasionDialog.setVisible(true);
         else if (topic == sCompanionShare)
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Companion, mPtr);
-        else if (!dialogueManager->checkServiceRefused(mCallback.get()))
+        else if (!dialogueManager->checkServiceRefused(serviceCallback))
         {
             if (topic == sBarter
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Barter))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Barter))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Barter, mPtr);
             else if (topic == sSpells
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Spells))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Spells))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_SpellBuying, mPtr);
             else if (topic == sTravel
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Travel))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Travel))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Travel, mPtr);
             else if (topic == sSpellMakingMenuTitle
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Spellmaking))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Spellmaking))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_SpellCreation, mPtr);
             else if (topic == sEnchanting
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Enchanting))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Enchanting))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Enchanting, mPtr);
             else if (topic == sServiceTrainingTitle
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Training))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Training))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Training, mPtr);
             else if (topic == sRepair
-                && !dialogueManager->checkServiceRefused(mCallback.get(), MWBase::DialogueManager::Repair))
+                && !dialogueManager->checkServiceRefused(serviceCallback, MWBase::DialogueManager::Repair))
                 MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_MerchantRepair, mPtr);
         }
         else
@@ -806,7 +812,7 @@ namespace MWGui
             mScrollBar->setVisible(false);
         if (scrollbar && !mScrollBar->getVisible())
             mScrollBar->setVisible(true);
-        if (oldScrollbarVisible != mScrollBar->getVisible() && !Settings::gui().mXboxStyledDialog)
+        if (oldScrollbarVisible != mScrollBar->getVisible())
             updateLayoutSizes();
 
         std::shared_ptr<BookTypesetter> typesetter

@@ -27,11 +27,13 @@ namespace MWGui
     {
         DialogueWindow* mWindow;
         bool mNeedMargin;
+        bool mResetHistory;
 
     public:
-        ResponseCallback(DialogueWindow* win, bool needMargin = true)
+        ResponseCallback(DialogueWindow* win, bool needMargin = true, bool resetHistory = false)
             : mWindow(win)
             , mNeedMargin(needMargin)
+            , mResetHistory(resetHistory)
         {
         }
 
@@ -194,6 +196,8 @@ namespace MWGui
         bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
+        friend class ResponseCallback;
+
         void resetFixedWindowGeometry();
         MyGUI::IntCoord getFixedWindowCoord(const MyGUI::IntSize& viewSize) const;
         void updateDisposition();
