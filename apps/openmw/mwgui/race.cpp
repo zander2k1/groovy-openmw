@@ -563,47 +563,11 @@ namespace MWGui
         {
             if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
             {
-                if (pressed)
-                {
-                    mLeftShoulderHeld = true;
-                    if (mHairButtonPending && !mHairChordUsed)
-                    {
-                        onSelectPreviousHair(nullptr);
-                        mHairChordUsed = true;
-                    }
-                    if (mFaceButtonPending && !mFaceChordUsed)
-                    {
-                        onSelectPreviousFace(nullptr);
-                        mFaceChordUsed = true;
-                    }
-                }
-                else if (released)
-                {
-                    mLeftShoulderHeld = false;
-                }
                 return true;
             }
 
             if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             {
-                if (pressed)
-                {
-                    mRightShoulderHeld = true;
-                    if (mHairButtonPending && !mHairChordUsed)
-                    {
-                        onSelectNextHair(nullptr);
-                        mHairChordUsed = true;
-                    }
-                    if (mFaceButtonPending && !mFaceChordUsed)
-                    {
-                        onSelectNextFace(nullptr);
-                        mFaceChordUsed = true;
-                    }
-                }
-                else if (released)
-                {
-                    mRightShoulderHeld = false;
-                }
                 return true;
             }
         }
@@ -704,20 +668,7 @@ namespace MWGui
             {
                 mLeftTriggerHeld = true;
                 if (useGamecubeHairButton)
-                {
-                    mHairButtonPending = true;
-                    mHairChordUsed = false;
-                    if (mLeftShoulderHeld)
-                    {
-                        onSelectPreviousHair(nullptr);
-                        mHairChordUsed = true;
-                    }
-                    else if (mRightShoulderHeld)
-                    {
-                        onSelectNextHair(nullptr);
-                        mHairChordUsed = true;
-                    }
-                }
+                    onSelectNextHair(nullptr);
                 else
                 {
                     if (mHairButtonPending)
@@ -735,13 +686,6 @@ namespace MWGui
             else if (mLeftTriggerHeld && arg.value <= kTriggerReleaseThreshold)
             {
                 mLeftTriggerHeld = false;
-                if (useGamecubeHairButton && mHairButtonPending)
-                {
-                    if (!mHairChordUsed)
-                        onSelectNextHair(nullptr);
-                    mHairButtonPending = false;
-                    mHairChordUsed = false;
-                }
             }
             return true;
         }
@@ -752,20 +696,7 @@ namespace MWGui
             {
                 mRightTriggerHeld = true;
                 if (useGamecubeHairButton)
-                {
-                    mFaceButtonPending = true;
-                    mFaceChordUsed = false;
-                    if (mLeftShoulderHeld)
-                    {
-                        onSelectPreviousFace(nullptr);
-                        mFaceChordUsed = true;
-                    }
-                    else if (mRightShoulderHeld)
-                    {
-                        onSelectNextFace(nullptr);
-                        mFaceChordUsed = true;
-                    }
-                }
+                    onSelectNextFace(nullptr);
                 else
                 {
                     if (mHairButtonPending)
@@ -783,13 +714,6 @@ namespace MWGui
             else if (mRightTriggerHeld && arg.value <= kTriggerReleaseThreshold)
             {
                 mRightTriggerHeld = false;
-                if (useGamecubeHairButton && mFaceButtonPending)
-                {
-                    if (!mFaceChordUsed)
-                        onSelectNextFace(nullptr);
-                    mFaceButtonPending = false;
-                    mFaceChordUsed = false;
-                }
             }
             return true;
         }
