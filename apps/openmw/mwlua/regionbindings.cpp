@@ -89,6 +89,11 @@ namespace MWLua
             chances[index] = static_cast<uint8_t>(std::clamp(value, 0, 100));
             world->modRegion(rec.mId, chances);
         };
+        auto resetProbability = [](const ESM::Region& rec) {
+            std::vector<uint8_t> chances(rec.mData.mProbabilities.begin(), rec.mData.mProbabilities.end());
+            MWBase::Environment::get().getWorld()->modRegion(rec.mId, chances);
+        };
+        regionT["resetProbability"] = resetProbability;
         regionT["sounds"] = sol::readonly_property([lua = lua.lua_state()](const ESM::Region& rec) {
             sol::table res(lua, sol::create);
             for (const auto& soundRef : rec.mSoundList)
