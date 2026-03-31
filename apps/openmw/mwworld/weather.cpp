@@ -317,6 +317,11 @@ namespace MWWorld
         }
     }
 
+    const std::vector<uint8_t>& RegionWeather::getChances() const
+    {
+        return mChances;
+    }
+
     void RegionWeather::setWeather(int weatherID)
     {
         mWeather = weatherID;
@@ -753,6 +758,14 @@ namespace MWWorld
             it->second.setChances(chances);
             regionalWeatherChanged(it->first, it->second);
         }
+    }
+
+    std::vector<uint8_t> WeatherManager::getRegionChances(const ESM::RefId& regionID) const
+    {
+        auto it = mRegions.find(regionID);
+        if (it != mRegions.end())
+            return it->second.getChances();
+        return {};
     }
 
     void WeatherManager::playerTeleported(const ESM::RefId& playerRegion, bool isExterior)

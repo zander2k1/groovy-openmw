@@ -1832,6 +1832,11 @@ namespace MWWorld
         mWeatherManager->modRegion(regionid, chances);
     }
 
+    std::vector<uint8_t> World::getRegionWeatherChances(const ESM::RefId& regionid) const
+    {
+        return mWeatherManager->getRegionChances(regionid);
+    }
+
     struct GetDoorMarkerVisitor
     {
         std::vector<World::DoorMarker>& mOut;
