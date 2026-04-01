@@ -1827,12 +1827,12 @@ namespace MWWorld
         mWeatherManager->changeWeather(region, id);
     }
 
-    void World::modRegion(const ESM::RefId& regionid, const std::vector<uint8_t>& chances)
+    void World::modRegion(const ESM::RefId& regionid, std::span<const uint8_t> chances)
     {
         mWeatherManager->modRegion(regionid, chances);
     }
 
-    std::vector<uint8_t> World::getRegionWeatherChances(const ESM::RefId& regionid) const
+    std::span<const uint8_t> World::getRegionWeatherChances(const ESM::RefId& regionid) const
     {
         return mWeatherManager->getRegionChances(regionid);
     }

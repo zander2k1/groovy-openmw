@@ -306,9 +306,9 @@ namespace MWWorld
         return state;
     }
 
-    void RegionWeather::setChances(const std::vector<uint8_t>& chances)
+    void RegionWeather::setChances(std::span<const uint8_t> chances)
     {
-        mChances = chances;
+        mChances.assign(chances.begin(), chances.end());
 
         // Regional weather no longer supports the current type, select a new weather pattern.
         if ((static_cast<size_t>(mWeather) >= mChances.size()) || (mChances[mWeather] == 0))
@@ -317,7 +317,7 @@ namespace MWWorld
         }
     }
 
-    const std::vector<uint8_t>& RegionWeather::getChances() const
+    std::span<const uint8_t> RegionWeather::getChances() const
     {
         return mChances;
     }
@@ -742,7 +742,7 @@ namespace MWWorld
         }
     }
 
-    void WeatherManager::modRegion(const ESM::RefId& regionID, const std::vector<uint8_t>& chances)
+    void WeatherManager::modRegion(const ESM::RefId& regionID, std::span<const uint8_t> chances)
     {
         // Sets the region's probability for various weather patterns. Note that this appears to be saved permanently.
         // In Morrowind, this seems to have the following behavior when applied to the current region:
@@ -760,7 +760,7 @@ namespace MWWorld
         }
     }
 
-    std::vector<uint8_t> WeatherManager::getRegionChances(const ESM::RefId& regionID) const
+    std::span<const uint8_t> WeatherManager::getRegionChances(const ESM::RefId& regionID) const
     {
         auto it = mRegions.find(regionID);
         if (it != mRegions.end())

@@ -2,6 +2,7 @@
 #include "recordstore.hpp"
 
 #include <algorithm>
+#include <span>
 #include <stdexcept>
 
 #include <components/esm3/loadregn.hpp>
@@ -25,12 +26,12 @@ namespace sol
 
 namespace
 {
-    std::vector<uint8_t> getRegionWeatherChances(const ESM::Region& rec)
+    std::span<const uint8_t> getRegionWeatherChances(const ESM::Region& rec)
     {
-        std::vector<uint8_t> chances = MWBase::Environment::get().getWorld()->getRegionWeatherChances(rec.mId);
-        if (chances.empty())
-            chances.assign(rec.mData.mProbabilities.begin(), rec.mData.mProbabilities.end());
-        return chances;
+        const auto chances = MWBase::Environment::get().getWorld()->getRegionWeatherChances(rec.mId);
+        if (!chances.empty())
+            return chances;
+        return rec.mData.mProbabilities;
     }
 }
 
@@ -64,7 +65,7 @@ namespace MWLua
 
         regionT["weatherProbabilities"] = sol::readonly_property([lua = lua.lua_state()](const ESM::Region& rec) {
             sol::table res(lua, sol::create);
-            const std::vector<uint8_t> chances = getRegionWeatherChances(rec);
+            const auto chances = getRegionWeatherChances(rec);
             for (size_t i = 0; i < chances.size(); ++i)
             {
                 const MWWorld::Weather* weather = MWBase::Environment::get().getWorld()->getWeather(i);
@@ -82,7 +83,8 @@ namespace MWLua
             if (it == allWeather.end())
                 throw std::runtime_error("Weather \"" + std::string(weatherId) + "\" not found");
 
-            std::vector<uint8_t> chances = getRegionWeatherChances(rec);
+            const auto current = getRegionWeatherChances(rec);
+            std::vector<uint8_t> chances(current.begin(), current.end());
             const size_t index = std::distance(allWeather.begin(), it);
             if (chances.size() <= index)
                 chances.resize(index + 1, 0);
@@ -90,8 +92,7 @@ namespace MWLua
             world->modRegion(rec.mId, chances);
         };
         auto resetProbability = [](const ESM::Region& rec) {
-            std::vector<uint8_t> chances(rec.mData.mProbabilities.begin(), rec.mData.mProbabilities.end());
-            MWBase::Environment::get().getWorld()->modRegion(rec.mId, chances);
+            MWBase::Environment::get().getWorld()->modRegion(rec.mId, rec.mData.mProbabilities);
         };
         regionT["resetProbability"] = resetProbability;
         regionT["sounds"] = sol::readonly_property([lua = lua.lua_state()](const ESM::Region& rec) {
