@@ -2,11 +2,11 @@
 
 #include <MyGUI_Gui.h>
 
-#include <unordered_map>
 #include "components/settings/values.hpp"
 #include "content.hpp"
 #include "util.hpp"
 #include "widget.hpp"
+#include <unordered_map>
 
 namespace LuaUi
 {

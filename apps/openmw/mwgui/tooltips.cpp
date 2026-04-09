@@ -3041,9 +3041,8 @@ namespace MWGui
         setCoord(0, 0, 300, 300);
 
         const MyGUI::IntPoint padding(8, 8);
-        const int contentProbeHeight = menuMode
-            ? std::max(300, MyGUI::RenderManager::getInstance().getViewSize().height)
-            : 300;
+        const int contentProbeHeight
+            = menuMode ? std::max(300, MyGUI::RenderManager::getInstance().getViewSize().height) : 300;
 
         // Only use menu mode formatting when menuMode is true
         const int forcedContentWidth = (menuMode && forcedWidth > 0) ? std::max(0, forcedWidth - padding.left * 2) : 0;

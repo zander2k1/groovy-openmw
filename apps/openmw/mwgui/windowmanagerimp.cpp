@@ -879,6 +879,8 @@ namespace MWGui
                         if (canShow(GW_Stats))
                             mStatsWindow->setVisible(true);
                         break;
+                    case GW_ALL:
+                        break;
                     case GW_None:
                         break;
                 }
