@@ -2874,7 +2874,9 @@ namespace MWGui
                 {
                     const int anchorHeight = 28;
                     const int anchorPadding = 4;
-                    const int posY = std::max(0, tooltipWinRect.top - anchorHeight - anchorPadding);
+                    int posY = std::max(0, tooltipWinRect.top - anchorHeight - anchorPadding);
+                    if (tooltipSize.height < viewSize.height && posY + tooltipSize.height > viewSize.height)
+                        posY = std::max(0, viewSize.height - tooltipSize.height);
                     setCoord(tooltipWinRect.left, posY, tooltipWinRect.width, tooltipSize.height);
                     return;
                 }
@@ -2915,14 +2917,21 @@ namespace MWGui
                                   / float(viewportSize.width) * size.width),
                 0);
 
+        if (position.left < 0)
+            position.left = 0;
         if ((position.left + size.width) > viewportSize.width)
         {
             position.left = viewportSize.width - size.width;
         }
+
+        if (position.top < 0)
+            position.top = 0;
         if ((position.top + size.height) > viewportSize.height)
         {
             position.top = MyGUI::InputManager::getInstance().getMousePosition().top - size.height - 8;
         }
+        if (position.top < 0)
+            position.top = 0;
     }
 
     void ToolTips::clear()
@@ -3032,6 +3041,9 @@ namespace MWGui
         setCoord(0, 0, 300, 300);
 
         const MyGUI::IntPoint padding(8, 8);
+        const int contentProbeHeight = menuMode
+            ? std::max(300, MyGUI::RenderManager::getInstance().getViewSize().height)
+            : 300;
 
         // Only use menu mode formatting when menuMode is true
         const int forcedContentWidth = (menuMode && forcedWidth > 0) ? std::max(0, forcedWidth - padding.left * 2) : 0;
@@ -3051,8 +3063,8 @@ namespace MWGui
             VFS::Path::toNormalized(image), *MWBase::Environment::get().getResourceSystem()->getVFS());
 
         Gui::EditBox* captionWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("NormalText",
-            MyGUI::IntCoord(0, 0, (!menuMode) ? 300 : contentWidth, 300), MyGUI::Align::Left | MyGUI::Align::Top,
-            "ToolTipCaption");
+            MyGUI::IntCoord(0, 0, (!menuMode) ? 300 : contentWidth, contentProbeHeight),
+            MyGUI::Align::Left | MyGUI::Align::Top, "ToolTipCaption");
         captionWidget->setEditStatic(true);
         captionWidget->setNeedKeyFocus(false);
         captionWidget->setCaptionWithReplacing(caption);
@@ -3064,7 +3076,7 @@ namespace MWGui
         const int textWidgetWidth = (!menuMode) ? 300 : contentWidth;
         Gui::EditBox* textWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
             MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, captionHeight + imageCaptionVPadding, textWidgetWidth,
-                300 - captionHeight - imageCaptionVPadding),
+                std::max(0, contentProbeHeight - captionHeight - imageCaptionVPadding)),
             (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top), "ToolTipText");
         textWidget->setEditStatic(true);
         textWidget->setEditMultiLine(true);
@@ -3090,7 +3102,8 @@ namespace MWGui
             icon->setColour(MyGUI::Colour(1.0f, 0.3f, 0.3f));
             Gui::EditBox* edit = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
                 MyGUI::IntCoord((!menuMode) ? (8 + 4) : (contentLeft + 8 + 4), totalSize.height + padding.top,
-                    (!menuMode) ? (300 - 8 - 4) : (contentWidth - 8 - 4), 300 - totalSize.height),
+                    (!menuMode) ? (300 - 8 - 4) : (contentWidth - 8 - 4),
+                    std::max(0, contentProbeHeight - totalSize.height)),
                 MyGUI::Align::Default);
             constexpr size_t maxLength = 60;
             std::string shortenedNote = note.substr(0, std::min(maxLength, note.find('\n')));
@@ -3109,7 +3122,8 @@ namespace MWGui
             const int effectAreaTop = totalSize.height;
             MyGUI::Widget* effectArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
                 MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, effectAreaTop,
-                    (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
+                    (!menuMode) ? (300 - padding.left) : contentWidth,
+                    std::max(0, contentProbeHeight - totalSize.height)),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
             MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
@@ -3137,7 +3151,8 @@ namespace MWGui
             const int enchantAreaTop = totalSize.height;
             MyGUI::Widget* enchantArea = mDynamicToolTipBox->createWidget<MyGUI::Widget>({},
                 MyGUI::IntCoord((!menuMode) ? padding.left : contentLeft, enchantAreaTop,
-                    (!menuMode) ? (300 - padding.left) : contentWidth, 300 - totalSize.height),
+                    (!menuMode) ? (300 - padding.left) : contentWidth,
+                    std::max(0, contentProbeHeight - totalSize.height)),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
             MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
@@ -3206,7 +3221,7 @@ namespace MWGui
         {
             extraWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
                 MyGUI::IntCoord((!menuMode) ? 0 : contentLeft, totalSize.height + 12, (!menuMode) ? 300 : contentWidth,
-                    300 - totalSize.height),
+                    std::max(0, contentProbeHeight - totalSize.height)),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top), "ToolTipExtraText");
 
             extraWidget->setEditStatic(true);
