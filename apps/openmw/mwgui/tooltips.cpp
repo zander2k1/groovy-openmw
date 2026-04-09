@@ -3619,11 +3619,8 @@ namespace MWGui
         const ESM::MagicEffect* effect = store->get<ESM::MagicEffect>().find(effectId);
 
         const VFS::Manager& vfs = *MWBase::Environment::get().getResourceSystem()->getVFS();
-        std::string icon = effect->mIcon;
-        const std::string::size_type slashPos = icon.rfind('\\');
-        if (slashPos != std::string::npos)
-            icon.insert(slashPos + 1, "b_");
-        VFS::Path::Normalized iconPath = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(icon), vfs);
+        VFS::Path::Normalized iconPath
+            = Misc::ResourceHelpers::correctBigIconPath(VFS::Path::toNormalized(effect->mIcon), vfs);
         if (!vfs.exists(iconPath))
             iconPath = Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effect->mIcon), vfs);
 

@@ -44,6 +44,8 @@ set(SHADER_FILES
     compatibility/objects.frag
     compatibility/terrain.vert
     compatibility/terrain.frag
+    compatibility/terrain_composite.vert
+    compatibility/terrain_composite.frag
     compatibility/shadows_vertex.glsl
     compatibility/shadows_fragment.glsl
     compatibility/shadowcasting.vert
@@ -52,6 +54,8 @@ set(SHADER_FILES
     compatibility/normals.glsl
     compatibility/multiview_resolve.vert
     compatibility/multiview_resolve.frag
+    compatibility/outline.frag
+    compatibility/outline.vert
     compatibility/depthclipped.vert
     compatibility/depthclipped.frag
     compatibility/gui.vert

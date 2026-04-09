@@ -166,6 +166,7 @@
 -- @field openmw.util#Vector3 position Object position.
 -- @field #number scale Object scale.
 -- @field openmw.util#Transform rotation Object rotation.
+-- @field #Cell startingCell The object's original cell. Returns nil if `cell` of the object is nil.
 -- @field openmw.util#Vector3 startingPosition The object original position
 -- @field openmw.util#Transform startingRotation The object original rotation
 -- @field #ObjectOwner owner Ownership information
@@ -371,7 +372,7 @@
 -- @field #boolean temporary If set, this spell effect is temporary and should end on its own. Either after a single application or after its duration has run out.
 -- @field #boolean affectsBaseValues If set, this spell affects the base values of affected stats, rather than modifying current values.
 -- @field #boolean stackable If set, this spell can be applied multiple times. If not set, the same spell can only be applied once from the same source (where source is determined by caster + item). In vanilla rules, consumables are stackable while spells and enchantments are not.
--- @field #number activeSpellId A number uniquely identifying this active spell within the affected actor's list of active spells.
+-- @field #string activeSpellId Uniquely identifies this active spell within the affected actor's list of active spells.
 -- @field #list<#ActiveSpellEffect> effects The active effects (@{#ActiveSpellEffect}) of this spell.
 
 ---
@@ -678,6 +679,13 @@
 --- @{#Spells}: Spells
 -- @field [parent=#Magic] #Spells spells
 
+---
+-- Creates a @{#Spell} without adding it to the world database.
+-- Use @{openmw_world#(world).createRecord} to add the record to the world.
+-- @function [parent=#Spells] createRecordDraft
+-- @param #Spell spell A Lua table with the fields of a Spell, with an optional field `template` that accepts a @{#Spell} as a base.
+-- @return #Spell A strongly typed Spell record.
+
 --- List of all @{#Spell}s.
 -- @field [parent=#Spells] #list<#Spell> records A read-only list of all @{#Spell} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) of #Spell.
@@ -707,6 +715,13 @@
 
 --- @{#Enchantments}: Enchantments
 -- @field [parent=#Magic] #Enchantments enchantments
+
+---
+-- Creates an @{#Enchantment} without adding it to the world database.
+-- Use @{openmw_world#(world).createRecord} to add the record to the world.
+-- @function [parent=#Enchantments] createRecordDraft
+-- @param #Enchantment enchantment A Lua table with the fields of an Enchantment, with an optional field `template` that accepts an @{#Enchantment} as a base.
+-- @return #Enchantment A strongly typed Enchantment record.
 
 --- A read-only list of all @{#Enchantment} records in the world database, may be indexed by recordId.
 -- Implements [iterables#List](iterables.html#List) and [iterables#Map](iterables.html#map-iterable) of #Enchantment.
@@ -738,6 +753,7 @@
 -- @field #string id Effect ID
 -- @field #string icon Effect Icon Path
 -- @field #string name Localized name of the effect
+-- @field #string description Localized description of the effect
 -- @field #string school Skill ID that is this effect's school
 -- @field #number baseCost
 -- @field openmw.util#Color color
@@ -757,6 +773,16 @@
 -- @field #string hitSound Identifier of the sound used on hit
 -- @field #string areaSound Identifier of the sound used for AOE spells
 -- @field #string boltSound Identifier of the projectile sound used for ranged spells
+-- @field #boolean hasAttribute True if the effect requires an attribute parameter
+-- @field #boolean hasSkill True if the effect requires a skill parameter
+-- @field #boolean onSelf True if the effect can be cast on self
+-- @field #boolean onTouch True if the effect can be cast on touch
+-- @field #boolean onTarget True if the effect can be cast on target
+-- @field #boolean unreflectable True if the effect cannot be reflected
+-- @field #boolean allowsSpellmaking True if the effect is available for spellmaking
+-- @field #boolean allowsEnchanting True if the effect is available for enchanting
+-- @field #boolean negativeLight True if the effect casts negative light
+-- @field #number speed Unused
 
 
 ---
