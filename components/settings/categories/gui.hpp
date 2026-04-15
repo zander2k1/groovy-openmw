@@ -23,7 +23,7 @@ namespace Settings
             makeClampSanitizerFloat(0.f, 8) };
         SettingValue<bool> mUseRecommendedScalingDefaults{ mIndex, "GUI", "use recommended scaling defaults", true };
         SettingValue<bool> mSettingsWindowIgnoreScaling{ mIndex, "GUI", "settings window ignore scaling", true };
-        SettingValue<int> mFontSize{ mIndex, "GUI", "font size", makeClampSanitizerInt(12, 18) };
+        SettingValue<int> mFontSize{ mIndex, "GUI", "font size", makeClampSanitizerInt(12, 25) };
         SettingValue<float> mMenuTransparency{ mIndex, "GUI", "menu transparency", makeClampSanitizerFloat(0, 1) };
         SettingValue<float> mTooltipDelay{ mIndex, "GUI", "tooltip delay", makeMaxSanitizerFloat(0) };
         SettingValue<bool> mStretchMenuBackground{ mIndex, "GUI", "stretch menu background" };

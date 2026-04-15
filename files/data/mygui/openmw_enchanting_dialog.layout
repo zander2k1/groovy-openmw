@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Dialog" layer="Windows" position="0 0 532 407" align="Center" name="_Main">
+    <Widget type="Window" skin="MW_Dialog" layer="Windows" position="0 0 532 305" align="Center" name="_Main">
 
         <Widget type="HBox" position="11 9 259 29">
             <Property key="Spacing" value="8"/>
@@ -139,7 +139,7 @@
             <UserString key="ToolTipLayout" value="TextToolTip"/>
             <UserString key="Caption_Text" value="#{sEnchantmentHelp9}"/>
         </Widget>
-        <Widget type="MWList" skin="MW_SimpleList" position="11 130 192 256" name="AvailableEffects">
+        <Widget type="MWList" skin="MW_SimpleList" position="11 130 192 154" name="AvailableEffects">
         </Widget>
 
         <!-- Used effects -->
@@ -149,13 +149,13 @@
             <UserString key="ToolTipLayout" value="TextToolTip"/>
             <UserString key="Caption_Text" value="#{sEnchantmentHelp10}"/>
         </Widget>
-        <Widget type="Widget" skin="MW_Box" position="215 130 301 256">
-            <Widget type="ScrollView" skin="MW_ScrollViewH" position="3 3 293 248" name="UsedEffects">
+        <Widget type="Widget" skin="MW_Box" position="215 130 301 154">
+            <Widget type="ScrollView" skin="MW_ScrollViewH" position="3 3 293 146" name="UsedEffects">
                 <Property key="CanvasAlign" value="Left Top"/>
             </Widget>
         </Widget>
 
-        <Widget type="HBox" position="0 372 530 57">
+        <Widget type="HBox" position="0 270 530 57">
             <Property key="Padding" value="11"/>
             <Widget type="HBox">
                 <UserString key="HStretch" value="true"/>         

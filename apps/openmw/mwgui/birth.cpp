@@ -244,17 +244,11 @@ namespace MWGui
 
         const ESM::BirthSign* birth = store.get<ESM::BirthSign>().find(mCurrentBirthId);
 
-        if (Settings::gui().mControllerMenus)
-        {
-            ToolTips::createBirthsignToolTip(mBirthList, mCurrentBirthId);
-            mBirthList->setUserString("CollapsedLabel", "#{sBirthSign}");
-            mBirthList->setUserString("CollapsedValue", birth->mName);
-            mBirthList->setUserString("ForceCollapsedTooltip", "true");
-        }
-        else
-        {
-            mBirthList->clearUserString("ForceCollapsedTooltip");
-        }
+        mBirthList->clearUserString("ToolTipType");
+        mBirthList->clearUserString("ToolTipLayout");
+        mBirthList->clearUserString("CollapsedLabel");
+        mBirthList->clearUserString("CollapsedValue");
+        mBirthList->clearUserString("ForceCollapsedTooltip");
 
         mBirthImage->setImageTexture(Misc::ResourceHelpers::correctTexturePath(
             VFS::Path::toNormalized(birth->mTexture), *MWBase::Environment::get().getResourceSystem()->getVFS()));
