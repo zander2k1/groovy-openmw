@@ -278,7 +278,6 @@ namespace MWGui
         void onMouseDrag(MyGUI::Widget* sender, int left, int top, MyGUI::MouseButton id);
         void onWorldButtonClicked(MyGUI::Widget* sender);
         void onMapDoubleClicked(MyGUI::Widget* sender);
-        void onGlobalMapDoubleClicked(MyGUI::Widget* sender);
         void onMapZoomed(MyGUI::Widget* sender, int rel);
         void zoomOnCursor(float speedDiff);
         void updateGlobalMap();

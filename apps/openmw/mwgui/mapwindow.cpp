@@ -857,7 +857,6 @@ namespace MWGui
         getWidget(mEventBoxGlobal, "EventBoxGlobal");
         mEventBoxGlobal->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
         mEventBoxGlobal->eventMouseButtonPressed += MyGUI::newDelegate(this, &MapWindow::onDragStart);
-        mEventBoxGlobal->eventMouseButtonDoubleClick += MyGUI::newDelegate(this, &MapWindow::onGlobalMapDoubleClicked);
 
         const bool allowZooming = Settings::map().mAllowZooming;
 
@@ -975,40 +974,6 @@ namespace MWGui
         ESM::RefId clickedId = getCellIdInWorldSpace(*mActiveCell, x, y);
 
         mEditingMarker.mCell = clickedId;
-
-        mEditNoteDialog.showDeleteButton(false);
-        mEditNoteDialog.setText({});
-        mEditNoteDialog.setVisible(true);
-    }
-
-    void MapWindow::onGlobalMapDoubleClicked(MyGUI::Widget* /*sender*/)
-    {
-        if (!Settings::map().mGlobal || !mGlobalMapRender)
-            return;
-
-        const MyGUI::IntPoint clickedPos = MyGUI::InputManager::getInstance().getMousePosition();
-        const MyGUI::IntPoint widgetPos = clickedPos - mEventBoxGlobal->getAbsolutePosition();
-
-        float imageX = static_cast<float>(widgetPos.left);
-        float imageY = static_cast<float>(widgetPos.top);
-        if (mGlobalMapZoom > 0.f)
-        {
-            imageX /= mGlobalMapZoom;
-            imageY /= mGlobalMapZoom;
-        }
-
-        float worldX = 0.f;
-        float worldY = 0.f;
-        mGlobalMapRender->imageSpaceToWorldPos(imageX, imageY, worldX, worldY);
-
-        const float cellXf = worldX / static_cast<float>(Constants::CellSizeInUnits);
-        const float cellYf = worldY / static_cast<float>(Constants::CellSizeInUnits);
-        const int cellX = static_cast<int>(std::floor(cellXf));
-        const int cellY = static_cast<int>(std::floor(cellYf));
-
-        mEditingMarker.mWorldX = worldX;
-        mEditingMarker.mWorldY = worldY;
-        mEditingMarker.mCell = ESM::RefId::esm3ExteriorCell(cellX, cellY);
 
         mEditNoteDialog.showDeleteButton(false);
         mEditNoteDialog.setText({});
