@@ -10,7 +10,6 @@
 
 namespace MyGUI
 {
-    class Button;
     class ScrollView;
     class TextBox;
     class Widget;
@@ -86,6 +85,7 @@ namespace MWGui
 
         void onMouseWheel(MyGUI::Widget* sender, int rel);
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
+        bool onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg) override;
 
     private:
         struct ControllerItem
@@ -121,8 +121,8 @@ namespace MWGui
         size_t findClosestControllerItem(bool rightPane, MyGUI::Widget* widget) const;
         void setControllerFocus(size_t newFocus);
 
+        MyGUI::TextBox *mNameLabel, *mRaceLabel, *mClassLabel, *mBirthSignLabel;
         MyGUI::TextBox *mNameWidget, *mRaceWidget, *mClassWidget, *mBirthSignWidget;
-        MyGUI::Button *mNameButton, *mRaceButton, *mClassButton, *mBirthSignButton;
         MyGUI::ScrollView* mSkillView;
 
         Widgets::MWDynamicStatPtr mHealth, mMagicka, mFatigue;
@@ -151,6 +151,8 @@ namespace MWGui
         MyGUI::Widget* mRaceHighlight = nullptr;
         MyGUI::Widget* mClassHighlight = nullptr;
         MyGUI::Widget* mBirthSignHighlight = nullptr;
+        bool mLeftTriggerHeld = false;
+        bool mRightTriggerHeld = false;
     };
 }
 #endif

@@ -61,13 +61,6 @@ namespace
         return { leftX, topY, rightX - leftX, bottomY - topY };
     }
 
-    void adjustButtonSize(MyGUI::Button* button)
-    {
-        // adjust size of button to fit its text
-        MyGUI::IntSize size = button->getTextSize();
-        button->setSize(size.width + 24, button->getSize().height);
-    }
-
     std::pair<MyGUI::TextBox*, MyGUI::TextBox*> getAttributeTextWidgets(MWGui::Widgets::MWAttribute* attribute)
     {
         if (!attribute)
@@ -105,97 +98,62 @@ namespace MWGui
         center();
 
         // Setup static stats
+        getWidget(mNameLabel, "Name_str");
         getWidget(mNameWidget, "NameText");
-        getWidget(mNameButton, "NameButton");
-        if (mNameButton)
-        {
-            mNameButton->setUserString("ToolTipType", "Layout");
-            mNameButton->setUserString("ToolTipLayout", "RaceToolTip");
-            mNameButton->setUserString("ForceCollapsedTooltip", "true");
-        }
-        if (mNameWidget)
-        {
-            mNameWidget->setUserString("ToolTipType", "Layout");
-            mNameWidget->setUserString("ToolTipLayout", "RaceToolTip");
-            mNameWidget->setUserString("ForceCollapsedTooltip", "true");
-            mNameWidget->changeWidgetSkin("SandTextRightController");
-        }
-        adjustButtonSize(mNameButton);
-        mNameButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onNameClicked);
-
+        getWidget(mRaceLabel, "Race_str");
         getWidget(mRaceWidget, "RaceText");
-        getWidget(mRaceButton, "RaceButton");
-        if (mRaceButton)
-        {
-            mRaceButton->setUserString("ToolTipType", "Layout");
-            mRaceButton->setUserString("ToolTipLayout", "RaceToolTip");
-        }
-        if (mRaceWidget)
-        {
-            mRaceWidget->setUserString("ToolTipType", "Layout");
-            mRaceWidget->setUserString("ToolTipLayout", "RaceToolTip");
-            mRaceWidget->changeWidgetSkin("SandTextRightController");
-        }
-        adjustButtonSize(mRaceButton);
-        mRaceButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onRaceClicked);
-
+        getWidget(mClassLabel, "Class_str");
         getWidget(mClassWidget, "ClassText");
-        getWidget(mClassButton, "ClassButton");
-        if (mClassButton)
-        {
-            mClassButton->setUserString("ToolTipType", "Layout");
-            mClassButton->setUserString("ToolTipLayout", "ClassToolTip");
-        }
-        if (mClassWidget)
-        {
-            mClassWidget->setUserString("ToolTipType", "Layout");
-            mClassWidget->setUserString("ToolTipLayout", "ClassToolTip");
-            mClassWidget->changeWidgetSkin("SandTextRightController");
-        }
-        adjustButtonSize(mClassButton);
-        mClassButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onClassClicked);
-
+        getWidget(mBirthSignLabel, "Sign_str");
         getWidget(mBirthSignWidget, "SignText");
-        getWidget(mBirthSignButton, "SignButton");
-        if (mBirthSignButton)
-        {
-            mBirthSignButton->setUserString("ToolTipType", "Layout");
-            mBirthSignButton->setUserString("ToolTipLayout", "BirthSignToolTip");
-            mBirthSignButton->setUserString("ToolTipDynamic", "Stats");
-        }
-        if (mBirthSignWidget)
-        {
-            mBirthSignWidget->setUserString("ToolTipType", "Layout");
-            mBirthSignWidget->setUserString("ToolTipLayout", "BirthSignToolTip");
-            mBirthSignWidget->setUserString("ToolTipDynamic", "Stats");
-            mBirthSignWidget->changeWidgetSkin("SandTextRightController");
-        }
-        adjustButtonSize(mBirthSignButton);
-        mBirthSignButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onBirthSignClicked);
+        auto configureRow = [this](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget, std::string_view tooltipLayout,
+                                bool forceCollapsed, bool dynamicStats,
+                                void (ReviewDialog::*handler)(MyGUI::Widget*)) {
+            if (!labelWidget || !valueWidget)
+                return;
 
-        auto setCollapsedPair = [](MyGUI::Button* button, MyGUI::TextBox* valueWidget) {
-            if (!button && !valueWidget)
-                return;
-            const std::string label = button ? button->getCaption().asUTF8() : std::string();
-            const std::string value = valueWidget ? valueWidget->getCaption().asUTF8() : std::string();
-            if (label.empty())
-                return;
-            if (button)
+            for (MyGUI::TextBox* widget : { labelWidget, valueWidget })
             {
-                button->setUserString("CollapsedLabel", label);
-                button->setUserString("CollapsedValue", value);
-            }
-            if (valueWidget)
-            {
-                valueWidget->setUserString("CollapsedLabel", label);
-                valueWidget->setUserString("CollapsedValue", value);
+                widget->setNeedMouseFocus(true);
+                widget->setUserString("ToolTipType", "Layout");
+                widget->setUserString("ToolTipLayout", std::string(tooltipLayout));
+                if (forceCollapsed)
+                    widget->setUserString("ForceCollapsedTooltip", "true");
+                else
+                    widget->clearUserString("ForceCollapsedTooltip");
+                if (dynamicStats)
+                    widget->setUserString("ToolTipDynamic", "Stats");
+                else
+                    widget->clearUserString("ToolTipDynamic");
+
+                widget->eventMouseButtonClick += MyGUI::newDelegate(this, handler);
             }
         };
 
-        setCollapsedPair(mNameButton, mNameWidget);
-        setCollapsedPair(mRaceButton, mRaceWidget);
-        setCollapsedPair(mClassButton, mClassWidget);
-        setCollapsedPair(mBirthSignButton, mBirthSignWidget);
+        auto setCollapsedPair = [](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget) {
+            if (!labelWidget || !valueWidget)
+                return;
+            const std::string label = labelWidget->getCaption().asUTF8();
+            const std::string value = valueWidget->getCaption().asUTF8();
+            if (label.empty())
+                return;
+
+            labelWidget->setUserString("CollapsedLabel", label);
+            labelWidget->setUserString("CollapsedValue", value);
+            valueWidget->setUserString("CollapsedLabel", label);
+            valueWidget->setUserString("CollapsedValue", value);
+        };
+
+        configureRow(mNameLabel, mNameWidget, "RaceToolTip", true, false, &ReviewDialog::onNameClicked);
+        configureRow(mRaceLabel, mRaceWidget, "RaceToolTip", false, false, &ReviewDialog::onRaceClicked);
+        configureRow(mClassLabel, mClassWidget, "ClassToolTip", false, false, &ReviewDialog::onClassClicked);
+        configureRow(
+            mBirthSignLabel, mBirthSignWidget, "BirthSignToolTip", false, true, &ReviewDialog::onBirthSignClicked);
+
+        setCollapsedPair(mNameLabel, mNameWidget);
+        setCollapsedPair(mRaceLabel, mRaceWidget);
+        setCollapsedPair(mClassLabel, mClassWidget);
+        setCollapsedPair(mBirthSignLabel, mBirthSignWidget);
 
         // Setup dynamic stats
         getWidget(mHealth, "Health");
@@ -262,7 +220,8 @@ namespace MWGui
 
         MyGUI::Widget* attributes = getWidget("Attributes");
         const auto& store = MWBase::Environment::get().getWorld()->getStore().get<ESM::Attribute>();
-        MyGUI::IntCoord coord{ 8, 4, 250, 18 };
+        const int attributeWidth = std::max(0, attributes->getWidth() - 8);
+        MyGUI::IntCoord coord{ 4, 4, attributeWidth, 18 };
         for (const ESM::Attribute& attribute : store)
         {
             auto* widget
@@ -300,29 +259,37 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             mControllerButtons = {};
-            mControllerButtons.mA = "#{Interface:Select}";
-            mControllerButtons.mB = "#{Interface:Back}";
+            mControllerButtons.mA = "#{sName}";
+            mControllerButtons.mB = "#{sBirthSign}";
             mControllerButtons.mX = "#{Interface:Done}";
-            mControllerButtons.mXAfterB = true;
-            mControllerButtons.mY = "#{Interface:Info}";
+            mControllerButtons.mBLeftAlign = true;
+            mControllerButtons.mXRightAlign = true;
+            if (Settings::input().mControllerIconStyle.get() == "gamecube")
+            {
+                mControllerButtons.mL2 = "#{sClass}";
+                mControllerButtons.mR2 = "#{sRace}";
+            }
+            else
+            {
+                mControllerButtons.mL1 = "#{sClass}";
+                mControllerButtons.mR1 = "#{sRace}";
+            }
             mDisableGamepadCursor = true;
         }
 
         if (Settings::gui().mControllerMenus && useControllerSelectionHighlight())
         {
-            MyGUI::Widget* rowParent = mNameButton ? mNameButton->getParent() : nullptr;
-            if (rowParent)
-            {
-                if (mNameButton)
-                    mNameHighlight = createControllerHighlight(rowParent, getRowCoord(mNameButton, mNameWidget));
-                if (mRaceButton)
-                    mRaceHighlight = createControllerHighlight(rowParent, getRowCoord(mRaceButton, mRaceWidget));
-                if (mClassButton)
-                    mClassHighlight = createControllerHighlight(rowParent, getRowCoord(mClassButton, mClassWidget));
-                if (mBirthSignButton)
-                    mBirthSignHighlight
-                        = createControllerHighlight(rowParent, getRowCoord(mBirthSignButton, mBirthSignWidget));
-            }
+            auto createRowHighlight = [](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget) {
+                if (!labelWidget)
+                    return static_cast<MyGUI::Widget*>(nullptr);
+                MyGUI::Widget* parent = labelWidget->getParent();
+                return createControllerHighlight(parent, getRowCoord(labelWidget, valueWidget));
+            };
+
+            mNameHighlight = createRowHighlight(mNameLabel, mNameWidget);
+            mRaceHighlight = createRowHighlight(mRaceLabel, mRaceWidget);
+            mClassHighlight = createRowHighlight(mClassLabel, mClassWidget);
+            mBirthSignHighlight = createRowHighlight(mBirthSignLabel, mBirthSignWidget);
             for (Widgets::MWAttribute* attribute : mAttributeList)
             {
                 if (attribute)
@@ -339,6 +306,8 @@ namespace MWGui
     void ReviewDialog::onOpen()
     {
         WindowModal::onOpen();
+        mLeftTriggerHeld = false;
+        mRightTriggerHeld = false;
         if (Settings::gui().mControllerMenus)
         {
             resetControllerItems();
@@ -351,6 +320,8 @@ namespace MWGui
     {
         WindowModal::onClose();
         mUpdateSkillArea = false;
+        mLeftTriggerHeld = false;
+        mRightTriggerHeld = false;
         mControllerItems.clear();
         mControllerLeftItems.clear();
         mControllerRightItems.clear();
@@ -370,18 +341,18 @@ namespace MWGui
     void ReviewDialog::setPlayerName(const std::string& name)
     {
         mNameWidget->setCaption(name);
-        const std::string label = mNameButton ? mNameButton->getCaption().asUTF8() : std::string();
+        const std::string label = mNameLabel ? mNameLabel->getCaption().asUTF8() : std::string();
         if (!label.empty())
         {
+            if (mNameLabel)
+            {
+                mNameLabel->setUserString("CollapsedLabel", label);
+                mNameLabel->setUserString("CollapsedValue", name);
+            }
             if (mNameWidget)
             {
                 mNameWidget->setUserString("CollapsedLabel", label);
                 mNameWidget->setUserString("CollapsedValue", name);
-            }
-            if (mNameButton)
-            {
-                mNameButton->setUserString("CollapsedLabel", label);
-                mNameButton->setUserString("CollapsedValue", name);
             }
         }
     }
@@ -393,22 +364,22 @@ namespace MWGui
         const ESM::Race* race = MWBase::Environment::get().getESMStore()->get<ESM::Race>().search(mRaceId);
         if (race)
         {
+            if (mRaceLabel)
+                ToolTips::createRaceToolTip(mRaceLabel, race);
             ToolTips::createRaceToolTip(mRaceWidget, race);
-            if (mRaceButton)
-                ToolTips::createRaceToolTip(mRaceButton, race);
             mRaceWidget->setCaption(race->mName);
-            const std::string label = mRaceButton ? mRaceButton->getCaption().asUTF8() : std::string();
+            const std::string label = mRaceLabel ? mRaceLabel->getCaption().asUTF8() : std::string();
             if (!label.empty())
             {
+                if (mRaceLabel)
+                {
+                    mRaceLabel->setUserString("CollapsedLabel", label);
+                    mRaceLabel->setUserString("CollapsedValue", race->mName);
+                }
                 if (mRaceWidget)
                 {
                     mRaceWidget->setUserString("CollapsedLabel", label);
                     mRaceWidget->setUserString("CollapsedValue", race->mName);
-                }
-                if (mRaceButton)
-                {
-                    mRaceButton->setUserString("CollapsedLabel", label);
-                    mRaceButton->setUserString("CollapsedValue", race->mName);
                 }
             }
         }
@@ -420,21 +391,21 @@ namespace MWGui
     {
         mClass = playerClass;
         mClassWidget->setCaption(mClass.mName);
+        if (mClassLabel)
+            ToolTips::createClassToolTip(mClassLabel, mClass);
         ToolTips::createClassToolTip(mClassWidget, mClass);
-        if (mClassButton)
-            ToolTips::createClassToolTip(mClassButton, mClass);
-        const std::string label = mClassButton ? mClassButton->getCaption().asUTF8() : std::string();
+        const std::string label = mClassLabel ? mClassLabel->getCaption().asUTF8() : std::string();
         if (!label.empty())
         {
+            if (mClassLabel)
+            {
+                mClassLabel->setUserString("CollapsedLabel", label);
+                mClassLabel->setUserString("CollapsedValue", mClass.mName);
+            }
             if (mClassWidget)
             {
                 mClassWidget->setUserString("CollapsedLabel", label);
                 mClassWidget->setUserString("CollapsedValue", mClass.mName);
-            }
-            if (mClassButton)
-            {
-                mClassButton->setUserString("CollapsedLabel", label);
-                mClassButton->setUserString("CollapsedValue", mClass.mName);
             }
         }
     }
@@ -448,24 +419,24 @@ namespace MWGui
         if (sign)
         {
             mBirthSignWidget->setCaption(sign->mName);
+            if (mBirthSignLabel)
+                ToolTips::createBirthsignToolTip(mBirthSignLabel, mBirthSignId);
             ToolTips::createBirthsignToolTip(mBirthSignWidget, mBirthSignId);
-            if (mBirthSignButton)
-                ToolTips::createBirthsignToolTip(mBirthSignButton, mBirthSignId);
             mBirthSignWidget->setUserString("ToolTipDynamic", "Stats");
-            if (mBirthSignButton)
-                mBirthSignButton->setUserString("ToolTipDynamic", "Stats");
-            const std::string label = mBirthSignButton ? mBirthSignButton->getCaption().asUTF8() : std::string();
+            if (mBirthSignLabel)
+                mBirthSignLabel->setUserString("ToolTipDynamic", "Stats");
+            const std::string label = mBirthSignLabel ? mBirthSignLabel->getCaption().asUTF8() : std::string();
             if (!label.empty())
             {
+                if (mBirthSignLabel)
+                {
+                    mBirthSignLabel->setUserString("CollapsedLabel", label);
+                    mBirthSignLabel->setUserString("CollapsedValue", sign->mName);
+                }
                 if (mBirthSignWidget)
                 {
                     mBirthSignWidget->setUserString("CollapsedLabel", label);
                     mBirthSignWidget->setUserString("CollapsedValue", sign->mName);
-                }
-                if (mBirthSignButton)
-                {
-                    mBirthSignButton->setUserString("CollapsedLabel", label);
-                    mBirthSignButton->setUserString("CollapsedValue", sign->mName);
                 }
             }
         }
@@ -1083,27 +1054,15 @@ namespace MWGui
         if (!Settings::gui().mControllerMenus)
             return;
 
-        if (mNameButton || mNameWidget)
-        {
-            MyGUI::Widget* tooltip = mNameButton ? static_cast<MyGUI::Widget*>(mNameButton) : mNameWidget;
-            addControllerItem(false, tooltip, { mNameWidget }, mNameHighlight, false);
-        }
-        if (mRaceButton || mRaceWidget)
-        {
-            MyGUI::Widget* tooltip = mRaceButton ? static_cast<MyGUI::Widget*>(mRaceButton) : mRaceWidget;
-            addControllerItem(false, tooltip, { mRaceWidget }, mRaceHighlight, false);
-        }
-        if (mClassButton || mClassWidget)
-        {
-            MyGUI::Widget* tooltip = mClassButton ? static_cast<MyGUI::Widget*>(mClassButton) : mClassWidget;
-            addControllerItem(false, tooltip, { mClassWidget }, mClassHighlight, false);
-        }
-        if (mBirthSignButton || mBirthSignWidget)
-        {
-            MyGUI::Widget* tooltip
-                = mBirthSignButton ? static_cast<MyGUI::Widget*>(mBirthSignButton) : mBirthSignWidget;
-            addControllerItem(false, tooltip, { mBirthSignWidget }, mBirthSignHighlight, false);
-        }
+        if (mNameLabel && mNameWidget)
+            addControllerItem(false, mNameLabel, { mNameLabel, mNameWidget }, mNameHighlight, false);
+        if (mRaceLabel && mRaceWidget)
+            addControllerItem(false, mRaceLabel, { mRaceLabel, mRaceWidget }, mRaceHighlight, false);
+        if (mClassLabel && mClassWidget)
+            addControllerItem(false, mClassLabel, { mClassLabel, mClassWidget }, mClassHighlight, false);
+        if (mBirthSignLabel && mBirthSignWidget)
+            addControllerItem(
+                false, mBirthSignLabel, { mBirthSignLabel, mBirthSignWidget }, mBirthSignHighlight, false);
 
         if (mHealth)
         {
@@ -1363,32 +1322,36 @@ namespace MWGui
 
     bool ReviewDialog::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
-        if (mControllerItems.empty())
+        if (arg.state != SDL_PRESSED)
             return true;
 
+        const bool useGamecubeShoulderPrompts = Settings::input().mControllerIconStyle.get() == "gamecube";
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
-            MyGUI::Widget* focusWidget = mControllerItems[mControllerFocus].mTooltipWidget;
-            if (focusWidget == mNameButton)
-                onNameClicked(mNameButton);
-            else if (focusWidget == mRaceButton)
-                onRaceClicked(mRaceButton);
-            else if (focusWidget == mClassButton)
-                onClassClicked(mClassButton);
-            else if (focusWidget == mBirthSignButton)
-                onBirthSignClicked(mBirthSignButton);
+            onNameClicked(mNameLabel);
             return true;
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
-            onBackClicked(nullptr);
+            onBirthSignClicked(mBirthSignLabel);
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)
         {
             onOkClicked(nullptr);
         }
+        else if (!useGamecubeShoulderPrompts && arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        {
+            onClassClicked(mClassLabel);
+        }
+        else if (!useGamecubeShoulderPrompts && arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        {
+            onRaceClicked(mRaceLabel);
+        }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
         {
+            if (mControllerItems.empty())
+                return true;
+
             const bool rightPane = mControllerItems[mControllerFocus].mRightPane;
             MWBase::Environment::get().getWindowManager()->restoreControllerTooltips();
             const std::vector<size_t>& list = rightPane ? mControllerRightItems : mControllerLeftItems;
@@ -1410,6 +1373,9 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT || arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
         {
+            if (mControllerItems.empty())
+                return true;
+
             const bool targetRightPane = (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
             MWBase::Environment::get().getWindowManager()->restoreControllerTooltips();
             if (targetRightPane == mControllerItems[mControllerFocus].mRightPane)
@@ -1436,5 +1402,42 @@ namespace MWGui
         }
 
         return true;
+    }
+
+    bool ReviewDialog::onControllerThumbstickEvent(const SDL_ControllerAxisEvent& arg)
+    {
+        if (Settings::input().mControllerIconStyle.get() != "gamecube")
+            return false;
+
+        constexpr int kTriggerPressThreshold = 16000;
+        constexpr int kTriggerReleaseThreshold = 8000;
+
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+        {
+            if (!mLeftTriggerHeld && arg.value >= kTriggerPressThreshold)
+            {
+                mLeftTriggerHeld = true;
+                onClassClicked(mClassLabel);
+            }
+            else if (mLeftTriggerHeld && arg.value <= kTriggerReleaseThreshold)
+                mLeftTriggerHeld = false;
+
+            return true;
+        }
+
+        if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+        {
+            if (!mRightTriggerHeld && arg.value >= kTriggerPressThreshold)
+            {
+                mRightTriggerHeld = true;
+                onRaceClicked(mRaceLabel);
+            }
+            else if (mRightTriggerHeld && arg.value <= kTriggerReleaseThreshold)
+                mRightTriggerHeld = false;
+
+            return true;
+        }
+
+        return false;
     }
 }

@@ -81,10 +81,12 @@ namespace MWGui
         Gui::HBox* mHBox;
         std::vector<MyGUI::Widget*> mDefaultOrder;
         bool mXAfterB = false;
+        bool mBLeftAlign = false;
+        bool mXRightAlign = false;
 
         void setIcon(MyGUI::ImageBox* image, const std::string& imagePath);
         int updateButton(Button button, const std::string& buttonStr);
-        void updateButtonOrder(bool xAfterB);
+        void updateButtonOrder(bool xAfterB, bool bLeftAlign, bool xRightAlign);
     };
 }
 

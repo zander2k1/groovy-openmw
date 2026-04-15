@@ -121,14 +121,14 @@ namespace MWGui
         int buttonCount = 0;
         if (buttons != nullptr)
         {
-            updateButtonOrder(buttons->mXAfterB);
+            updateButtonOrder(buttons->mXAfterB, buttons->mBLeftAlign, buttons->mXRightAlign);
             for (const auto& row : sButtonDefs)
                 buttonCount += updateButton(row.mButton, buttons->*(row.mField));
 
             mHBox->notifyChildrenSizeChanged();
         }
         else
-            updateButtonOrder(false);
+            updateButtonOrder(false, false, false);
 
         setVisible(buttonCount > 0);
     }
@@ -156,17 +156,45 @@ namespace MWGui
         }
     }
 
-    void ControllerButtonsOverlay::updateButtonOrder(bool xAfterB)
+    void ControllerButtonsOverlay::updateButtonOrder(bool xAfterB, bool bLeftAlign, bool xRightAlign)
     {
         if (!mHBox || mDefaultOrder.empty())
             return;
 
-        if (mXAfterB == xAfterB)
+        if (mXAfterB == xAfterB && mBLeftAlign == bLeftAlign && mXRightAlign == xRightAlign)
             return;
 
         mXAfterB = xAfterB;
+        mBLeftAlign = bLeftAlign;
+        mXRightAlign = xRightAlign;
         std::vector<MyGUI::Widget*> order = mDefaultOrder;
-        if (xAfterB)
+        if (bLeftAlign)
+        {
+            auto aIt = std::find(order.begin(), order.end(), mButtons[Button_A].mHBox);
+            auto bIt = std::find(order.begin(), order.end(), mButtons[Button_B].mHBox);
+            if (aIt != order.end() && bIt != order.end() && std::next(aIt) != bIt)
+            {
+                MyGUI::Widget* bWidget = *bIt;
+                order.erase(bIt);
+                aIt = std::find(order.begin(), order.end(), mButtons[Button_A].mHBox);
+                order.insert(std::next(aIt), bWidget);
+            }
+        }
+        if (xRightAlign)
+        {
+            auto xIt = std::find(order.begin(), order.end(), mButtons[Button_X].mHBox);
+            auto spacerIt = std::find_if(order.begin(), order.end(),
+                [](MyGUI::Widget* widget) { return widget && widget->castType<Gui::Spacer>(false) != nullptr; });
+            if (xIt != order.end() && spacerIt != order.end())
+            {
+                MyGUI::Widget* xWidget = *xIt;
+                order.erase(xIt);
+                spacerIt = std::find_if(order.begin(), order.end(),
+                    [](MyGUI::Widget* widget) { return widget && widget->castType<Gui::Spacer>(false) != nullptr; });
+                order.insert(std::next(spacerIt), xWidget);
+            }
+        }
+        else if (xAfterB)
         {
             auto xIt = std::find(order.begin(), order.end(), mButtons[Button_X].mHBox);
             auto bIt = std::find(order.begin(), order.end(), mButtons[Button_B].mHBox);
