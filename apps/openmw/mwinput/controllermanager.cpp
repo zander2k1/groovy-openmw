@@ -594,6 +594,16 @@ namespace MWInput
             { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
 
         mJoystickLastUsed = true;
+
+        // While controls are disabled (e.g., startup videos), ignore normal GUI/controller handling
+        // and only allow the synthetic Escape press used to skip videos.
+        if (MWBase::Environment::get().getInputManager()->controlsDisabled())
+        {
+            auto kc = SDLUtil::sdlKeyToMyGUI(SDLK_ESCAPE);
+            MyGUI::InputManager::getInstance().injectKeyPress(kc, 0);
+            return;
+        }
+
         if (isDpadButton(arg.button))
         {
             if (mGuiNavHeldButton == arg.button && !mGuiNavHeldFromAxis)
@@ -668,7 +678,14 @@ namespace MWInput
                 { MWBase::LuaManager::InputEvent::ControllerReleased, arg.button });
         }
 
-        if (!Settings::input().mEnableController || MWBase::Environment::get().getInputManager()->controlsDisabled())
+        if (MWBase::Environment::get().getInputManager()->controlsDisabled())
+        {
+            auto kc = SDLUtil::sdlKeyToMyGUI(SDLK_ESCAPE);
+            MyGUI::InputManager::getInstance().injectKeyRelease(kc);
+            return;
+        }
+
+        if (!Settings::input().mEnableController)
             return;
 
         mJoystickLastUsed = true;
