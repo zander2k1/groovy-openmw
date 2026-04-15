@@ -2755,6 +2755,18 @@ bool MWShadowTechnique::adjustPerspectiveShadowMapCameraSettings(osgUtil::Render
 
     convexHull.extendTowardsNegativeZ();
 
+    {
+        // extendTowardsNegativeZ is too numerically unstable to do this first
+        convexHull.clip(osg::Plane(-1.0,0.0,0.0,1.0));
+        convexHull.clip(osg::Plane(1.0,0.0,0.0,1.0));
+        convexHull.clip(osg::Plane(0.0,-1.0,0.0,1.0));
+        convexHull.clip(osg::Plane(0.0,1.0,0.0,1.0));
+        convexHullUnextended.clip(osg::Plane(-1.0,0.0,0.0,1.0));
+        convexHullUnextended.clip(osg::Plane(1.0,0.0,0.0,1.0));
+        convexHullUnextended.clip(osg::Plane(0.0,-1.0,0.0,1.0));
+        convexHullUnextended.clip(osg::Plane(0.0,1.0,0.0,1.0));
+    }
+
 #if 0
     convexHull.output(osg::notify(osg::NOTICE));
 
@@ -3046,6 +3058,31 @@ bool MWShadowTechnique::adjustPerspectiveShadowMapCameraSettings(osgUtil::Render
                                    0.0,  0.0, 1.0/best_z_ratio,  0.0,
                                    0.0,  b,   0.0,  0.0 );
     osg::Matrixd light_persp = light_p * lightView * lightPerspective;
+
+    if (convexHull.valid())
+    {
+        convexHull.transform(lightView * lightPerspective);
+        xMin = osg::maximum(-1.0, convexHull.min(0));
+        xMax = osg::minimum(1.0, convexHull.max(0));
+        yMin = osg::maximum(-1.0, convexHull.min(1));
+        yMax = osg::minimum(1.0, convexHull.max(1));
+
+        if (xMin != -1.0 || yMin != -1.0 || xMax != 1.0 || yMax != 1.0)
+        {
+            osg::Matrix m;
+            m.makeTranslate(osg::Vec3d(-0.5*(xMax+xMin),
+                                       -0.5*(yMax+yMin),
+                                       0.0));
+
+            m.postMultScale(osg::Vec3d(2.0/(xMax-xMin),
+                                       2.0/(yMax-yMin),
+                                       1.0));
+
+            convexHull.transform(m);
+            convexHullUnextended.transform(m);
+            light_persp.postMult(m);
+        }
+    }
 
 #if 0
     OSG_NOTICE<<"light_p = "<<light_p<<std::endl;
