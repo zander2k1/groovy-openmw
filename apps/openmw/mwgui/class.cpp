@@ -721,7 +721,7 @@ namespace MWGui
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mB = "#{Interface:Back}";
             mControllerButtons.mY = "#{Interface:Info}";
-            mControllerButtons.mR1 = "Class Description";
+            mControllerButtons.mR1 = "#{Interface:ClassDescription}";
             mControllerButtons.mLStick.clear();
 
             mDescriptionButton->setVisible(false);
