@@ -186,17 +186,47 @@ namespace MWGui
 
     namespace
     {
-        float getDialogueScaleMultiplier()
+        float getCustomScaleMultiplier(float customScaling)
         {
             const float interfaceScaling = Settings::gui().mScalingFactor;
             if (interfaceScaling <= 0.f)
                 return 1.f;
 
-            float dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
-            if (dialogueScaling <= 0.f)
-                dialogueScaling = interfaceScaling;
+            if (customScaling <= 0.f)
+                customScaling = interfaceScaling;
 
-            return std::max(dialogueScaling / interfaceScaling, 0.01f);
+            return std::max(customScaling / interfaceScaling, 0.01f);
+        }
+
+        float getDialogueScaleMultiplier()
+        {
+            return getCustomScaleMultiplier(Settings::gui().mDialogueInterfaceScaling);
+        }
+
+        float getSettingsScaleMultiplier()
+        {
+            float settingsScaling = Settings::gui().mSettingsInterfaceScaling;
+            if (settingsScaling <= 0.f && Settings::gui().mSettingsWindowIgnoreScaling)
+                settingsScaling = 1.f;
+            return getCustomScaleMultiplier(settingsScaling);
+        }
+
+        float getSaveLoadScaleMultiplier()
+        {
+            return getCustomScaleMultiplier(Settings::gui().mSaveLoadInterfaceScaling);
+        }
+
+        void updateScalingLayerSize(std::string_view layerName, float scaleMultiplier)
+        {
+            auto* layer = MyGUI::LayerManager::getInstance().getByName(std::string(layerName), false);
+            auto* scalingLayer = dynamic_cast<MyGUIPlatform::ScalingLayer*>(layer);
+            if (!scalingLayer)
+                return;
+
+            const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+            const int layerWidth = std::max(1, static_cast<int>(std::lround(viewSize.width / scaleMultiplier)));
+            const int layerHeight = std::max(1, static_cast<int>(std::lround(viewSize.height / scaleMultiplier)));
+            scalingLayer->setLayerSize(MyGUI::IntSize(layerWidth, layerHeight));
         }
 
         bool isChildOf(MyGUI::Widget* widget, MyGUI::Widget* parent)
@@ -375,6 +405,7 @@ namespace MWGui
         MyGUI::ResourceManager::getInstance().load("core.xml");
         updateDialogueLayerSize();
         updateSettingsLayerSize();
+        updateSaveLoadLayerSize();
 
         const bool keyboardNav = Settings::gui().mKeyboardNavigation;
         mKeyboardNavigation = std::make_unique<KeyboardNavigation>();
@@ -1681,11 +1712,13 @@ namespace MWGui
             if (setting.first == "GUI" && setting.second == "menu transparency")
                 setMenuTransparency(Settings::gui().mMenuTransparency);
             else if (setting.first == "GUI"
-                && (setting.second == "dialogue interface scaling" || setting.second == "scaling factor"
+                && (setting.second == "dialogue interface scaling" || setting.second == "settings interface scaling"
+                    || setting.second == "save load interface scaling" || setting.second == "scaling factor"
                     || setting.second == "settings window ignore scaling"))
             {
                 updateDialogueLayerSize();
                 updateSettingsLayerSize();
+                updateSaveLoadLayerSize();
             }
             else if (setting.first == "Video"
                 && (setting.second == "resolution x" || setting.second == "resolution y"
@@ -1724,6 +1757,7 @@ namespace MWGui
         mGuiPlatform->getRenderManagerPtr()->setViewSize(x, y);
         updateDialogueLayerSize();
         updateSettingsLayerSize();
+        updateSaveLoadLayerSize();
 
         // scaled size
         const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
@@ -1758,44 +1792,19 @@ namespace MWGui
 
     void WindowManager::updateDialogueLayerSize()
     {
-        auto* layer = MyGUI::LayerManager::getInstance().getByName("Dialogue", false);
-        auto* scalingLayer = dynamic_cast<MyGUIPlatform::ScalingLayer*>(layer);
-        if (!scalingLayer)
-            return;
-
-        const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        const float scaleMultiplier = getDialogueScaleMultiplier();
-
-        const int layerWidth = std::max(1, static_cast<int>(std::lround(viewSize.width / scaleMultiplier)));
-        const int layerHeight = std::max(1, static_cast<int>(std::lround(viewSize.height / scaleMultiplier)));
-        scalingLayer->setLayerSize(MyGUI::IntSize(layerWidth, layerHeight));
+        updateScalingLayerSize("Dialogue", getDialogueScaleMultiplier());
     }
 
     void WindowManager::updateSettingsLayerSize()
     {
-        auto* layer = MyGUI::LayerManager::getInstance().getByName("Settings", false);
-        auto* scalingLayer = dynamic_cast<MyGUIPlatform::ScalingLayer*>(layer);
-        if (!scalingLayer)
-            return;
+        const float scaleMultiplier = getSettingsScaleMultiplier();
+        updateScalingLayerSize("Settings", scaleMultiplier);
+        updateScalingLayerSize("SettingsPopup", scaleMultiplier);
+    }
 
-        const MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        float interfaceScaling = Settings::gui().mScalingFactor;
-        if (interfaceScaling <= 0.f)
-            interfaceScaling = 1.f;
-
-        float settingsScale = 1.f;
-        if (Settings::gui().mSettingsWindowIgnoreScaling)
-            settingsScale = interfaceScaling;
-
-        const int layerWidth = std::max(1, static_cast<int>(std::lround(viewSize.width * settingsScale)));
-        const int layerHeight = std::max(1, static_cast<int>(std::lround(viewSize.height * settingsScale)));
-        scalingLayer->setLayerSize(MyGUI::IntSize(layerWidth, layerHeight));
-
-        if (auto* popupLayer = MyGUI::LayerManager::getInstance().getByName("SettingsPopup", false))
-        {
-            if (auto* popupScaling = dynamic_cast<MyGUIPlatform::ScalingLayer*>(popupLayer))
-                popupScaling->setLayerSize(MyGUI::IntSize(layerWidth, layerHeight));
-        }
+    void WindowManager::updateSaveLoadLayerSize()
+    {
+        updateScalingLayerSize("SaveLoad", getSaveLoadScaleMultiplier());
     }
 
     bool WindowManager::isWindowVisible() const

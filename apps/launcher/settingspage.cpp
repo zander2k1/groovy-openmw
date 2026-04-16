@@ -218,6 +218,12 @@ Launcher::SettingsPage::SettingsPage(
         &SettingsPage::onInterfaceScalingChanged);
     connect(dialogueScalingSpinBox, static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
         &SettingsPage::onDialogueScalingChanged);
+    connect(settingsInterfaceScalingSpinBox,
+        static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+        &SettingsPage::onSettingsInterfaceScalingChanged);
+    connect(saveLoadInterfaceScalingSpinBox,
+        static_cast<void (QDoubleSpinBox::*)(double)>(&QDoubleSpinBox::valueChanged), this,
+        &SettingsPage::onSaveLoadInterfaceScalingChanged);
     mLastInterfaceScaling = scalingSpinBox->value();
 
     mCellNameCompleter.setModel(&mCellNameCompleterModel);
@@ -303,7 +309,7 @@ void Launcher::SettingsPage::on_recommendedScalingDefaultsCheckBox_stateChanged(
         }
     }
     else
-        setScalingValues(1.0, 1.0);
+        setScalingValues(1.0, 1.0, 1.0, 1.0);
 }
 
 void Launcher::SettingsPage::onResolutionChanged(int width, int height)
@@ -540,8 +546,15 @@ bool Launcher::SettingsPage::loadSettings()
         }
         const double interfaceScaling = Settings::gui().mScalingFactor;
         const double dialogueScaling = Settings::gui().mDialogueInterfaceScaling;
+        const double settingsScaling = Settings::gui().mSettingsInterfaceScaling;
+        const double saveLoadScaling = Settings::gui().mSaveLoadInterfaceScaling;
         const double effectiveDialogueScaling = dialogueScaling > 0.0 ? dialogueScaling : interfaceScaling;
-        setScalingValues(interfaceScaling, effectiveDialogueScaling);
+        const double effectiveSettingsScaling = settingsScaling > 0.0
+            ? settingsScaling
+            : (Settings::gui().mSettingsWindowIgnoreScaling ? 1.0 : interfaceScaling);
+        const double effectiveSaveLoadScaling = saveLoadScaling > 0.0 ? saveLoadScaling : interfaceScaling;
+        setScalingValues(
+            interfaceScaling, effectiveDialogueScaling, effectiveSettingsScaling, effectiveSaveLoadScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         loadSettingBool(Settings::gui().mSettingsWindowIgnoreScaling, *settingsWindowIgnoreScalingCheckBox);
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
@@ -599,25 +612,39 @@ void Launcher::SettingsPage::onInterfaceScalingChanged(double value)
     if (std::abs(delta) < 0.0001)
         return;
 
-    const double dialogueScaling = dialogueScalingSpinBox->value();
-    if (dialogueScaling > 0.0)
-        dialogueScalingSpinBox->setValue(std::max(0.5, dialogueScaling + delta));
+    adjustCustomScaleWithInterfaceDelta(dialogueScalingSpinBox, delta);
+    adjustCustomScaleWithInterfaceDelta(settingsInterfaceScalingSpinBox, delta);
+    adjustCustomScaleWithInterfaceDelta(saveLoadInterfaceScalingSpinBox, delta);
 
     mLastInterfaceScaling = value;
 }
 
 void Launcher::SettingsPage::onDialogueScalingChanged(double value)
 {
-    if (value > 0.0 && value < 0.5)
-        dialogueScalingSpinBox->setValue(0.5);
+    clampCustomScale(dialogueScalingSpinBox, value);
 }
 
-void Launcher::SettingsPage::setScalingValues(double interfaceScaling, double dialogueScaling)
+void Launcher::SettingsPage::onSettingsInterfaceScalingChanged(double value)
+{
+    clampCustomScale(settingsInterfaceScalingSpinBox, value);
+}
+
+void Launcher::SettingsPage::onSaveLoadInterfaceScalingChanged(double value)
+{
+    clampCustomScale(saveLoadInterfaceScalingSpinBox, value);
+}
+
+void Launcher::SettingsPage::setScalingValues(
+    double interfaceScaling, double dialogueScaling, double settingsScaling, double saveLoadScaling)
 {
     const QSignalBlocker interfaceBlocker(scalingSpinBox);
     const QSignalBlocker dialogueBlocker(dialogueScalingSpinBox);
+    const QSignalBlocker settingsBlocker(settingsInterfaceScalingSpinBox);
+    const QSignalBlocker saveLoadBlocker(saveLoadInterfaceScalingSpinBox);
     scalingSpinBox->setValue(interfaceScaling);
     dialogueScalingSpinBox->setValue(dialogueScaling);
+    settingsInterfaceScalingSpinBox->setValue(settingsScaling);
+    saveLoadInterfaceScalingSpinBox->setValue(saveLoadScaling);
     mLastInterfaceScaling = interfaceScaling;
 }
 
@@ -630,8 +657,21 @@ bool Launcher::SettingsPage::applyRecommendedScalingDefaults(int width, int heig
         return false;
     }
 
-    setScalingValues(interfaceScaling, dialogueScaling);
+    setScalingValues(interfaceScaling, dialogueScaling, interfaceScaling, interfaceScaling);
     return true;
+}
+
+void Launcher::SettingsPage::adjustCustomScaleWithInterfaceDelta(QDoubleSpinBox* spinBox, double delta) const
+{
+    const double customScale = spinBox->value();
+    if (customScale > 0.0)
+        spinBox->setValue(std::max(0.5, customScale + delta));
+}
+
+void Launcher::SettingsPage::clampCustomScale(QDoubleSpinBox* spinBox, double value)
+{
+    if (value > 0.0 && value < 0.5)
+        spinBox->setValue(0.5);
 }
 
 void Launcher::SettingsPage::populateLoadedConfigs()
@@ -888,6 +928,8 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);
         Settings::gui().mScalingFactor.set(scalingSpinBox->value());
         Settings::gui().mDialogueInterfaceScaling.set(dialogueScalingSpinBox->value());
+        Settings::gui().mSettingsInterfaceScaling.set(settingsInterfaceScalingSpinBox->value());
+        Settings::gui().mSaveLoadInterfaceScaling.set(saveLoadInterfaceScalingSpinBox->value());
         Settings::gui().mFontSize.set(fontSizeSpinBox->value());
         saveSettingBool(*settingsWindowIgnoreScalingCheckBox, Settings::gui().mSettingsWindowIgnoreScaling);
         saveSettingFloat(*gamepadCursorSpeedSpinBox, Settings::input().mGamepadCursorSpeed);

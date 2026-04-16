@@ -616,6 +616,7 @@ namespace MWGui
         void setMenuTransparency(float value);
         void updateDialogueLayerSize();
         void updateSettingsLayerSize();
+        void updateSaveLoadLayerSize();
 
         void updatePinnedWindows();
 

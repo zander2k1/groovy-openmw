@@ -23,6 +23,7 @@
     <Layer name="LoadingScreen" overlapped="false" pick="true"/>
     <Layer name="Debug" overlapped="true" pick="true"/>
     <Layer name="Console" overlapped="true" pick="true"/>
+    <Layer name="SaveLoad" type="ScalingLayer" pick="true"/>
     <Layer name="Modal" overlapped="true" pick="true"/>
     <Layer name="Popup" overlapped="true" pick="true"/>
     <Layer name="Notification" overlapped="false" pick="false"/>

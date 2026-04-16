@@ -36,6 +36,8 @@ namespace Launcher
         void on_runScriptAfterStartupBrowseButton_clicked();
         void onInterfaceScalingChanged(double value);
         void onDialogueScalingChanged(double value);
+        void onSettingsInterfaceScalingChanged(double value);
+        void onSaveLoadInterfaceScalingChanged(double value);
         void slotAnimSourcesToggled(bool checked);
         void slotPostProcessToggled(bool checked);
         void slotSkyBlendingToggled(bool checked);
@@ -46,7 +48,10 @@ namespace Launcher
 
     private:
         bool applyRecommendedScalingDefaults(int width, int height);
-        void setScalingValues(double interfaceScaling, double dialogueScaling);
+        void setScalingValues(
+            double interfaceScaling, double dialogueScaling, double settingsScaling, double saveLoadScaling);
+        void adjustCustomScaleWithInterfaceDelta(QDoubleSpinBox* spinBox, double delta) const;
+        void clampCustomScale(QDoubleSpinBox* spinBox, double value);
         void populateLoadedConfigs();
 
         const Files::ConfigurationManager& mCfgMgr;
