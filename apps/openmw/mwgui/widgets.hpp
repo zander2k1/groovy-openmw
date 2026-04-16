@@ -241,6 +241,7 @@ namespace MWGui
             typedef ESM::ENAMstruct SpellEffectValue;
 
             void setSpellEffect(const SpellEffectParams& params);
+            int fitToWidth(int width, bool wrap);
 
             int getRequestedWidth() const { return mRequestedWidth; }
 

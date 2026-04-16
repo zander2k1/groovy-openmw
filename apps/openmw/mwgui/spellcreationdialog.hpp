@@ -158,6 +158,7 @@ namespace MWGui
         bool isControllerEffectsAtTop() const;
         bool isControllerEffectsRightColumn() const;
         MyGUI::Widget* getControllerEffectsTooltipWidget() const;
+        void scrollUsedEffectsToFocused();
 
     private:
         Type mType;

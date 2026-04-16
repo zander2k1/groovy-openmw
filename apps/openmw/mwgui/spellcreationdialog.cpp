@@ -65,6 +65,7 @@ namespace
         effect.mMagnMin = 0;
         effect.mRange = 0;
     }
+
 }
 
 namespace MWGui
@@ -1328,7 +1329,10 @@ namespace MWGui
         MyGUI::EnumeratorWidgetPtr oldWidgets = mUsedEffectsView->getEnumerator();
         MyGUI::Gui::getInstance().destroyWidgets(oldWidgets);
 
-        MyGUI::IntSize size(0, 0);
+        constexpr int minEffectHeight = 24;
+        const int viewWidth = std::max(1, mUsedEffectsView->getWidth());
+        const int viewHeight = std::max(1, mUsedEffectsView->getHeight());
+        constexpr int scrollbarWidth = 18;
 
         mEffectButtons.clear();
         mEffectHighlights.clear();
@@ -1347,7 +1351,7 @@ namespace MWGui
             params.mIsConstant = mConstantEffect;
 
             MyGUI::Button* button = mUsedEffectsView->createWidget<MyGUI::Button>(
-                {}, MyGUI::IntCoord(0, size.height, 0, 24), MyGUI::Align::Default);
+                {}, MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight), MyGUI::Align::Default);
             button->setUserData(i);
             button->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellCreationDialog::onEditEffect);
             button->setNeedMouseFocus(true);
@@ -1356,54 +1360,65 @@ namespace MWGui
                 button->setUserString("ForceCollapsedTooltip", "true");
 
             Widgets::MWSpellEffectPtr effect = button->createWidget<Widgets::MWSpellEffect>(
-                "MW_EffectImage", MyGUI::IntCoord(0, 0, 0, 24), MyGUI::Align::Default);
+                "MW_EffectImage", MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight), MyGUI::Align::Default);
 
             effect->setNeedMouseFocus(false);
             effect->setSpellEffect(params);
-
-            effect->setSize(effect->getRequestedWidth(), 24);
-            button->setSize(effect->getRequestedWidth(), 24);
+            effect->fitToWidth(viewWidth, true);
 
             MyGUI::Widget* highlight = nullptr;
             if (Settings::gui().mControllerMenus)
             {
-                int highlightWidth = effect->getRequestedWidth();
-                int paneWidth = 0;
-                if (mUsedEffectsView)
-                {
-                    paneWidth = mUsedEffectsView->getClientCoord().width;
-                    if (paneWidth <= 0)
-                        paneWidth = mUsedEffectsView->getWidth();
-                }
-                highlightWidth = std::max(highlightWidth, paneWidth);
                 highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, size.height, highlightWidth, 24), MyGUI::Align::Default);
+                    "ControllerHighlight",
+                    MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight),
+                    MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setDepth(1);
                 highlight->setVisible(false);
             }
 
-            size.width = std::max(size.width, effect->getRequestedWidth());
-            size.height += 24;
             ++i;
 
             mEffectButtons.emplace_back(std::pair(effect, button));
             mEffectHighlights.emplace_back(highlight);
         }
 
-        if (mUsedEffectsView)
+        const auto relayoutRows = [&](int rowWidth) -> int
         {
-            int paneWidth = mUsedEffectsView->getClientCoord().width;
-            if (paneWidth <= 0)
-                paneWidth = mUsedEffectsView->getWidth();
-            size.width = std::max(size.width, paneWidth);
+            rowWidth = std::max(1, rowWidth);
+            int y = 0;
+            for (std::size_t index = 0; index < mEffectButtons.size(); ++index)
+            {
+                Widgets::MWSpellEffectPtr effect = mEffectButtons[index].first;
+                MyGUI::Button* button = mEffectButtons[index].second;
+                const int effectHeight = effect->fitToWidth(rowWidth, true);
+                effect->setCoord(0, 0, rowWidth, effectHeight);
+                button->setCoord(0, y, rowWidth, effectHeight);
+                if (index < mEffectHighlights.size() && mEffectHighlights[index])
+                    mEffectHighlights[index]->setCoord(0, y, rowWidth, effectHeight);
+                y += effectHeight;
+            }
+            return y;
+        };
+
+        int rowWidth = viewWidth;
+        int contentHeight = relayoutRows(rowWidth);
+        if (contentHeight > viewHeight)
+        {
+            rowWidth = std::max(1, viewWidth - scrollbarWidth);
+            contentHeight = relayoutRows(rowWidth);
         }
 
-        // Canvas size must be expressed with HScroll disabled, otherwise MyGUI would expand the scroll area when the
-        // scrollbar is hidden
+        // Canvas size must be expressed with VScroll disabled, otherwise MyGUI would expand the scroll area when the
+        // scrollbar is hidden.
         mUsedEffectsView->setVisibleHScroll(false);
-        mUsedEffectsView->setCanvasSize(size);
-        mUsedEffectsView->setVisibleHScroll(true);
+        mUsedEffectsView->setVisibleVScroll(false);
+        mUsedEffectsView->setCanvasSize(MyGUI::IntSize(viewWidth, std::max(viewHeight, contentHeight)));
+        mUsedEffectsView->setVisibleVScroll(true);
+
+        if (Settings::gui().mControllerMenus)
+            scrollUsedEffectsToFocused();
 
         notifyEffectsChanged();
     }
@@ -1557,6 +1572,8 @@ namespace MWGui
             const int lineHeight = Settings::gui().mFontSize + 3;
             mAvailableEffectsList->setViewOffset(-lineHeight * static_cast<int>(mAvailableFocus - 5));
         }
+        if (mRightColumn)
+            scrollUsedEffectsToFocused();
 
         if (!mRightColumn && mAvailableFocus < mAvailableButtons.size())
         {
@@ -1566,6 +1583,27 @@ namespace MWGui
         }
 
         return true;
+    }
+
+    void EffectEditorBase::scrollUsedEffectsToFocused()
+    {
+        if (!mUsedEffectsView || !mRightColumn || mEffectFocus >= mEffectButtons.size())
+            return;
+
+        const MyGUI::IntCoord itemCoord = mEffectButtons[mEffectFocus].second->getAbsoluteCoord();
+        const MyGUI::IntCoord viewCoord = mUsedEffectsView->getAbsoluteCoord();
+
+        int newOffset = mUsedEffectsView->getViewOffset().top;
+        if (itemCoord.top < viewCoord.top)
+            newOffset += viewCoord.top - itemCoord.top;
+        else if (itemCoord.top + itemCoord.height > viewCoord.top + viewCoord.height)
+            newOffset -= (itemCoord.top + itemCoord.height) - (viewCoord.top + viewCoord.height);
+        else
+            return;
+
+        const int minOffset = std::min(0, mUsedEffectsView->getHeight() - mUsedEffectsView->getCanvasSize().height);
+        newOffset = std::clamp(newOffset, minOffset, 0);
+        mUsedEffectsView->setViewOffset(MyGUI::IntPoint(0, newOffset));
     }
 
     void EffectEditorBase::setControllerEffectsFocus(bool active)
@@ -1599,6 +1637,7 @@ namespace MWGui
             mEffectButtons[mEffectFocus].first->setStateSelected(true);
             if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
                 mEffectHighlights[mEffectFocus]->setVisible(true);
+            scrollUsedEffectsToFocused();
         }
     }
 
@@ -1627,6 +1666,7 @@ namespace MWGui
                 mEffectButtons[mEffectFocus].first->setStateSelected(true);
                 if (mEffectFocus < mEffectHighlights.size() && mEffectHighlights[mEffectFocus])
                     mEffectHighlights[mEffectFocus]->setVisible(true);
+                scrollUsedEffectsToFocused();
             }
             winMgr->setControllerTooltipVisible(false);
         }
