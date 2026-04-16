@@ -1776,21 +1776,24 @@ namespace MWGui
             if (showChargeBar)
             {
                 const int maxBarWidth = 160;
+                const int minBarWidth = 48;
                 const int barHeight = 18;
-                int barWidth = std::min(maxBarWidth, std::max(0, winRect.width - padding * 2));
+
+                const int textWidth = std::min(nameText->getTextSize().width, nameWidth);
+                const int textRight = padding + textWidth;
+                const int barAreaLeft = std::max(padding, textRight + padding);
+                const int barAreaRight = leftMostText->getLeft() - padding;
+                const int availableBarWidth = std::max(0, barAreaRight - barAreaLeft);
+
+                int barWidth = std::min(maxBarWidth, availableBarWidth);
                 if ((winRect.width - barWidth) % 2 != 0)
                     barWidth = std::max(0, barWidth - 1);
-                if (barWidth > 0)
+
+                if (barWidth >= minBarWidth)
                 {
+                    const int maxBarLeft = barAreaRight - barWidth;
                     int barLeft = (winRect.width - barWidth) / 2;
-                    const int textWidth = std::min(nameText->getTextSize().width, nameWidth);
-                    const int textRight = padding + textWidth;
-                    if (textRight + padding > barLeft)
-                    {
-                        const int rightLimit = leftMostText->getLeft() - padding;
-                        const int maxLeft = std::max(padding, rightLimit - barWidth);
-                        barLeft = std::min(std::max(textRight + padding, padding), maxLeft);
-                    }
+                    barLeft = std::clamp(barLeft, barAreaLeft, maxBarLeft);
                     const int barTop = (collapsedHeight - barHeight) / 2;
                     auto* chargeBar = mDynamicToolTipBox->createWidget<Widgets::MWDynamicStat>("MW_ChargeBar",
                         MyGUI::IntCoord(barLeft, barTop, barWidth, barHeight), MyGUI::Align::Default,
