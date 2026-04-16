@@ -47,6 +47,8 @@
 namespace
 {
     constexpr size_t kAlchemyNameLimit = 48;
+    constexpr int kAlchemyWindowFixedWidth = 588;
+    constexpr int kAlchemyWindowFixedHeight = 394;
 
     bool isChildOf(MyGUI::Widget* widget, MyGUI::Widget* parent)
     {
@@ -56,6 +58,16 @@ namespace
                 return true;
         }
         return false;
+    }
+
+    void enforceFixedSize(MyGUI::Widget* mainWidget)
+    {
+        if (!mainWidget)
+            return;
+
+        const MyGUI::IntSize sz = mainWidget->getSize();
+        if (sz.width != kAlchemyWindowFixedWidth || sz.height != kAlchemyWindowFixedHeight)
+            mainWidget->setSize(kAlchemyWindowFixedWidth, kAlchemyWindowFixedHeight);
     }
 }
 
@@ -155,6 +167,9 @@ namespace MWGui
 
             updateControllerButtons();
         }
+
+        if (!mUseXboxAlchemyUi)
+            enforceFixedSize(mMainWidget);
 
         center();
     }
@@ -256,6 +271,9 @@ namespace MWGui
 
     void AlchemyWindow::onFrame(float /*duration*/)
     {
+        if (!mUseXboxAlchemyUi)
+            enforceFixedSize(mMainWidget);
+
         if (!Settings::gui().mControllerMenus)
             return;
 
@@ -349,6 +367,9 @@ namespace MWGui
 
     void AlchemyWindow::onOpen()
     {
+        if (!mUseXboxAlchemyUi)
+            enforceFixedSize(mMainWidget);
+
         if (Settings::gui().mControllerMenus)
             center();
 
