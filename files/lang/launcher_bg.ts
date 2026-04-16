@@ -1690,5 +1690,13 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <source>Enable white/black button icons</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Replace alchemy with an Xbox-style split menu flow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Alchemy UI</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

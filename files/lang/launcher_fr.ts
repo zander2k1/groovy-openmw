@@ -1678,5 +1678,13 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <source>XBOX Tab Order</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Replace alchemy with an Xbox-style split menu flow.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Alchemy UI</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

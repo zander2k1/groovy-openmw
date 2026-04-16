@@ -62,8 +62,8 @@ namespace
 namespace MWGui
 {
     AlchemyWindow::AlchemyWindow()
-        : WindowBase(Settings::gui().mXboxAlchemyUi.get() ? "openmw_alchemy_window_xbox.layout"
-                                                          : "openmw_alchemy_window.layout")
+        : WindowBase(
+            Settings::gui().mXboxAlchemyUi.get() ? "openmw_alchemy_window_xbox.layout" : "openmw_alchemy_window.layout")
         , mCurrentFilter(FilterType::ByName)
         , mUseXboxAlchemyUi(Settings::gui().mXboxAlchemyUi)
         , mModel(nullptr)
@@ -660,10 +660,9 @@ namespace MWGui
     void AlchemyWindow::filterListButtonHandler(const SDL_ControllerButtonEvent& arg)
     {
         const bool hasItems = mItemView && mItemView->getItemCount() > 0;
-        MyGUI::Widget* postListFocus
-            = hasItems ? static_cast<MyGUI::Widget*>(mItemView)
-                       : (mUseXboxAlchemyUi ? static_cast<MyGUI::Widget*>(mFilterType)
-                                            : static_cast<MyGUI::Widget*>(mNameEdit));
+        MyGUI::Widget* postListFocus = hasItems
+            ? static_cast<MyGUI::Widget*>(mItemView)
+            : (mUseXboxAlchemyUi ? static_cast<MyGUI::Widget*>(mFilterType) : static_cast<MyGUI::Widget*>(mNameEdit));
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
         if (arg.button == SDL_CONTROLLER_BUTTON_A)
@@ -886,8 +885,9 @@ namespace MWGui
         if (focusInItemView && mItemView->getItemCount() <= 0)
         {
             if (mUseXboxAlchemyUi)
-                setControllerFocusWidget(mXboxPage == XboxPage::Picker ? static_cast<MyGUI::Widget*>(mFilterType)
-                                                                       : static_cast<MyGUI::Widget*>(mIngredients[mXboxFocusedIngredient]));
+                setControllerFocusWidget(mXboxPage == XboxPage::Picker
+                        ? static_cast<MyGUI::Widget*>(mFilterType)
+                        : static_cast<MyGUI::Widget*>(mIngredients[mXboxFocusedIngredient]));
             else
                 setControllerFocusWidget(mNameEdit);
             return;

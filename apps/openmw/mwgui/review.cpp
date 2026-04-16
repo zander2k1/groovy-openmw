@@ -106,29 +106,29 @@ namespace MWGui
         getWidget(mClassWidget, "ClassText");
         getWidget(mBirthSignLabel, "Sign_str");
         getWidget(mBirthSignWidget, "SignText");
-        auto configureRow = [this](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget, std::string_view tooltipLayout,
-                                bool forceCollapsed, bool dynamicStats,
-                                void (ReviewDialog::*handler)(MyGUI::Widget*)) {
-            if (!labelWidget || !valueWidget)
-                return;
+        auto configureRow
+            = [this](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget, std::string_view tooltipLayout,
+                  bool forceCollapsed, bool dynamicStats, void (ReviewDialog::*handler)(MyGUI::Widget*)) {
+                  if (!labelWidget || !valueWidget)
+                      return;
 
-            for (MyGUI::TextBox* widget : { labelWidget, valueWidget })
-            {
-                widget->setNeedMouseFocus(true);
-                widget->setUserString("ToolTipType", "Layout");
-                widget->setUserString("ToolTipLayout", std::string(tooltipLayout));
-                if (forceCollapsed)
-                    widget->setUserString("ForceCollapsedTooltip", "true");
-                else
-                    widget->clearUserString("ForceCollapsedTooltip");
-                if (dynamicStats)
-                    widget->setUserString("ToolTipDynamic", "Stats");
-                else
-                    widget->clearUserString("ToolTipDynamic");
+                  for (MyGUI::TextBox* widget : { labelWidget, valueWidget })
+                  {
+                      widget->setNeedMouseFocus(true);
+                      widget->setUserString("ToolTipType", "Layout");
+                      widget->setUserString("ToolTipLayout", std::string(tooltipLayout));
+                      if (forceCollapsed)
+                          widget->setUserString("ForceCollapsedTooltip", "true");
+                      else
+                          widget->clearUserString("ForceCollapsedTooltip");
+                      if (dynamicStats)
+                          widget->setUserString("ToolTipDynamic", "Stats");
+                      else
+                          widget->clearUserString("ToolTipDynamic");
 
-                widget->eventMouseButtonClick += MyGUI::newDelegate(this, handler);
-            }
-        };
+                      widget->eventMouseButtonClick += MyGUI::newDelegate(this, handler);
+                  }
+              };
 
         auto setCollapsedPair = [](MyGUI::TextBox* labelWidget, MyGUI::TextBox* valueWidget) {
             if (!labelWidget || !valueWidget)
