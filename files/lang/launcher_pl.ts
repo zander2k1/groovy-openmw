@@ -1721,5 +1721,13 @@ Logi i ustawienia zmienione za pomocą programu uruchamiającego i w grze zostan
         <source>Save &amp; Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use Xbox-style font colors by overriding FontColor fallback values.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Font Color</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

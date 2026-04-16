@@ -167,6 +167,92 @@ namespace
         return false;
     }
 
+    constexpr std::array xboxFontColorFallbacks = {
+        "FontColor_color_normal,244,177,53",
+        "FontColor_color_normal_over,249,208,134",
+        "FontColor_color_normal_pressed,253,239,215",
+        "FontColor_color_active,96,112,202",
+        "FontColor_color_active_over,159,169,223",
+        "FontColor_color_active_pressed,223,226,244",
+        "FontColor_color_disabled,179,168,135",
+        "FontColor_color_disabled_over,249,208,134",
+        "FontColor_color_disabled_pressed,253,239,215",
+        "FontColor_color_link,90,96,139",
+        "FontColor_color_link_over,114,120,163",
+        "FontColor_color_link_pressed,139,145,180",
+        "FontColor_color_journal_link,24,43,146",
+        "FontColor_color_journal_link_over,44,70,222",
+        "FontColor_color_journal_link_pressed,117,135,234",
+        "FontColor_color_journal_topic,0,0,0",
+        "FontColor_color_journal_topic_over,24,43,146",
+        "FontColor_color_journal_topic_pressed,44,70,222",
+        "FontColor_color_answer,150,50,30",
+        "FontColor_color_answer_over,249,208,134",
+        "FontColor_color_answer_pressed,253,239,215",
+        "FontColor_color_header,249,208,134",
+        "FontColor_color_notify,249,208,134",
+        "FontColor_color_big_normal,169,128,65",
+        "FontColor_color_big_normal_over,202,168,117",
+        "FontColor_color_big_normal_pressed,225,206,179",
+        "FontColor_color_big_link,90,96,139",
+        "FontColor_color_big_link_over,111,117,162",
+        "FontColor_color_big_link_pressed,136,141,179",
+        "FontColor_color_big_answer,150,50,30",
+        "FontColor_color_big_answer_over,202,168,117",
+        "FontColor_color_big_answer_pressed,225,206,179",
+        "FontColor_color_big_header,202,168,117",
+        "FontColor_color_big_notify,202,168,117",
+        "FontColor_color_background,0,0,0",
+        "FontColor_color_focus,80,80,80",
+        "FontColor_color_health,150,50,30",
+        "FontColor_color_magic,53,69,159",
+        "FontColor_color_fatigue,68,166,83",
+        "FontColor_color_misc,0,205,205",
+        "FontColor_color_weapon_fill,150,50,30",
+        "FontColor_color_magic_fill,150,50,30",
+        "FontColor_color_positive,249,208,134",
+        "FontColor_color_negative,150,50,30",
+        "FontColor_color_count,249,208,134",
+    };
+
+    bool isFontColorFallback(const QString& value)
+    {
+        return value.startsWith(QLatin1String("FontColor_"));
+    }
+
+    void applyXboxFontColorFallbacks(Config::GameSettings& gameSettings, bool enabled)
+    {
+        static const QString fallbackKey = QStringLiteral("fallback");
+        const QList<Config::SettingValue> fallbackValues = gameSettings.values(fallbackKey);
+
+        QList<Config::SettingValue> preservedUserFallbacks;
+        preservedUserFallbacks.reserve(fallbackValues.size());
+        for (const Config::SettingValue& fallbackValue : fallbackValues)
+        {
+            if (!gameSettings.isUserSetting(fallbackValue))
+                continue;
+
+            if (isFontColorFallback(fallbackValue.value))
+                continue;
+
+            preservedUserFallbacks.push_back(fallbackValue);
+        }
+
+        gameSettings.remove(fallbackKey);
+        for (const Config::SettingValue& fallbackValue : preservedUserFallbacks)
+            gameSettings.setMultiValue(fallbackKey, fallbackValue);
+
+        if (!enabled)
+            return;
+
+        const QString userContext = gameSettings.getUserContext();
+        for (const char* fallbackValue : xboxFontColorFallbacks)
+        {
+            const QString value = QString::fromLatin1(fallbackValue);
+            gameSettings.setMultiValue(fallbackKey, { value, value, userContext });
+        }
+    }
+
     enum FileTypeRoles
     {
         Role_ThisFile = Qt::ItemDataRole::UserRole,
@@ -538,6 +624,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledFonts, *xboxStyledFontsCheckBox);
         loadSettingBool(Settings::gui().mXboxTabOrder, *xboxTabOrderCheckBox);
+        loadSettingBool(Settings::gui().mXboxFontColor, *xboxFontColorCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
         {
@@ -923,6 +1010,10 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
         saveSettingBool(*xboxStyledFontsCheckBox, Settings::gui().mXboxStyledFonts);
         saveSettingBool(*xboxTabOrderCheckBox, Settings::gui().mXboxTabOrder);
+        const bool hadXboxFontColor = Settings::gui().mXboxFontColor;
+        saveSettingBool(*xboxFontColorCheckBox, Settings::gui().mXboxFontColor);
+        if (hadXboxFontColor || Settings::gui().mXboxFontColor)
+            applyXboxFontColorFallbacks(mGameSettings, Settings::gui().mXboxFontColor);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);
         saveSettingBool(*recommendedScalingDefaultsCheckBox, Settings::gui().mUseRecommendedScalingDefaults);

@@ -1473,7 +1473,7 @@
               </property>
              </widget>
             </item>
-            <item row="16" column="0">
+            <item row="17" column="0">
              <widget class="QCheckBox" name="settingsWindowIgnoreScalingCheckBox">
               <property name="toolTip">
                <string>Keep the in-game settings window at normal size regardless of GUI scaling.</string>
@@ -1526,17 +1526,27 @@
               <item row="14" column="0">
                <widget class="QCheckBox" name="xboxTabOrderCheckBox">
                 <property name="toolTip">
-                 <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
+                  <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
                 </property>
                <property name="text">
                 <string>XBOX Tab Order</string>
                </property>
               </widget>
              </item>
-             <item row="15" column="0">
-              <widget class="QCheckBox" name="useZoomOnMapCheckBox">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <item row="15" column="0">
+               <widget class="QCheckBox" name="xboxFontColorCheckBox">
+                <property name="toolTip">
+                 <string>Use Xbox-style font colors by overriding FontColor fallback values.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Font Color</string>
+                </property>
+               </widget>
+              </item>
+              <item row="16" column="0">
+               <widget class="QCheckBox" name="useZoomOnMapCheckBox">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
                 <string>Can Zoom on Maps</string>

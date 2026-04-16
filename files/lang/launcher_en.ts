@@ -1697,5 +1697,13 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <source>Save &amp; Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Use Xbox-style font colors by overriding FontColor fallback values.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Font Color</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
