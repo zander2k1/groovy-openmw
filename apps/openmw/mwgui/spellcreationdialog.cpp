@@ -1370,9 +1370,7 @@ namespace MWGui
             if (Settings::gui().mControllerMenus)
             {
                 highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight",
-                    MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight),
-                    MyGUI::Align::Default);
+                    "ControllerHighlight", MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight), MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setDepth(1);
                 highlight->setVisible(false);
@@ -1384,8 +1382,7 @@ namespace MWGui
             mEffectHighlights.emplace_back(highlight);
         }
 
-        const auto relayoutRows = [&](int rowWidth) -> int
-        {
+        const auto relayoutRows = [&](int rowWidth) -> int {
             rowWidth = std::max(1, rowWidth);
             int y = 0;
             for (std::size_t index = 0; index < mEffectButtons.size(); ++index)

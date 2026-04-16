@@ -231,7 +231,7 @@ Teal:
   stage: checks
   extends: .Ubuntu_Image
   before_script:
-    - apt-get update
+    - bash CI/apt_update_retry.sh
     - apt-get -y install curl wget make build-essential libreadline-dev git-core zip unzip
   script:
     - CI/teal_ci.sh
@@ -645,7 +645,7 @@ macOS15_Xcode16_arm64:
   variables:
     GIT_STRATEGY: none
   script:
-    - apt-get update
+    - bash CI/apt_update_retry.sh
     - apt-get install -y curl gcab unzip
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.22.35.zip" -o awscli-exe-linux-x86_64.zip
     - unzip -d awscli-exe-linux-x86_64 awscli-exe-linux-x86_64.zip
@@ -684,7 +684,7 @@ macOS15_Xcode16_arm64:
   variables:
     GIT_STRATEGY: none
   script:
-    - apt-get update
+    - bash CI/apt_update_retry.sh
     - apt-get install -y curl dos2unix unzip zip
     - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64-2.22.35.zip" -o awscli-exe-linux-x86_64.zip
     - unzip -d awscli-exe-linux-x86_64 awscli-exe-linux-x86_64.zip
