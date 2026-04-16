@@ -18,6 +18,7 @@
 #include <MyGUI_ListBox.h>
 #include <MyGUI_UString.h>
 #include <MyGUI_Widget.h>
+#include <MyGUI_Window.h>
 
 #include <components/esm3/loadappa.hpp>
 #include <components/esm3/loadingr.hpp>
@@ -56,26 +57,15 @@ namespace
         }
         return false;
     }
-
-    constexpr int kAlchemyWindowFixedWidth = 588;
-    constexpr int kAlchemyWindowFixedHeight = 394;
-
-    void enforceFixedSize(MyGUI::Widget* mainWidget)
-    {
-        if (!mainWidget)
-            return;
-
-        const MyGUI::IntSize sz = mainWidget->getSize();
-        if (sz.width != kAlchemyWindowFixedWidth || sz.height != kAlchemyWindowFixedHeight)
-            mainWidget->setSize(kAlchemyWindowFixedWidth, kAlchemyWindowFixedHeight);
-    }
 }
 
 namespace MWGui
 {
     AlchemyWindow::AlchemyWindow()
-        : WindowBase("openmw_alchemy_window.layout")
+        : WindowBase(Settings::gui().mXboxAlchemyUi.get() ? "openmw_alchemy_window_xbox.layout"
+                                                          : "openmw_alchemy_window.layout")
         , mCurrentFilter(FilterType::ByName)
+        , mUseXboxAlchemyUi(Settings::gui().mXboxAlchemyUi)
         , mModel(nullptr)
         , mSortModel(nullptr)
         , mAlchemy(std::make_unique<MWMechanics::Alchemy>())
@@ -100,6 +90,11 @@ namespace MWGui
         getWidget(mItemView, "ItemView");
         getWidget(mFilterValue, "FilterValue");
         getWidget(mFilterType, "FilterType");
+        if (mUseXboxAlchemyUi)
+        {
+            getWidget(mXboxSummaryPanel, "XboxSummaryPanel");
+            getWidget(mXboxIngredientPickerPanel, "XboxIngredientPickerPanel");
+        }
 
         mBrewCountEdit->eventValueChanged += MyGUI::newDelegate(this, &AlchemyWindow::onCountValueChanged);
         mBrewCountEdit->eventEditSelectAccept += MyGUI::newDelegate(this, &AlchemyWindow::onAccept);
@@ -143,12 +138,11 @@ namespace MWGui
             mFilterValue->setNeedKeyFocus(true);
             mFilterValue->setEditStatic(true);
             mItemView->setNeedKeyFocus(true);
-
-            mControllerButtons = {};
-            mControllerButtons.mA = "#{Interface:Select}";
-            mControllerButtons.mX = "#{Interface:Create}";
-            mControllerButtons.mY = "#{Interface:Info}";
-            mControllerButtons.mB = "#{Interface:Cancel}";
+            if (mUseXboxAlchemyUi)
+            {
+                for (ItemWidget* ingredient : mIngredients)
+                    ingredient->setNeedKeyFocus(true);
+            }
 
             MyGUI::Widget* highlightParent = mMainWidget->getClientWidget();
             if (!highlightParent)
@@ -158,9 +152,10 @@ namespace MWGui
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);
+
+            updateControllerButtons();
         }
 
-        enforceFixedSize(mMainWidget);
         center();
     }
 
@@ -236,6 +231,8 @@ namespace MWGui
                 mFilterValue->setIndexSelected(restoreIndex);
         }
         update();
+        if (mUseXboxAlchemyUi)
+            switchXboxPage(XboxPage::Summary);
     }
 
     void AlchemyWindow::initFilter()
@@ -262,10 +259,9 @@ namespace MWGui
         if (!Settings::gui().mControllerMenus)
             return;
 
-        enforceFixedSize(mMainWidget);
-
         updateControllerFocusState();
         updateControllerFocusHighlight();
+        updateXboxIngredientFocus();
         updateEditStaticState();
     }
 
@@ -353,7 +349,6 @@ namespace MWGui
 
     void AlchemyWindow::onOpen()
     {
-        enforceFixedSize(mMainWidget);
         if (Settings::gui().mControllerMenus)
             center();
 
@@ -388,9 +383,18 @@ namespace MWGui
         update();
         initFilter();
 
+        if (mUseXboxAlchemyUi)
+        {
+            mXboxFocusedIngredient = 0;
+            mXboxSelectedIngredientSlot = 0;
+            switchXboxPage(XboxPage::Summary);
+        }
+
         if (Settings::gui().mControllerMenus)
         {
-            if (mItemView->getItemCount() > 0)
+            if (mUseXboxAlchemyUi)
+                setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+            else if (mItemView->getItemCount() > 0)
                 setControllerFocusWidget(mItemView);
             else
                 setControllerFocusWidget(mNameEdit);
@@ -402,8 +406,13 @@ namespace MWGui
     void AlchemyWindow::onIngredientSelected(MyGUI::Widget* sender)
     {
         size_t i = std::distance(mIngredients.begin(), std::find(mIngredients.begin(), mIngredients.end(), sender));
-        mAlchemy->removeIngredient(i);
-        update();
+        if (mUseXboxAlchemyUi)
+            openXboxIngredientPicker(i);
+        else
+        {
+            mAlchemy->removeIngredient(i);
+            update();
+        }
     }
 
     void AlchemyWindow::onItemSelected(MWWorld::Ptr item)
@@ -486,11 +495,19 @@ namespace MWGui
     void AlchemyWindow::onSelectedItem(int index)
     {
         MWWorld::Ptr item = mSortModel->getItem(index).mBase;
-        int res = mAlchemy->addIngredient(item);
+        const int res = mUseXboxAlchemyUi ? mAlchemy->setIngredient(mXboxSelectedIngredientSlot, item)
+                                          : mAlchemy->addIngredient(item);
 
         if (res != -1)
         {
             update();
+            if (mUseXboxAlchemyUi)
+            {
+                mXboxFocusedIngredient = mXboxSelectedIngredientSlot;
+                switchXboxPage(XboxPage::Summary);
+                if (Settings::gui().mControllerMenus)
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+            }
 
             const ESM::RefId& sound = item.getClass().getUpSoundId(item);
             MWBase::Environment::get().getWindowManager()->playSound(sound);
@@ -643,10 +660,13 @@ namespace MWGui
     void AlchemyWindow::filterListButtonHandler(const SDL_ControllerButtonEvent& arg)
     {
         const bool hasItems = mItemView && mItemView->getItemCount() > 0;
-        MyGUI::Widget* postListFocus = hasItems ? static_cast<MyGUI::Widget*>(mItemView) : mNameEdit;
+        MyGUI::Widget* postListFocus
+            = hasItems ? static_cast<MyGUI::Widget*>(mItemView)
+                       : (mUseXboxAlchemyUi ? static_cast<MyGUI::Widget*>(mFilterType)
+                                            : static_cast<MyGUI::Widget*>(mNameEdit));
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
 
-        if (arg.button == SDL_CONTROLLER_BUTTON_A || arg.button == SDL_CONTROLLER_BUTTON_Y)
+        if (arg.button == SDL_CONTROLLER_BUTTON_A)
         {
             size_t index = mFilterValue->getIndexSelected();
             mFilterValue->setIndexSelected(index);
@@ -654,6 +674,10 @@ namespace MWGui
             setControllerFocusWidget(postListFocus);
 
             winMgr->playSound(ESM::RefId::stringRefId("Menu Click"));
+        }
+        else if (arg.button == SDL_CONTROLLER_BUTTON_Y && mUseXboxAlchemyUi)
+        {
+            showControllerInfo();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
@@ -735,6 +759,30 @@ namespace MWGui
         winMgr->toggleVirtualKeyboard();
     }
 
+    void AlchemyWindow::updateControllerButtons()
+    {
+        if (!Settings::gui().mControllerMenus)
+            return;
+
+        mControllerButtons = {};
+        if (mUseXboxAlchemyUi)
+        {
+            mControllerButtons.mA = "#{Interface:Inventory}";
+            mControllerButtons.mX = "#{Interface:Create}";
+            mControllerButtons.mY = "#{Interface:Info}";
+            mControllerButtons.mB = mXboxPage == XboxPage::Picker ? "#{Interface:Back}" : "#{Interface:Cancel}";
+        }
+        else
+        {
+            mControllerButtons.mA = "#{Interface:Select}";
+            mControllerButtons.mX = "#{Interface:Create}";
+            mControllerButtons.mY = "#{Interface:Info}";
+            mControllerButtons.mB = "#{Interface:Cancel}";
+        }
+
+        MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
+    }
+
     void AlchemyWindow::setControllerFocusWidget(MyGUI::Widget* widget)
     {
         if (!widget)
@@ -742,11 +790,18 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(widget);
         mLastControllerFocusWidget = widget;
+        if (mUseXboxAlchemyUi)
+        {
+            const auto it = std::find(mIngredients.begin(), mIngredients.end(), widget);
+            if (it != mIngredients.end())
+                mXboxFocusedIngredient = static_cast<int>(std::distance(mIngredients.begin(), it));
+        }
         const bool focusInItemView = isFocusInItemView(widget);
         mControllerItemViewFocus = focusInItemView;
         mItemView->setActiveControllerWindow(focusInItemView);
         if (focusInItemView)
             mItemView->refreshControllerFocus();
+        updateXboxIngredientFocus();
         updateControllerFocusHighlight();
     }
 
@@ -791,7 +846,17 @@ namespace MWGui
         mVirtualKeyboardWasVisible = keyboardVisible;
         if (keyboardClosed && mLastKeyboardEdit)
         {
-            setControllerFocusWidget(mLastKeyboardEdit);
+            if (mUseXboxAlchemyUi)
+            {
+                if (mXboxPage == XboxPage::Summary)
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                else if (mItemView->getItemCount() > 0)
+                    setControllerFocusWidget(mItemView);
+                else
+                    setControllerFocusWidget(mFilterType);
+            }
+            else
+                setControllerFocusWidget(mLastKeyboardEdit);
             mLastKeyboardEdit = nullptr;
             return;
         }
@@ -799,7 +864,19 @@ namespace MWGui
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         if (!keyboardVisible && focus == nullptr)
         {
-            if (mItemView->getItemCount() > 0)
+            if (mUseXboxAlchemyUi)
+            {
+                if (mXboxPage == XboxPage::Picker)
+                {
+                    if (mItemView->getItemCount() > 0)
+                        setControllerFocusWidget(mItemView);
+                    else
+                        setControllerFocusWidget(mFilterType);
+                }
+                else
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+            }
+            else if (mItemView->getItemCount() > 0)
                 setControllerFocusWidget(mItemView);
             else
                 setControllerFocusWidget(mNameEdit);
@@ -808,7 +885,11 @@ namespace MWGui
         const bool focusInItemView = isFocusInItemView(focus);
         if (focusInItemView && mItemView->getItemCount() <= 0)
         {
-            setControllerFocusWidget(mNameEdit);
+            if (mUseXboxAlchemyUi)
+                setControllerFocusWidget(mXboxPage == XboxPage::Picker ? static_cast<MyGUI::Widget*>(mFilterType)
+                                                                       : static_cast<MyGUI::Widget*>(mIngredients[mXboxFocusedIngredient]));
+            else
+                setControllerFocusWidget(mNameEdit);
             return;
         }
         if (focusInItemView != mControllerItemViewFocus)
@@ -830,6 +911,119 @@ namespace MWGui
             mBrewCountEdit->setEditStatic(shouldStatic);
         if (mFilterValue->getEditStatic() != true)
             mFilterValue->setEditStatic(true);
+    }
+
+    void AlchemyWindow::resizeToLayoutSize(MyGUI::Widget* source)
+    {
+        if (!mMainWidget || !source)
+            return;
+
+        const MyGUI::IntSize targetSize = source->getSize();
+        if (targetSize.width <= 0 || targetSize.height <= 0)
+            return;
+
+        if (mMainWidget->getSize() != targetSize)
+            mMainWidget->setSize(targetSize);
+
+        if (MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>(false))
+            window->setMinSize(targetSize);
+    }
+
+    void AlchemyWindow::setXboxIngredientFocus(int index)
+    {
+        if (!mUseXboxAlchemyUi)
+            return;
+
+        mXboxFocusedIngredient = std::clamp(index, 0, static_cast<int>(mIngredients.size()) - 1);
+        updateXboxIngredientFocus();
+    }
+
+    void AlchemyWindow::updateXboxIngredientFocus()
+    {
+        if (!mUseXboxAlchemyUi || !Settings::gui().mControllerMenus)
+            return;
+
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        const bool summaryFocus = mXboxPage == XboxPage::Summary && focus != nullptr
+            && std::find(mIngredients.begin(), mIngredients.end(), focus) != mIngredients.end();
+        for (size_t i = 0; i < mIngredients.size(); ++i)
+            mIngredients[i]->setControllerFocus(summaryFocus && static_cast<int>(i) == mXboxFocusedIngredient);
+    }
+
+    void AlchemyWindow::switchXboxPage(XboxPage page)
+    {
+        if (!mUseXboxAlchemyUi)
+            return;
+
+        mXboxPage = page;
+        if (mXboxSummaryPanel)
+            mXboxSummaryPanel->setVisible(page == XboxPage::Summary);
+        if (mXboxIngredientPickerPanel)
+            mXboxIngredientPickerPanel->setVisible(page == XboxPage::Picker);
+        if (mFilterListHighlight)
+            mFilterListHighlight->setVisible(false);
+
+        mControllerItemViewFocus = false;
+        mItemView->setActiveControllerWindow(false);
+
+        resizeToLayoutSize(page == XboxPage::Summary ? mXboxSummaryPanel : mXboxIngredientPickerPanel);
+        center();
+        updateControllerButtons();
+        updateXboxIngredientFocus();
+    }
+
+    void AlchemyWindow::openXboxIngredientPicker(size_t slot)
+    {
+        if (!mUseXboxAlchemyUi)
+            return;
+
+        mXboxSelectedIngredientSlot = static_cast<int>(std::clamp<size_t>(slot, 0, mIngredients.size() - 1));
+        mXboxFocusedIngredient = mXboxSelectedIngredientSlot;
+        switchXboxPage(XboxPage::Picker);
+
+        if (!Settings::gui().mControllerMenus)
+            return;
+
+        if (mIngredients[mXboxSelectedIngredientSlot]->isUserString("ToolTipType"))
+        {
+            const MWWorld::Ptr item = *mIngredients[mXboxSelectedIngredientSlot]->getUserData<MWWorld::Ptr>();
+            mItemView->setActiveControllerWindow(true);
+            setControllerFocusWidget(mItemView);
+            mItemView->setControllerFocusToItem(item);
+        }
+        else if (mItemView->getItemCount() > 0)
+            setControllerFocusWidget(mItemView);
+        else
+            setControllerFocusWidget(mFilterType);
+    }
+
+    void AlchemyWindow::closeXboxIngredientPicker()
+    {
+        if (!mUseXboxAlchemyUi)
+            return;
+
+        switchXboxPage(XboxPage::Summary);
+        mXboxFocusedIngredient = std::clamp(mXboxSelectedIngredientSlot, 0, static_cast<int>(mIngredients.size()) - 1);
+        if (Settings::gui().mControllerMenus)
+            setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+    }
+
+    int AlchemyWindow::getLastFilledIngredientIndex() const
+    {
+        for (int i = static_cast<int>(mIngredients.size()) - 1; i >= 0; --i)
+        {
+            if (mIngredients[i] && mIngredients[i]->isUserString("ToolTipType"))
+                return i;
+        }
+
+        return -1;
+    }
+
+    void AlchemyWindow::showControllerInfo()
+    {
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        winMgr->setControllerTooltipVisible(true);
+        winMgr->restoreControllerTooltips();
     }
 
     void AlchemyWindow::onNameEdited(MyGUI::EditBox* sender)
@@ -875,8 +1069,218 @@ namespace MWGui
         return focus && mItemView && isChildOf(focus, mItemView);
     }
 
+    MyGUI::Widget* AlchemyWindow::getControllerFocusTooltipWidget() const
+    {
+        if (!mUseXboxAlchemyUi || mXboxPage != XboxPage::Summary || mXboxFocusedIngredient < 0
+            || mXboxFocusedIngredient >= static_cast<int>(mIngredients.size()))
+        {
+            return nullptr;
+        }
+
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        if (std::find(mIngredients.begin(), mIngredients.end(), focus) == mIngredients.end())
+            return nullptr;
+
+        return mIngredients[mXboxFocusedIngredient];
+    }
+
+    bool AlchemyWindow::onXboxControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
+    {
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        const bool isFilterListOpen
+            = focus != nullptr && focus->getParent() != nullptr && focus->getParent()->getParent() == mFilterValue;
+
+        if (isFilterListOpen)
+        {
+            filterListButtonHandler(arg);
+            if (MyGUI::ListBox* list = getFilterListBox(focus))
+                updateFilterListHighlight(list);
+            return true;
+        }
+        else if (mFilterListHighlight)
+            mFilterListHighlight->setVisible(false);
+
+        const bool focusInItemView = isFocusInItemView(focus);
+
+        if (arg.button == SDL_CONTROLLER_BUTTON_START)
+        {
+            openVirtualKeyboard(mNameEdit);
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+        {
+            onDecreaseButtonTriggered();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+        {
+            onIncreaseButtonTriggered();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_X)
+        {
+            onCreateButtonClicked(mCreateButton);
+            return true;
+        }
+
+        if (mXboxPage == XboxPage::Summary)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_A)
+            {
+                if (focus == mNameEdit)
+                {
+                    openVirtualKeyboard(mNameEdit);
+                    return true;
+                }
+                if (focus == mBrewCountEdit)
+                {
+                    CountDialog* dialog = MWBase::Environment::get().getWindowManager()->getCountDialog();
+                    dialog->openCountDialog("Quantity", "Quantity", 100, this);
+                    dialog->setCount(std::clamp(mBrewCountEdit->getValue(), 1, 100));
+                    dialog->eventOkClicked.clear();
+                    dialog->eventOkClicked += MyGUI::newDelegate(this, &AlchemyWindow::onBrewCountSelected);
+                    mControllerItemViewFocus = false;
+                    mItemView->setActiveControllerWindow(false);
+                    updateControllerFocusHighlight();
+                    return true;
+                }
+                openXboxIngredientPicker(mXboxFocusedIngredient);
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+            {
+                showControllerInfo();
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_B)
+            {
+                const int latestIngredient = getLastFilledIngredientIndex();
+                if (latestIngredient >= 0)
+                {
+                    mAlchemy->removeIngredient(latestIngredient);
+                    update();
+                    mXboxFocusedIngredient = latestIngredient;
+                    if (Settings::gui().mControllerMenus)
+                        setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                }
+                else
+                    onCancelButtonClicked(mCancelButton);
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
+            {
+                if (focus == mBrewCountEdit)
+                    setControllerFocusWidget(mNameEdit);
+                else if (focus != mNameEdit)
+                {
+                    setXboxIngredientFocus(mXboxFocusedIngredient - 1);
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                }
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+            {
+                if (focus == mNameEdit)
+                    setControllerFocusWidget(mBrewCountEdit);
+                else if (focus != mBrewCountEdit)
+                {
+                    setXboxIngredientFocus(mXboxFocusedIngredient + 1);
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                }
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+            {
+                if (focus != mNameEdit && focus != mBrewCountEdit)
+                    setControllerFocusWidget(mNameEdit);
+                return true;
+            }
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+            {
+                if (focus == mNameEdit)
+                {
+                    setXboxIngredientFocus(mXboxFocusedIngredient);
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                }
+                else if (focus != mBrewCountEdit)
+                {
+                    setXboxIngredientFocus(mXboxFocusedIngredient + 1);
+                    setControllerFocusWidget(mIngredients[mXboxFocusedIngredient]);
+                }
+                return true;
+            }
+
+            return true;
+        }
+
+        if (arg.button == SDL_CONTROLLER_BUTTON_B)
+        {
+            closeXboxIngredientPicker();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_Y)
+        {
+            showControllerInfo();
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_A)
+        {
+            if (focus == mFilterType)
+            {
+                switchFilterType(mFilterType);
+                return true;
+            }
+            if (focus == mFilterValue && mFilterValue->getItemCount() > 0)
+            {
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mFilterValue);
+                MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::ArrowDown, 0, false);
+                return true;
+            }
+        }
+
+        if (focusInItemView)
+        {
+            if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN && mItemView->isControllerFocusBottomRow())
+            {
+                setControllerFocusWidget(mFilterType);
+                return true;
+            }
+
+            mItemView->onControllerButton(arg.button);
+            return true;
+        }
+
+        if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT)
+        {
+            if (focus == mFilterValue)
+                setControllerFocusWidget(mFilterType);
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT)
+        {
+            if (focus == mFilterType)
+                setControllerFocusWidget(mFilterValue);
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN)
+        {
+            return true;
+        }
+        if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP)
+        {
+            if ((focus == mFilterType || focus == mFilterValue) && mItemView->getItemCount() > 0)
+                setControllerFocusWidget(mItemView);
+            return true;
+        }
+
+        return true;
+    }
+
     bool AlchemyWindow::onControllerButtonEvent(const SDL_ControllerButtonEvent& arg)
     {
+        if (mUseXboxAlchemyUi)
+            return onXboxControllerButtonEvent(arg);
+
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         bool isFilterListOpen
             = focus != nullptr && focus->getParent() != nullptr && focus->getParent()->getParent() == mFilterValue;

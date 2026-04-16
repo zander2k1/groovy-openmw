@@ -1641,6 +1641,8 @@ namespace MWGui
                 return quickKeysMenu->getControllerFocusTooltipWidget();
             if (auto* enchantingDialog = dynamic_cast<EnchantingDialog*>(activeWindow))
                 return enchantingDialog->getControllerFocusTooltipWidget();
+            if (auto* alchemyWindow = dynamic_cast<AlchemyWindow*>(activeWindow))
+                return alchemyWindow->getControllerFocusTooltipWidget();
             if (auto* spellCreationDialog = dynamic_cast<SpellCreationDialog*>(activeWindow))
                 return spellCreationDialog->getControllerFocusTooltipWidget();
             if (auto* spellBuyingWindow = dynamic_cast<SpellBuyingWindow*>(activeWindow))
@@ -2092,7 +2094,7 @@ namespace MWGui
                     if (auto* alchemyWindow = dynamic_cast<AlchemyWindow*>(activeControllerWindow))
                     {
                         if (!alchemyWindow->isControllerItemViewFocused())
-                            focus = nullptr;
+                            focus = alchemyWindow->getControllerFocusTooltipWidget();
                     }
                 }
                 if (focus == nullptr)

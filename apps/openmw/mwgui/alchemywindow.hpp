@@ -44,10 +44,17 @@ namespace MWGui
         MyGUI::EditBox* getNameEdit() const { return mNameEdit; }
         ItemView* getItemView() const { return mItemView; }
         bool isControllerItemViewFocused() const { return mControllerItemViewFocus; }
+        MyGUI::Widget* getControllerFocusTooltipWidget() const;
 
     private:
         static const float sCountChangeInitialPause; // in seconds
         static const float sCountChangeInterval; // in seconds
+
+        enum class XboxPage
+        {
+            Summary,
+            Picker
+        };
 
         std::string mSuggestedPotionName;
         enum class FilterType
@@ -56,6 +63,8 @@ namespace MWGui
             ByEffect
         };
         FilterType mCurrentFilter;
+        XboxPage mXboxPage = XboxPage::Summary;
+        const bool mUseXboxAlchemyUi;
 
         std::unique_ptr<ItemSelectionDialog> mItemSelectionDialog;
 
@@ -67,6 +76,8 @@ namespace MWGui
         MyGUI::Button* mCancelButton;
 
         MyGUI::Widget* mEffectsBox;
+        MyGUI::Widget* mXboxSummaryPanel = nullptr;
+        MyGUI::Widget* mXboxIngredientPickerPanel = nullptr;
 
         MyGUI::Button* mIncreaseButton;
         MyGUI::Button* mDecreaseButton;
@@ -83,13 +94,25 @@ namespace MWGui
         bool mVirtualKeyboardWasVisible = false;
         bool mNameHitLimit = false;
         bool mSuppressNameLimitMessage = false;
+        int mXboxFocusedIngredient = 0;
+        int mXboxSelectedIngredientSlot = 0;
 
         void openVirtualKeyboard(MyGUI::EditBox* edit);
         void setControllerFocusWidget(MyGUI::Widget* widget);
         void updateControllerFocusHighlight();
         void updateControllerFocusState();
+        void updateControllerButtons();
         void updateEditStaticState();
         bool isFocusInItemView(MyGUI::Widget* focus) const;
+        void resizeToLayoutSize(MyGUI::Widget* source);
+        void setXboxIngredientFocus(int index);
+        void updateXboxIngredientFocus();
+        void switchXboxPage(XboxPage page);
+        void openXboxIngredientPicker(size_t slot);
+        void closeXboxIngredientPicker();
+        int getLastFilledIngredientIndex() const;
+        void showControllerInfo();
+        bool onXboxControllerButtonEvent(const SDL_ControllerButtonEvent& arg);
         void onNameEdited(MyGUI::EditBox* sender);
         void setNameCaption(const MyGUI::UString& caption);
         void setNameCaptionWithReplacing(const std::string& caption);

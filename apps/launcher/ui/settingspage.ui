@@ -1415,7 +1415,7 @@
               </property>
              </widget>
             </item>
-            <item row="12" column="0">
+            <item row="14" column="0">
              <widget class="QCheckBox" name="settingsWindowIgnoreScalingCheckBox">
               <property name="toolTip">
                <string>Keep the in-game settings window at normal size regardless of GUI scaling.</string>
@@ -1429,37 +1429,47 @@
              </widget>
             </item>
              <item row="8" column="0">
-              <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
-               <property name="text">
-                <string>XBOX Styled Dialog</string>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="0">
-              <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
-               <property name="toolTip">
-                <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
-               </property>
-               <property name="text">
-               <string>XBOX Styled Minimap</string>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="0">
+               <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
+                <property name="text">
+                 <string>XBOX Styled Dialog</string>
+                </property>
+               </widget>
+              </item>
+               <item row="9" column="0">
+               <widget class="QCheckBox" name="xboxAlchemyUiCheckBox">
+                <property name="toolTip">
+                 <string>Replace alchemy with an Xbox-style split menu flow.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Alchemy UI</string>
+                </property>
+               </widget>
+              </item>
+               <item row="10" column="0">
+               <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
+                <property name="toolTip">
+                 <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
+                </property>
+                <property name="text">
+                <string>XBOX Styled Minimap</string>
+                </property>
+               </widget>
+              </item>
+              <item row="11" column="0">
              <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
-               <property name="toolTip">
-                <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
-               </property>
-               <property name="text">
-                <string>XBOX Styled Fonts</string>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="0">
-              <widget class="QCheckBox" name="xboxTabOrderCheckBox">
-               <property name="toolTip">
-                <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
-               </property>
+                <property name="toolTip">
+                 <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Styled Fonts</string>
+                </property>
+               </widget>
+              </item>
+              <item row="12" column="0">
+               <widget class="QCheckBox" name="xboxTabOrderCheckBox">
+                <property name="toolTip">
+                 <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
+                </property>
                <property name="text">
                 <string>XBOX Tab Order</string>
                </property>
