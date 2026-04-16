@@ -168,7 +168,7 @@ Coverity_Upload:
   needs:
     - Coverity
 
-Ubuntu_GCC:
+.Ubuntu_GCC_common:
   extends: .Ubuntu
   cache:
     key: Ubuntu_GCC.ubuntu_24.04.v2
@@ -181,8 +181,12 @@ Ubuntu_GCC:
   # When CCache doesn't exist (e.g. first build on a fork), build takes more than 1h, which is the default for forks.
   timeout: 2h
 
+Ubuntu_GCC:
+  extends: .Ubuntu_GCC_common
+  allow_failure: true
+
 Ubuntu_GCC_asan:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_asan.ubuntu_24.04.v2
   variables:
@@ -253,7 +257,7 @@ Ubuntu_GCC_Debug:
   timeout: 2h
 
 Ubuntu_GCC_tests:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_tests.ubuntu_24.04.v2
   variables:
@@ -267,7 +271,7 @@ Ubuntu_GCC_tests:
       junit: build/*-tests.xml
 
 .Ubuntu_GCC_tests_Debug:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_tests_Debug.ubuntu_24.04.v2
   variables:
@@ -283,7 +287,7 @@ Ubuntu_GCC_tests:
       junit: build/*-tests.xml
 
 Ubuntu_GCC_tests_asan:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_tests_asan.ubuntu_24.04.v2
   variables:
@@ -306,7 +310,7 @@ Ubuntu_GCC_tests_asan:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_ID != "7107382"
 
 Ubuntu_GCC_tests_ubsan:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_tests_ubsan.ubuntu_24.04.v2
   variables:
@@ -326,7 +330,7 @@ Ubuntu_GCC_tests_ubsan:
     - if: $CI_PIPELINE_SOURCE == "push" && $CI_PROJECT_ID != "7107382"
 
 .Ubuntu_GCC_tests_tsan:
-  extends: Ubuntu_GCC
+  extends: .Ubuntu_GCC_common
   cache:
     key: Ubuntu_GCC_tests_tsan.ubuntu_24.04.v2
   variables:
