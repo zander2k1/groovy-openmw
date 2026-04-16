@@ -766,7 +766,7 @@ namespace MWGui
         mControllerButtons = {};
         if (mUseXboxAlchemyUi)
         {
-            mControllerButtons.mA = "#{Interface:Inventory}";
+            mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mX = "#{Interface:Create}";
             mControllerButtons.mY = "#{Interface:Info}";
             mControllerButtons.mB = mXboxPage == XboxPage::Picker ? "#{Interface:Back}" : "#{Interface:Cancel}";
