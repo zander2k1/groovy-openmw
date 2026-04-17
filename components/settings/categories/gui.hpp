@@ -23,8 +23,6 @@ namespace Settings
             makeClampSanitizerFloat(0.f, 8) };
         SettingValue<float> mSettingsInterfaceScaling{ mIndex, "GUI", "settings interface scaling",
             makeClampSanitizerFloat(0.f, 8) };
-        SettingValue<float> mSaveLoadInterfaceScaling{ mIndex, "GUI", "save load interface scaling",
-            makeClampSanitizerFloat(0.f, 8) };
         SettingValue<bool> mUseRecommendedScalingDefaults{ mIndex, "GUI", "use recommended scaling defaults", true };
         SettingValue<bool> mSettingsWindowIgnoreScaling{ mIndex, "GUI", "settings window ignore scaling", false };
         SettingValue<int> mFontSize{ mIndex, "GUI", "font size", makeClampSanitizerInt(12, 25) };

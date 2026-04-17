@@ -1679,27 +1679,19 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales the settings menu and main menu independently of the main GUI scaling.&lt;/p&gt;&lt;p&gt;Set to 0.0 to follow GUI Scaling Factor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Settings Interface Scaling</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales the save/load screen independently of the main GUI scaling.&lt;/p&gt;&lt;p&gt;Set to 0.0 to follow GUI Scaling Factor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Save &amp; Load Interface Scaling</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Use Xbox-style font colors by overriding FontColor fallback values.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>XBOX Font Color</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales the settings menu, main menu, and save/load interface independently of the main GUI scaling.&lt;/p&gt;&lt;p&gt;Set to 0.0 to follow GUI Scaling Factor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings &amp; Save/Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

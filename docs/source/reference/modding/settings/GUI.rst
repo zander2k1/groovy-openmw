@@ -29,17 +29,7 @@ GUI Settings
    :default: 0.0
    :location: :bdg-success:`Launcher > Settings > Interface`
 
-   Scales the settings interface independently from the main GUI scaling factor.
-   A value of 0.0 reuses "scaling factor".
-
-.. omw-setting::
-   :title: save load interface scaling
-   :type: float32
-   :range: 0.0 to 8.0
-   :default: 0.0
-   :location: :bdg-success:`Launcher > Settings > Interface`
-
-   Scales the save/load interface independently from the main GUI scaling factor.
+   Scales the settings interface and save/load interface independently from the main GUI scaling factor.
    A value of 0.0 reuses "scaling factor".
 
 .. omw-setting::

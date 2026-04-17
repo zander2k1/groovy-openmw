@@ -211,11 +211,6 @@ namespace MWGui
             return getCustomScaleMultiplier(settingsScaling);
         }
 
-        float getSaveLoadScaleMultiplier()
-        {
-            return getCustomScaleMultiplier(Settings::gui().mSaveLoadInterfaceScaling);
-        }
-
         void updateScalingLayerSize(std::string_view layerName, float scaleMultiplier)
         {
             auto* layer = MyGUI::LayerManager::getInstance().getByName(std::string(layerName), false);
@@ -1713,8 +1708,7 @@ namespace MWGui
                 setMenuTransparency(Settings::gui().mMenuTransparency);
             else if (setting.first == "GUI"
                 && (setting.second == "dialogue interface scaling" || setting.second == "settings interface scaling"
-                    || setting.second == "save load interface scaling" || setting.second == "scaling factor"
-                    || setting.second == "settings window ignore scaling"))
+                    || setting.second == "scaling factor" || setting.second == "settings window ignore scaling"))
             {
                 updateDialogueLayerSize();
                 updateSettingsLayerSize();
@@ -1804,7 +1798,7 @@ namespace MWGui
 
     void WindowManager::updateSaveLoadLayerSize()
     {
-        updateScalingLayerSize("SaveLoad", getSaveLoadScaleMultiplier());
+        updateScalingLayerSize("SaveLoad", getCustomScaleMultiplier(Settings::gui().mSettingsInterfaceScaling));
     }
 
     bool WindowManager::isWindowVisible() const
