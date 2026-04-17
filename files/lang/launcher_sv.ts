@@ -1710,5 +1710,9 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <source>Settings &amp; Save/Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>XBOX</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

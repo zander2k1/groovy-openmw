@@ -1694,5 +1694,9 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <source>Settings &amp; Save/Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>XBOX</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

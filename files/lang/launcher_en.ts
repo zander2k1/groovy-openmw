@@ -1689,5 +1689,9 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <source>Settings &amp; Save/Load Interface Scaling</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>XBOX</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
