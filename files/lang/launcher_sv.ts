@@ -1647,14 +1647,6 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Keep the in-game settings window at normal size regardless of GUI scaling.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ignore GUI Scaling for Settings Menu</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>XBOX Styled Minimap</source>
         <translation type="unfinished"></translation>
     </message>
