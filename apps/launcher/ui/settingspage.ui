@@ -1444,64 +1444,7 @@
               </property>
              </widget>
             </item>
-             <item row="10" column="0">
-               <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
-                <property name="text">
-                 <string>XBOX Styled Dialog</string>
-                </property>
-               </widget>
-              </item>
-               <item row="11" column="0">
-               <widget class="QCheckBox" name="xboxAlchemyUiCheckBox">
-                <property name="toolTip">
-                 <string>Replace alchemy with an Xbox-style split menu flow.</string>
-                </property>
-                <property name="text">
-                 <string>XBOX Alchemy UI</string>
-                </property>
-               </widget>
-              </item>
-               <item row="12" column="0">
-               <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
-                <property name="toolTip">
-                 <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
-                </property>
-                <property name="text">
-                <string>XBOX Styled Minimap</string>
-                </property>
-               </widget>
-              </item>
-              <item row="13" column="0">
-             <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
-                <property name="toolTip">
-                 <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
-                </property>
-                <property name="text">
-                 <string>XBOX Styled Fonts</string>
-                </property>
-               </widget>
-              </item>
-              <item row="14" column="0">
-               <widget class="QCheckBox" name="xboxTabOrderCheckBox">
-                <property name="toolTip">
-                  <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
-                </property>
-               <property name="text">
-                <string>XBOX Tab Order</string>
-               </property>
-              </widget>
-             </item>
-              <item row="15" column="0">
-               <widget class="QCheckBox" name="xboxFontColorCheckBox">
-                <property name="toolTip">
-                 <string>Use Xbox-style font colors by overriding FontColor fallback values.</string>
-                </property>
-                <property name="text">
-                 <string>XBOX Font Color</string>
-                </property>
-               </widget>
-              </item>
-              <item row="16" column="0">
+              <item row="10" column="0">
                <widget class="QCheckBox" name="useZoomOnMapCheckBox">
                 <property name="toolTip">
                  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enable zooming on local and global maps.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1594,8 +1537,89 @@
             </spacer>
            </item>
           </layout>
-         </widget>
-         <widget class="QWidget" name="interfaceControllerTab">
+          </widget>
+          <widget class="QWidget" name="interfaceXboxTab">
+           <attribute name="title">
+            <string>XBOX</string>
+           </attribute>
+           <layout class="QVBoxLayout">
+            <item>
+             <layout class="QGridLayout" name="interfaceXboxGridLayout">
+              <item row="0" column="0">
+               <widget class="QCheckBox" name="xboxStyledDialogCheckBox">
+                <property name="text">
+                 <string>XBOX Styled Dialog</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QCheckBox" name="xboxAlchemyUiCheckBox">
+                <property name="toolTip">
+                 <string>Replace alchemy with an Xbox-style split menu flow.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Alchemy UI</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
+                <property name="toolTip">
+                 <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Styled Minimap</string>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QCheckBox" name="xboxStyledFontsCheckBox">
+                <property name="toolTip">
+                 <string>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Styled Fonts</string>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QCheckBox" name="xboxTabOrderCheckBox">
+                <property name="toolTip">
+                 <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Tab Order</string>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QCheckBox" name="xboxFontColorCheckBox">
+                <property name="toolTip">
+                 <string>Use Xbox-style font colors by overriding FontColor fallback values.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Font Color</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="interfaceXboxSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="interfaceControllerTab">
           <attribute name="title">
            <string>Controller</string>
           </attribute>
