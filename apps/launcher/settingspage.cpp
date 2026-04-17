@@ -127,33 +127,35 @@ namespace
         int height;
         double interfaceScaling;
         double dialogueScaling;
+        double settingsScaling;
     };
 
     constexpr std::array<RecommendedScalingDefaults, 21> recommendedScalingDefaults = {
-        RecommendedScalingDefaults{ 640, 480, 0.8, 1.0 },
-        RecommendedScalingDefaults{ 720, 480, 0.8, 1.0 },
-        RecommendedScalingDefaults{ 720, 576, 0.9, 1.1 },
-        RecommendedScalingDefaults{ 800, 600, 1.0, 1.2 },
-        RecommendedScalingDefaults{ 1024, 768, 1.25, 1.45 },
-        RecommendedScalingDefaults{ 1152, 864, 1.45, 1.65 },
-        RecommendedScalingDefaults{ 1280, 720, 1.45, 1.65 },
-        RecommendedScalingDefaults{ 1280, 800, 1.65, 2.0 },
-        RecommendedScalingDefaults{ 1280, 960, 1.65, 2.0 },
-        RecommendedScalingDefaults{ 1280, 1024, 1.65, 2.0 },
-        RecommendedScalingDefaults{ 1360, 768, 1.55, 1.85 },
-        RecommendedScalingDefaults{ 1366, 768, 1.55, 1.85 },
-        RecommendedScalingDefaults{ 1440, 1080, 1.85, 2.15 },
-        RecommendedScalingDefaults{ 1600, 900, 1.75, 2.05 },
-        RecommendedScalingDefaults{ 1600, 1200, 1.95, 2.35 },
-        RecommendedScalingDefaults{ 1680, 1050, 1.85, 2.25 },
-        RecommendedScalingDefaults{ 1920, 1080, 1.85, 2.25 },
-        RecommendedScalingDefaults{ 1920, 1200, 1.95, 2.35 },
-        RecommendedScalingDefaults{ 1920, 1440, 2.35, 2.75 },
-        RecommendedScalingDefaults{ 2560, 1440, 2.35, 2.75 },
-        RecommendedScalingDefaults{ 3840, 2160, 2.65, 3.15 },
+        RecommendedScalingDefaults{ 640, 480, 1.0, 1.0, 0.85 },
+        RecommendedScalingDefaults{ 720, 480, 1.0, 1.0, 0.85 },
+        RecommendedScalingDefaults{ 720, 576, 1.0, 1.2, 1.0 },
+        RecommendedScalingDefaults{ 800, 600, 1.2, 1.4, 1.0 },
+        RecommendedScalingDefaults{ 1024, 768, 1.25, 1.45, 1.05 },
+        RecommendedScalingDefaults{ 1152, 864, 1.45, 1.65, 1.25 },
+        RecommendedScalingDefaults{ 1280, 720, 1.45, 1.65, 1.25 },
+        RecommendedScalingDefaults{ 1280, 800, 1.65, 2.0, 1.4 },
+        RecommendedScalingDefaults{ 1280, 960, 1.65, 2.0, 1.4 },
+        RecommendedScalingDefaults{ 1280, 1024, 1.65, 2.0, 1.4 },
+        RecommendedScalingDefaults{ 1360, 768, 1.55, 1.85, 1.3 },
+        RecommendedScalingDefaults{ 1366, 768, 1.55, 1.85, 1.3 },
+        RecommendedScalingDefaults{ 1440, 1080, 1.85, 2.15, 1.55 },
+        RecommendedScalingDefaults{ 1600, 900, 1.75, 2.05, 1.5 },
+        RecommendedScalingDefaults{ 1600, 1200, 1.95, 2.35, 1.65 },
+        RecommendedScalingDefaults{ 1680, 1050, 1.85, 2.25, 1.55 },
+        RecommendedScalingDefaults{ 1920, 1080, 1.85, 2.25, 1.55 },
+        RecommendedScalingDefaults{ 1920, 1200, 1.95, 2.35, 1.65 },
+        RecommendedScalingDefaults{ 1920, 1440, 2.35, 2.75, 2.0 },
+        RecommendedScalingDefaults{ 2560, 1440, 2.35, 2.75, 2.0 },
+        RecommendedScalingDefaults{ 3840, 2160, 2.65, 3.15, 2.25 },
     };
 
-    bool tryGetRecommendedScaling(int width, int height, double& interfaceScaling, double& dialogueScaling)
+    bool tryGetRecommendedScaling(
+        int width, int height, double& interfaceScaling, double& dialogueScaling, double& settingsScaling)
     {
         for (const auto& entry : recommendedScalingDefaults)
         {
@@ -161,6 +163,7 @@ namespace
             {
                 interfaceScaling = entry.interfaceScaling;
                 dialogueScaling = entry.dialogueScaling;
+                settingsScaling = entry.settingsScaling;
                 return true;
             }
         }
@@ -723,12 +726,13 @@ bool Launcher::SettingsPage::applyRecommendedScalingDefaults(int width, int heig
 {
     double interfaceScaling = 1.0;
     double dialogueScaling = 1.0;
-    if (!tryGetRecommendedScaling(width, height, interfaceScaling, dialogueScaling))
+    double settingsScaling = 1.0;
+    if (!tryGetRecommendedScaling(width, height, interfaceScaling, dialogueScaling, settingsScaling))
     {
         return false;
     }
 
-    setScalingValues(interfaceScaling, dialogueScaling, interfaceScaling);
+    setScalingValues(interfaceScaling, dialogueScaling, settingsScaling);
     return true;
 }
 

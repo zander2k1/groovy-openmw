@@ -3217,6 +3217,13 @@ namespace MWGui
         if (mWindows.empty())
             return;
 
+        if (isSettingsWindowVisible())
+        {
+            mControllerButtonsOverlay->setVisible(false);
+            mInventoryTabsOverlay->setVisible(false);
+            return;
+        }
+
         WindowBase* topWin = getActiveControllerWindow();
         if (!topWin || !topWin->isVisible())
         {
