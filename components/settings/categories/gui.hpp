@@ -55,7 +55,6 @@ namespace Settings
         SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap", true };
         SettingValue<bool> mXboxStyledFonts{ mIndex, "GUI", "xbox styled fonts" };
         SettingValue<bool> mXboxTabOrder{ mIndex, "GUI", "xbox tab order", false };
-        SettingValue<bool> mXboxFontColor{ mIndex, "GUI", "xbox font color", false };
         SettingValue<MyGUI::Colour> mColorTopicSpecific{ mIndex, "GUI", "color topic specific" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificOver{ mIndex, "GUI", "color topic specific over" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificPressed{ mIndex, "GUI", "color topic specific pressed" };

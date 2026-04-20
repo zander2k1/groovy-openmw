@@ -1691,14 +1691,6 @@ Logs and settings changed through the launcher and in-game will be saved here.</
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Use Xbox-style font colors by overriding FontColor fallback values.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>XBOX Font Color</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Scales the settings menu, main menu, and save/load interface independently of the main GUI scaling.&lt;/p&gt;&lt;p&gt;Set to 0.0 to follow GUI Scaling Factor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
