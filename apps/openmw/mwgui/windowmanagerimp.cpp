@@ -51,6 +51,7 @@
 
 #include <components/misc/frameratelimiter.hpp>
 #include <components/misc/resourcehelpers.hpp>
+#include <components/misc/strings/algorithm.hpp>
 
 #include <components/l10n/manager.hpp>
 
@@ -277,7 +278,7 @@ namespace MWGui
             }
         }
 
-        GuiWindow inventoryIndexToWindow(size_t index)
+        GuiWindow inventoryIndexToWindow(size_t index, bool skipMap)
         {
             static constexpr GuiWindow kDefaultOrder[] = { GW_Map, GW_Inventory, GW_Magic, GW_Stats };
             static constexpr GuiWindow kXboxOrder[] = { GW_Inventory, GW_Magic, GW_Map, GW_Stats };
@@ -285,7 +286,10 @@ namespace MWGui
 
             const auto& order = Settings::gui().mXboxTabOrder ? kXboxOrder : kDefaultOrder;
             if (index < kOrderSize)
-                return order[index];
+            {
+                const GuiWindow window = order[index];
+                return (skipMap && window == GW_Map) ? GW_None : window;
+            }
 
             return GW_None;
         }
@@ -880,6 +884,7 @@ namespace MWGui
                 const size_t winCount = mGuiModeStates[GM_Inventory].mWindows.size();
                 const size_t activeIndex
                     = winCount > 0 ? std::clamp<size_t>(mActiveControllerWindows[GM_Inventory], 0, winCount - 1) : 0;
+                const bool skipMap = isCrassifiedNavigationEnabled();
                 const auto canShow = [this](GuiWindow wnd) { return (mAllowed & wnd) && !(mForceHidden & wnd); };
 
                 mMap->setVisible(false);
@@ -887,7 +892,7 @@ namespace MWGui
                 mSpellWindow->setVisible(false);
                 mStatsWindow->setVisible(false);
 
-                switch (inventoryIndexToWindow(activeIndex))
+                switch (inventoryIndexToWindow(activeIndex, skipMap))
                 {
                     case GW_Map:
                         if (canShow(GW_Map))
@@ -1171,11 +1176,12 @@ namespace MWGui
             }
             else if (mode == GM_Inventory && Settings::gui().mControllerMenus)
             {
+                const bool skipMap = isCrassifiedNavigationEnabled();
                 bool found = false;
                 for (size_t i = 0; i < winCount; ++i)
                 {
                     activeIndex = wrap(activeIndex, winCount, delta);
-                    const GuiWindow window = inventoryIndexToWindow(activeIndex);
+                    const GuiWindow window = inventoryIndexToWindow(activeIndex, skipMap);
                     if (window != GW_None && (mAllowed & window) && !(mForceHidden & window))
                     {
                         found = true;
@@ -1214,11 +1220,12 @@ namespace MWGui
 
         if (mode == GM_Inventory)
         {
+            const bool skipMap = isCrassifiedNavigationEnabled();
             for (size_t i = 0; i < winCount; i++)
                 mGuiModeStates[mode].mWindows[i]->setVisible(false);
 
             const size_t activeIndex = std::clamp<size_t>(mActiveControllerWindows[mode], 0, winCount - 1);
-            const GuiWindow window = inventoryIndexToWindow(activeIndex);
+            const GuiWindow window = inventoryIndexToWindow(activeIndex, skipMap);
             if (window != GW_None && (mAllowed & window) && !(mForceHidden & window))
                 mGuiModeStates[mode].mWindows[activeIndex]->setVisible(true);
         }
@@ -1267,7 +1274,7 @@ namespace MWGui
         activeIndex = std::clamp<size_t>(activeIndex, 0, winCount - 1);
         if (mode == GM_Inventory)
         {
-            const GuiWindow window = inventoryIndexToWindow(activeIndex);
+            const GuiWindow window = inventoryIndexToWindow(activeIndex, isCrassifiedNavigationEnabled());
             if (window == GW_None || !(mAllowed & window) || (mForceHidden & window))
                 return;
         }
@@ -1894,9 +1901,14 @@ namespace MWGui
                 const size_t winCount = mGuiModeStates[mode].mWindows.size();
                 if (winCount == 0)
                     return;
+                const bool skipMap = isCrassifiedNavigationEnabled();
+                const auto canActivateIndex = [this, skipMap](size_t idx) {
+                    const GuiWindow window = inventoryIndexToWindow(idx, skipMap);
+                    return window != GW_None && (mAllowed & window) && !(mForceHidden & window);
+                };
                 const size_t index = std::min(mLastInventoryControllerWindow, winCount - 1);
                 WindowBase* target = mGuiModeStates[mode].mWindows[index];
-                if (target && target->isVisible())
+                if (target && target->isVisible() && canActivateIndex(index))
                     setActiveControllerWindow(mode, index);
                 else
                     cycleActiveControllerWindow(true);
@@ -3168,6 +3180,30 @@ namespace MWGui
         if (mInventoryTabsOverlay != nullptr && mInventoryTabsOverlay->isVisible())
             height -= mInventoryTabsOverlay->getHeight();
         return height;
+    }
+
+    bool WindowManager::isCrassifiedNavigationEnabled() const
+    {
+        static constexpr std::string_view kPluginName = "crassified navigation.esp";
+        MWBase::World* world = MWBase::Environment::get().getWorld();
+        if (!world)
+            return false;
+
+        for (const std::string& contentFile : world->getContentFiles())
+        {
+            if (Misc::StringUtils::ciEqual(contentFile, kPluginName))
+                return true;
+
+            std::string_view filename = contentFile;
+            const std::string_view::size_type separator = filename.find_last_of("/\\");
+            if (separator != std::string_view::npos)
+                filename = filename.substr(separator + 1);
+
+            if (Misc::StringUtils::ciEqual(filename, kPluginName))
+                return true;
+        }
+
+        return false;
     }
 
     void WindowManager::setControllerTooltipVisible(bool visible)

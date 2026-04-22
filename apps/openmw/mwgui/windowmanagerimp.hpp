@@ -395,6 +395,7 @@ namespace MWGui
         WindowBase* getActiveControllerWindow() override;
         int getControllerMenuHeight() override;
         void cycleActiveControllerWindow(bool next) override;
+        bool isCrassifiedNavigationEnabled() const override;
         void setActiveControllerWindow(GuiMode mode, size_t activeIndex) override;
         bool getControllerTooltipVisible() const override { return mControllerTooltipVisible; }
         void setControllerTooltipVisible(bool visible) override;

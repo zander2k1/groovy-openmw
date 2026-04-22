@@ -218,6 +218,26 @@ namespace MWGui
         onWindowResize(t);
     }
 
+    ControllerButtons* StatsWindow::getControllerButtons()
+    {
+        if (Settings::gui().mControllerMenus)
+        {
+            const bool skipMap = MWBase::Environment::get().getWindowManager()->isCrassifiedNavigationEnabled();
+            if (Settings::gui().mXboxTabOrder)
+            {
+                mControllerButtons.mL2 = skipMap ? "#{Interface:Magic}" : "#{Interface:Map}";
+                mControllerButtons.mR2 = "#{Interface:Inventory}";
+            }
+            else
+            {
+                mControllerButtons.mL2 = "#{Interface:Magic}";
+                mControllerButtons.mR2 = skipMap ? "#{Interface:Inventory}" : "#{Interface:Map}";
+            }
+        }
+
+        return &mControllerButtons;
+    }
+
     void StatsWindow::onOpen()
     {
         resetFixedWindowGeometry();

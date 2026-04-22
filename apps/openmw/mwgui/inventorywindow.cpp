@@ -1246,6 +1246,7 @@ namespace MWGui
                 mControllerButtons.mB = "#{Interface:Back}";
                 mControllerButtons.mX = "#{Interface:Drop}";
                 mControllerButtons.mY = "#{Interface:Info}";
+                const bool skipMap = MWBase::Environment::get().getWindowManager()->isCrassifiedNavigationEnabled();
                 if (Settings::gui().mXboxTabOrder)
                 {
                     mControllerButtons.mL2 = "#{sStats}";
@@ -1253,7 +1254,7 @@ namespace MWGui
                 }
                 else
                 {
-                    mControllerButtons.mL2 = "#{sMap}";
+                    mControllerButtons.mL2 = skipMap ? "#{sStats}" : "#{sMap}";
                     mControllerButtons.mR2 = "#{sMagicMenu}";
                 }
                 break;

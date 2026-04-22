@@ -70,6 +70,18 @@ namespace MWGui
         }
     }
 
+    ControllerButtons* SpellWindow::getControllerButtons()
+    {
+        if (Settings::gui().mControllerMenus)
+        {
+            const bool skipMap = MWBase::Environment::get().getWindowManager()->isCrassifiedNavigationEnabled();
+            mControllerButtons.mL2 = "#{Interface:Inventory}";
+            mControllerButtons.mR2 = (Settings::gui().mXboxTabOrder && !skipMap) ? "#{Interface:Map}" : "#{sStats}";
+        }
+
+        return &mControllerButtons;
+    }
+
     void SpellWindow::onPinToggled()
     {
         Settings::windows().mSpellsPin.set(mPinned);

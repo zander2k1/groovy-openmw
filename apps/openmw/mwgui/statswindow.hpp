@@ -52,6 +52,7 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "Stats"; }
         MyGUI::Widget* getControllerFocusTooltipWidget() const;
+        ControllerButtons* getControllerButtons() override;
 
     protected:
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;

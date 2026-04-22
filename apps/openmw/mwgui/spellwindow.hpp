@@ -28,6 +28,7 @@ namespace MWGui
         void updateSpells();
         MyGUI::EditBox* getFilterEdit() const { return nullptr; }
         SpellView* getSpellView() const { return mSpellView; }
+        ControllerButtons* getControllerButtons() override;
 
         void onFrame(float dt) override;
 
