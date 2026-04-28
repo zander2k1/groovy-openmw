@@ -511,7 +511,7 @@ namespace MWGui
 
     void DialogueWindow::onMouseWheel(MyGUI::Widget* /*sender*/, int rel)
     {
-        if (!mScrollBar->getVisible())
+        if (!mScrollBar->getVisible() || mScrollBar->getScrollRange() == 0)
             return;
 
         const float scaledStep = rel * 0.3f;
