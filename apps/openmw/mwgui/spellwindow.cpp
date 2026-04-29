@@ -412,6 +412,7 @@ namespace MWGui
             mSpellView->setActiveControllerWindow(active);
 
         WindowBase::setActiveControllerWindow(active);
+        updateEffectsHighlight();
     }
 
     void SpellWindow::refreshEffectWidgets()
@@ -494,6 +495,7 @@ namespace MWGui
         }
         else
         {
+            refreshEffectWidgets();
             mSpellView->setActiveControllerWindow(true);
             mSpellView->setControllerFocusIndex(mPrevSpellFocus);
         }
@@ -512,7 +514,7 @@ namespace MWGui
                 mEffectIcons[i]->setCoord(mEffectIconCoords[i]);
         }
 
-        if (!mEffectsFocusActive || mEffectWidgets.empty())
+        if (!mActiveControllerWindow || !mEffectsFocusActive || mEffectWidgets.empty())
             return;
 
         MyGUI::Widget* widget = mEffectWidgets[mEffectsFocus];

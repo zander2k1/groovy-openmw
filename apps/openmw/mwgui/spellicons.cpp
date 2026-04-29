@@ -127,7 +127,7 @@ namespace MWGui
                 MyGUI::ImageBox& widget = *mWidgetMap[effectId];
                 if (activeEffects.emplace(effectId).second)
                 {
-                    widget.setPosition(horizontalOffset, verticalOffset);
+                    widget.setCoord(horizontalOffset, verticalOffset, size, size);
                     widget.setVisible(true);
                     widget.setNeedMouseFocus(true);
                     widget.setUserString("ToolTipType", "ActiveEffect");
