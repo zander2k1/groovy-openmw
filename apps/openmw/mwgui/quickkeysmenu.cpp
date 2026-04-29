@@ -333,6 +333,7 @@ namespace MWGui
         mSelected->button->setItem(MWWorld::Ptr());
         mSelected->button->setUserString("ToolTipType", "Spell");
         mSelected->button->setUserString("Spell", spellId.serialize());
+        mSelected->button->setUserString("SpellName", spell->mName);
 
         // use the icon of the first effect
         const ESM::MagicEffect* effect

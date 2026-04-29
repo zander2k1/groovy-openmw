@@ -14,6 +14,7 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadbody.hpp>
 #include <components/esm3/loadrace.hpp>
+#include <components/esm3/loadspel.hpp>
 #include <components/myguiplatform/myguitexture.hpp>
 #include <components/settings/values.hpp>
 
@@ -545,6 +546,7 @@ namespace MWGui
             spellPowerWidget->setSpellId(spellpower);
             spellPowerWidget->setUserString("ToolTipType", "Spell");
             spellPowerWidget->setUserString("Spell", spellpower.serialize());
+            spellPowerWidget->setUserString("SpellName", store.get<ESM::Spell>().find(spellpower)->mName);
 
             mSpellPowerItems.push_back(spellPowerWidget);
 

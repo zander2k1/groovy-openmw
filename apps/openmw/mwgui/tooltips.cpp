@@ -1825,9 +1825,18 @@ namespace MWGui
             const bool controllerMenu = Settings::gui().mControllerMenus;
             const bool collapsed = controllerMenu && (!winMgr->getControllerTooltipEnabled() || controllerMap);
 
-            const std::string nameRaw = effectWidget->isUserString("ActiveEffectName")
-                ? std::string(effectWidget->getUserString("ActiveEffectName"))
-                : std::string();
+            const ToolTipInfo* effectTooltipInfo = effectWidget->getUserData<ToolTipInfo>(false);
+            const std::string nameRaw = [&]() -> std::string {
+                if (effectWidget->isUserString("ActiveEffectName"))
+                {
+                    const std::string userName = std::string(effectWidget->getUserString("ActiveEffectName"));
+                    if (!userName.empty())
+                        return userName;
+                }
+                if (effectTooltipInfo && !effectTooltipInfo->caption.empty())
+                    return effectTooltipInfo->caption;
+                return {};
+            }();
             const std::string iconTexture = effectWidget->isUserString("ActiveEffectIcon")
                 ? std::string(effectWidget->getUserString("ActiveEffectIcon"))
                 : std::string();
@@ -2361,6 +2370,54 @@ namespace MWGui
                     const auto& store = MWBase::Environment::get().getESMStore();
                     const ESM::Spell* spell
                         = store->get<ESM::Spell>().find(ESM::RefId::deserialize(focus->getUserString("Spell")));
+                    const std::string spellName = [&]() -> std::string {
+                        if (focus->isUserString("SpellName"))
+                            return std::string(focus->getUserString("SpellName"));
+                        if (!spell->mName.empty())
+                            return spell->mName;
+                        if (const MyGUI::TextBox* textWidget = focus->castType<MyGUI::TextBox>(false))
+                            return textWidget->getCaption().asUTF8();
+                        return spell->mId.toDebugString();
+                    }();
+
+                    auto buildSpellToolTipInfo = [&]() {
+                        ToolTipInfo info;
+                        info.caption = spellName;
+
+                        Widgets::SpellEffectList effects;
+                        for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
+                        {
+                            Widgets::SpellEffectParams params;
+                            params.mEffectID = spellEffect.mData.mEffectID;
+                            params.mSkill = spellEffect.mData.mSkill;
+                            params.mAttribute = spellEffect.mData.mAttribute;
+                            params.mDuration = spellEffect.mData.mDuration;
+                            params.mMagnMin = spellEffect.mData.mMagnMin;
+                            params.mMagnMax = spellEffect.mData.mMagnMax;
+                            params.mRange = spellEffect.mData.mRange;
+                            params.mArea = spellEffect.mData.mArea;
+                            params.mIsConstant = (spell->mData.mType == ESM::Spell::ST_Ability);
+                            params.mNoTarget = false;
+                            effects.push_back(params);
+                        }
+
+                        if (MWMechanics::spellIncreasesSkill(spell))
+                        {
+                            ESM::RefId id = MWMechanics::getSpellSchool(spell, MWMechanics::getPlayer());
+                            if (!id.empty())
+                            {
+                                const auto& school = store->get<ESM::Skill>().find(id)->mSchool;
+                                info.text = "#{sSchool}: " + MyGUI::TextIterator::toTagsString(school->mName).asUTF8();
+                            }
+                        }
+
+                        if (focus->getUserString("SpellCost") == "true")
+                            info.text
+                                += MWGui::ToolTips::getValueString(MWMechanics::calcSpellCost(*spell), "#{sCastCost}");
+
+                        info.effects = std::move(effects);
+                        return info;
+                    };
 
                     const bool controllerMenu = Settings::gui().mControllerMenus;
                     const bool collapsed = controllerMenu && (!winMgr->getControllerTooltipEnabled() || controllerMap);
@@ -2427,7 +2484,7 @@ namespace MWGui
                                 MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
                                 MyGUI::Align::Left | MyGUI::Align::VCenter);
                             name->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
-                            name->setCaption(spell->mName);
+                            name->setCaption(spellName);
 
                             if (!costChance.empty())
                             {
@@ -2441,305 +2498,10 @@ namespace MWGui
                             tooltipSize = MyGUI::IntSize(width, height);
                         }
                         else
-                        {
-                            int y = padding;
-
-                            MyGUI::TextBox* name = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                                MyGUI::IntCoord(padding, y, width - padding * 2, 18),
-                                MyGUI::Align::Left | MyGUI::Align::Top);
-                            name->setTextAlign(MyGUI::Align::HCenter | MyGUI::Align::Top);
-                            name->setCaption(spell->mName);
-                            const int nameHeight = name->getTextSize().height;
-                            name->setSize(width - padding * 2, nameHeight);
-                            y += nameHeight + spacing;
-
-                            std::string schoolText;
-                            if (MWMechanics::spellIncreasesSkill(spell))
-                            {
-                                ESM::RefId id = MWMechanics::getSpellSchool(spell, MWMechanics::getPlayer());
-                                if (!id.empty())
-                                {
-                                    const auto& school = store->get<ESM::Skill>().find(id)->mSchool;
-                                    schoolText
-                                        = "#{sSchool}: " + MyGUI::TextIterator::toTagsString(school->mName).asUTF8();
-                                }
-                            }
-
-                            if (!schoolText.empty())
-                            {
-                                Gui::EditBox* school = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
-                                    MyGUI::IntCoord(padding, y, width - padding * 2, 18),
-                                    MyGUI::Align::Left | MyGUI::Align::Top);
-                                school->setEditStatic(true);
-                                school->setEditMultiLine(true);
-                                school->setEditWordWrap(true);
-                                school->setNeedKeyFocus(false);
-                                school->setCaptionWithReplacing(schoolText);
-                                const int schoolHeight = std::max(0, school->getTextSize().height);
-                                school->setSize(width - padding * 2, schoolHeight);
-                                y += schoolHeight + spacing;
-                            }
-
-                            for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
-                            {
-                                if (spellEffect.mData.mEffectID.empty())
-                                    continue;
-
-                                const ESM::MagicEffect* magicEffect
-                                    = store->get<ESM::MagicEffect>().find(spellEffect.mData.mEffectID);
-                                const ESM::Attribute* attribute
-                                    = store->get<ESM::Attribute>().search(spellEffect.mData.mAttribute);
-                                const ESM::Skill* skill = store->get<ESM::Skill>().search(spellEffect.mData.mSkill);
-                                if (!magicEffect)
-                                    continue;
-
-                                auto windowManager = MWBase::Environment::get().getWindowManager();
-                                std::string_view pt = windowManager->getGameSettingString("spoint", {});
-                                std::string_view pts = windowManager->getGameSettingString("spoints", {});
-                                std::string_view pct = windowManager->getGameSettingString("spercent", {});
-                                std::string_view ft = windowManager->getGameSettingString("sfeet", {});
-                                std::string_view lvl = windowManager->getGameSettingString("sLevel", {});
-                                std::string_view lvls = windowManager->getGameSettingString("sLevels", {});
-                                std::string to
-                                    = " " + std::string{ windowManager->getGameSettingString("sTo", {}) } + " ";
-                                std::string sec
-                                    = " " + std::string{ windowManager->getGameSettingString("ssecond", {}) };
-                                std::string secs
-                                    = " " + std::string{ windowManager->getGameSettingString("sseconds", {}) };
-
-                                std::string effectText
-                                    = MWMechanics::getMagicEffectString(*magicEffect, attribute, skill);
-
-                                const int magnMin = spellEffect.mData.mMagnMin;
-                                const int magnMax = spellEffect.mData.mMagnMax;
-                                const int duration = spellEffect.mData.mDuration;
-                                const int area = spellEffect.mData.mArea;
-                                const int range = spellEffect.mData.mRange;
-
-                                const bool isConstant = (spell->mData.mType == ESM::Spell::ST_Ability);
-                                if ((magnMin || magnMax))
-                                {
-                                    ESM::MagicEffect::MagnitudeDisplayType displayType
-                                        = magicEffect->getMagnitudeDisplayType();
-                                    if (displayType == ESM::MagicEffect::MDT_TimesInt)
-                                    {
-                                        std::stringstream formatter;
-                                        formatter << std::fixed << std::setprecision(1) << " " << (magnMin / 10.0f);
-                                        if (magnMin != magnMax)
-                                            formatter << to << (magnMax / 10.0f);
-                                        formatter << windowManager->getGameSettingString("sXTimesINT", {});
-                                        effectText += formatter.str();
-                                    }
-                                    else if (displayType != ESM::MagicEffect::MDT_None)
-                                    {
-                                        effectText += " " + MyGUI::utility::toString(magnMin);
-                                        if (magnMin != magnMax)
-                                            effectText += to + MyGUI::utility::toString(magnMax);
-
-                                        if (displayType == ESM::MagicEffect::MDT_Percentage)
-                                            effectText += pct;
-                                        else if (displayType == ESM::MagicEffect::MDT_Feet)
-                                        {
-                                            effectText += ' ';
-                                            effectText += ft;
-                                        }
-                                        else if (displayType == ESM::MagicEffect::MDT_Level)
-                                        {
-                                            effectText += ' ';
-                                            if (magnMin == magnMax && std::abs(magnMin) == 1)
-                                                effectText += lvl;
-                                            else
-                                                effectText += lvls;
-                                        }
-                                        else
-                                        {
-                                            effectText += ' ';
-                                            if (magnMin == magnMax && std::abs(magnMin) == 1)
-                                                effectText += pt;
-                                            else
-                                                effectText += pts;
-                                        }
-                                    }
-                                }
-                                else if (type == "ActiveEffect")
-                                {
-                                    const bool activeEffectControllerMenu = Settings::gui().mControllerMenus;
-                                    const bool activeEffectCollapsed = activeEffectControllerMenu
-                                        && (!winMgr->getControllerTooltipEnabled() || controllerMap);
-
-                                    const std::string nameRaw = focus->isUserString("ActiveEffectName")
-                                        ? std::string(focus->getUserString("ActiveEffectName"))
-                                        : std::string();
-                                    const std::string activeEffectIconTexture = focus->isUserString("ActiveEffectIcon")
-                                        ? std::string(focus->getUserString("ActiveEffectIcon"))
-                                        : std::string();
-                                    const std::string textRaw = focus->isUserString("ActiveEffectText")
-                                        ? std::string(focus->getUserString("ActiveEffectText"))
-                                        : std::string();
-
-                                    const std::string nameText
-                                        = MyGUI::LanguageManager::getInstance().replaceTags(nameRaw);
-
-                                    if (activeEffectControllerMenu)
-                                    {
-                                        const int activeEffectPadding = 8;
-                                        const int activeEffectSpacing = 4;
-                                        const int activeEffectIconSize = 16;
-                                        const int activeEffectWidth
-                                            = tooltipWidth > 0 ? tooltipWidth : tooltipWinRect.width;
-
-                                        if (activeEffectCollapsed)
-                                        {
-                                            const int height = 28;
-                                            const int textHeight = height - 8;
-                                            const int textTop = 4;
-
-                                            mDynamicToolTipBox->setVisible(true);
-                                            mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
-
-                                            int nameLeft = activeEffectPadding;
-                                            if (!activeEffectIconTexture.empty())
-                                            {
-                                                const int iconTop = (height - activeEffectIconSize) / 2;
-                                                MyGUI::ImageBox* icon
-                                                    = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>("ImageBox",
-                                                        MyGUI::IntCoord(activeEffectPadding, iconTop,
-                                                            activeEffectIconSize, activeEffectIconSize),
-                                                        MyGUI::Align::VCenter | MyGUI::Align::Left);
-                                                icon->setImageTexture(Misc::ResourceHelpers::correctIconPath(
-                                                    VFS::Path::toNormalized(activeEffectIconTexture),
-                                                    *MWBase::Environment::get().getResourceSystem()->getVFS()));
-                                                nameLeft
-                                                    = activeEffectPadding + activeEffectIconSize + activeEffectSpacing;
-                                            }
-
-                                            const int rightPadding = activeEffectPadding;
-                                            const int nameWidth
-                                                = std::max(0, activeEffectWidth - nameLeft - rightPadding);
-
-                                            MyGUI::TextBox* activeEffectName
-                                                = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
-                                                    MyGUI::IntCoord(nameLeft, textTop, nameWidth, textHeight),
-                                                    MyGUI::Align::Left | MyGUI::Align::VCenter);
-                                            activeEffectName->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
-                                            activeEffectName->setCaption(nameText.empty() ? nameRaw : nameText);
-
-                                            tooltipSize = MyGUI::IntSize(activeEffectWidth, height);
-                                        }
-                                        else
-                                        {
-                                            ToolTipInfo info;
-                                            info.caption = nameRaw;
-                                            info.icon = activeEffectIconTexture;
-                                            info.imageSize = 16;
-                                            info.text = textRaw;
-                                            tooltipSize = createToolTip(info, false, tooltipWidth, true);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        ToolTipInfo info;
-                                        info.caption = nameRaw;
-                                        info.icon = iconTexture;
-                                        info.imageSize = 16;
-                                        info.text = textRaw;
-                                        tooltipSize = createToolTip(info, false, 0, false);
-                                    }
-                                }
-
-                                if (!isConstant)
-                                {
-                                    int effectDuration = duration;
-                                    if (!(magicEffect->mData.mFlags & ESM::MagicEffect::AppliedOnce))
-                                        effectDuration = std::max(1, effectDuration);
-
-                                    if (effectDuration > 0
-                                        && !(magicEffect->mData.mFlags & ESM::MagicEffect::NoDuration))
-                                    {
-                                        effectText += ' ';
-                                        effectText += windowManager->getGameSettingString("sfor", {});
-                                        effectText += ' ' + MyGUI::utility::toString(effectDuration)
-                                            + ((effectDuration == 1) ? sec : secs);
-                                    }
-
-                                    if (area > 0)
-                                        effectText += " #{sin} " + MyGUI::utility::toString(area) + " #{sfootarea}";
-
-                                    effectText += ' ';
-                                    effectText += windowManager->getGameSettingString("sonword", {});
-                                    effectText += ' ';
-                                    if (range == ESM::RT_Self)
-                                        effectText += windowManager->getGameSettingString("sRangeSelf", {});
-                                    else if (range == ESM::RT_Touch)
-                                        effectText += windowManager->getGameSettingString("sRangeTouch", {});
-                                    else if (range == ESM::RT_Target)
-                                        effectText += windowManager->getGameSettingString("sRangeTarget", {});
-                                }
-
-                                int effectLeft = padding;
-                                const std::string& effectIcon = magicEffect->mIcon;
-                                if (!effectIcon.empty())
-                                {
-                                    const int iconTop = y + 1;
-                                    MyGUI::ImageBox* icon = mDynamicToolTipBox->createWidget<MyGUI::ImageBox>(
-                                        "ImageBox", MyGUI::IntCoord(effectLeft, iconTop, iconSize, iconSize),
-                                        MyGUI::Align::Left | MyGUI::Align::Top);
-                                    icon->setImageTexture(
-                                        Misc::ResourceHelpers::correctIconPath(VFS::Path::toNormalized(effectIcon),
-                                            *MWBase::Environment::get().getResourceSystem()->getVFS()));
-                                    effectLeft += iconSize + spacing;
-                                }
-
-                                Gui::EditBox* effectWidget = mDynamicToolTipBox->createWidget<Gui::EditBox>("SandText",
-                                    MyGUI::IntCoord(effectLeft, y, width - effectLeft - padding, 18),
-                                    MyGUI::Align::Left | MyGUI::Align::Top);
-                                effectWidget->setEditStatic(true);
-                                effectWidget->setEditMultiLine(true);
-                                effectWidget->setEditWordWrap(true);
-                                effectWidget->setNeedKeyFocus(false);
-                                effectWidget->setCaptionWithReplacing(effectText);
-                                const int effectsHeight = std::max(iconSize, effectWidget->getTextSize().height);
-                                effectWidget->setSize(width - effectLeft - padding, effectsHeight);
-                                y += effectsHeight + padding;
-                            }
-                            tooltipSize = MyGUI::IntSize(width, y);
-                        }
+                            tooltipSize = createToolTip(buildSpellToolTipInfo(), false, tooltipWidth, true);
                     }
                     else
-                    {
-                        ToolTipInfo info;
-                        info.caption = spell->mName;
-                        Widgets::SpellEffectList effects;
-                        for (const ESM::IndexedENAMstruct& spellEffect : spell->mEffects.mList)
-                        {
-                            Widgets::SpellEffectParams params;
-                            params.mEffectID = spellEffect.mData.mEffectID;
-                            params.mSkill = spellEffect.mData.mSkill;
-                            params.mAttribute = spellEffect.mData.mAttribute;
-                            params.mDuration = spellEffect.mData.mDuration;
-                            params.mMagnMin = spellEffect.mData.mMagnMin;
-                            params.mMagnMax = spellEffect.mData.mMagnMax;
-                            params.mRange = spellEffect.mData.mRange;
-                            params.mArea = spellEffect.mData.mArea;
-                            params.mIsConstant = (spell->mData.mType == ESM::Spell::ST_Ability);
-                            params.mNoTarget = false;
-                            effects.push_back(params);
-                        }
-                        if (MWMechanics::spellIncreasesSkill(spell))
-                        {
-                            ESM::RefId id = MWMechanics::getSpellSchool(spell, MWMechanics::getPlayer());
-                            if (!id.empty())
-                            {
-                                const auto& school = store->get<ESM::Skill>().find(id)->mSchool;
-                                info.text = "#{sSchool}: " + MyGUI::TextIterator::toTagsString(school->mName).asUTF8();
-                            }
-                        }
-                        if (focus->getUserString("SpellCost") == "true")
-                            info.text
-                                += MWGui::ToolTips::getValueString(MWMechanics::calcSpellCost(*spell), "#{sCastCost}");
-                        info.effects = std::move(effects);
-                        tooltipSize = createToolTip(info, false, tooltipWidth, true);
-                    }
+                        tooltipSize = createToolTip(buildSpellToolTipInfo(), false, tooltipWidth, true);
                 }
                 else if (type == "Layout")
                 {

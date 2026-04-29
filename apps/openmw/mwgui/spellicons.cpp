@@ -132,10 +132,7 @@ namespace MWGui
                     widget.setNeedMouseFocus(true);
                     widget.setUserString("ToolTipType", "ActiveEffect");
                     widget.setUserString("ActiveEffectIcon", effect.mIcon);
-                    std::string nameTag = "#{";
-                    nameTag += ESM::MagicEffect::refIdToGmstString(effectId);
-                    nameTag += "}";
-                    widget.setUserString("ActiveEffectName", nameTag);
+                    widget.setUserString("ActiveEffectName", effect.mName);
                     if (source.mDuration >= fadeTime && fadeTime > 0.f)
                         widget.setAlpha(std::min(source.mTimeLeft / fadeTime, 1.f));
                     horizontalOffset += size;

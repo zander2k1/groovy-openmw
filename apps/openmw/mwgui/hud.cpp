@@ -351,6 +351,7 @@ namespace MWGui
 
         mSpellBox->setUserString("ToolTipType", "Spell");
         mSpellBox->setUserString("Spell", spellId.serialize());
+        mSpellBox->setUserString("SpellName", spellName);
         mSpellBox->setUserData(MyGUI::Any::Null);
 
         if (!spell->mEffects.mList.empty())

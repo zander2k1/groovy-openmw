@@ -713,6 +713,7 @@ namespace MWGui
         widget->setSpellId(spell->mId);
         widget->setUserString("ToolTipType", "Spell");
         widget->setUserString("Spell", spell->mId.serialize());
+        widget->setUserString("SpellName", spell->mName);
         widget->eventMouseWheel += MyGUI::newDelegate(this, &ReviewDialog::onMouseWheel);
         if (MyGUI::TextBox* nameWidget = getSpellTextWidget(widget))
             nameWidget->changeWidgetSkin("SandTextController");

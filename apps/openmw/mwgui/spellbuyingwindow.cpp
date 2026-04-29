@@ -88,6 +88,7 @@ namespace MWGui
         toAdd->eventMouseWheel += MyGUI::newDelegate(this, &SpellBuyingWindow::onMouseWheel);
         toAdd->setUserString("ToolTipType", "Spell");
         toAdd->setUserString("Spell", spell.mId.serialize());
+        toAdd->setUserString("SpellName", spell.mName);
         toAdd->setUserString("SpellCost", "true");
         toAdd->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellBuyingWindow::onSpellButtonClick);
         mSpellsWidgetMap.insert(std::make_pair(toAdd, spell.mId));
