@@ -1023,7 +1023,8 @@ namespace MWGui
 
                 mKeyboardNavigation->onFrame();
                 mMessageBoxManager->onFrame(dt);
-                MWBase::Environment::get().getInputManager()->update(dt, true, false);
+                // Keep GUI input active while the modal message box is blocking so controller navigation still works.
+                MWBase::Environment::get().getInputManager()->update(dt, false, false);
 
                 if (!mWindowVisible)
                     std::this_thread::sleep_for(std::chrono::milliseconds(5));
