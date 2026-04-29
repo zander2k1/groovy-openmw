@@ -2212,6 +2212,11 @@ namespace MWGui
             || mLuaUiWantsCursor;
     }
 
+    bool WindowManager::isGuiModeForScript() const
+    {
+        return !mGuiModes.empty() || isConsoleMode() || isPostProcessorHudVisible() || isInteractiveMessageBoxActive();
+    }
+
     bool WindowManager::isConsoleMode() const
     {
         return mConsole && mConsole->isVisible();

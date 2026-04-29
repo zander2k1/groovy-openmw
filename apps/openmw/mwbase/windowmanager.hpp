@@ -135,6 +135,7 @@ namespace MWBase
         virtual bool containsMode(MWGui::GuiMode) const = 0;
 
         virtual bool isGuiMode() const = 0;
+        virtual bool isGuiModeForScript() const = 0;
 
         virtual bool isConsoleMode() const = 0;
         virtual bool isPostProcessorHudVisible() const = 0;

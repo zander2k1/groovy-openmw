@@ -162,6 +162,7 @@ namespace MWGui
         bool containsMode(GuiMode mode) const override;
 
         bool isGuiMode() const override;
+        bool isGuiModeForScript() const override;
 
         bool isConsoleMode() const override;
         bool isPostProcessorHudVisible() const override;
