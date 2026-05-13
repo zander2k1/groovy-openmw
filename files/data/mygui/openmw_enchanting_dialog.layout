@@ -52,7 +52,7 @@
         <!-- Values -->
         <Widget type="VBox" position="304 7 201 116">
             <!-- Price block moved here (was the Constant effect block) -->
-            <Widget type="HBox" position="11 76 209 27">
+            <Widget type="HBox" position="11 76 209 27" name="PriceLayout">
                 <Property key="Spacing" value="8"/>
                 <UserString key="HStretch" value="true"/>
                 <Widget type="AutoSizedTextBox" skin="NormalText" name="PriceTextLabel">
@@ -63,6 +63,18 @@
                 </Widget>
                 <Widget type="AutoSizedTextBox" skin="SandText" name="PriceLabel">
                     <Property key="Caption" value="0"/>
+                    <Property key="TextAlign" value="Right VCenter"/>
+                    <UserString key="HStretch" value="true"/>
+                </Widget>
+            </Widget>
+
+            <Widget type="HBox" name="ChanceLayout">
+                <UserString key="HStretch" value="true"/>
+                <Widget type="AutoSizedTextBox" skin="NormalText">
+                    <Property key="Caption" value="#{sEnchantmentMenu6}:"/>
+                </Widget>
+                <Widget type="AutoSizedTextBox" skin="SandText" name="SuccessChance">
+                    <Property key="Caption" value="39"/>
                     <Property key="TextAlign" value="Right VCenter"/>
                     <UserString key="HStretch" value="true"/>
                 </Widget>
@@ -119,17 +131,6 @@
                 </Widget>
             </Widget>
 
-            <Widget type="HBox" name="ChanceLayout">
-                <UserString key="HStretch" value="true"/>
-                <Widget type="AutoSizedTextBox" skin="SandText">
-                    <Property key="Caption" value="#{sEnchantmentMenu6}:"/>
-                </Widget>
-                <Widget type="AutoSizedTextBox" skin="SandText" name="SuccessChance">
-                    <Property key="Caption" value="39"/>
-                    <Property key="TextAlign" value="Right VCenter"/>
-                    <UserString key="HStretch" value="true"/>
-                </Widget>
-            </Widget>
         </Widget>
 
         <!-- Available effects -->

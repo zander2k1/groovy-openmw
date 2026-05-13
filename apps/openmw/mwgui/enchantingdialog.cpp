@@ -64,6 +64,7 @@ namespace MWGui
         getWidget(mCharge, "Charge");
         getWidget(mSuccessChance, "SuccessChance");
         getWidget(mChanceLayout, "ChanceLayout");
+        getWidget(mPriceLayout, "PriceLayout");
         getWidget(mTypeButton, "TypeButton");
         getWidget(mBuyButton, "BuyButton");
         getWidget(mPrice, "PriceLabel");
@@ -226,10 +227,11 @@ namespace MWGui
             mBuyButton->setCaptionWithReplacing("#{sBuy}");
             mControllerButtons.mX = "#{Interface:Buy}";
             mChanceLayout->setVisible(false);
+            mChanceLayout->setUserString("Hidden", "true");
+            mPriceLayout->setVisible(true);
+            mPriceLayout->setUserString("Hidden", "false");
             mPtr = ptr;
             setSoulGem(MWWorld::Ptr());
-            mPrice->setVisible(true);
-            mPriceText->setVisible(true);
         }
         else
         {
@@ -237,12 +239,17 @@ namespace MWGui
             mEnchanting.setEnchanter(MWMechanics::getPlayer());
             mBuyButton->setCaptionWithReplacing("#{sCreate}");
             mControllerButtons.mX = "#{Interface:Create}";
-            mChanceLayout->setVisible(Settings::game().mShowEnchantChance);
+            const bool showChance = Settings::game().mShowEnchantChance;
+            mChanceLayout->setVisible(showChance);
+            mChanceLayout->setUserString("Hidden", showChance ? "false" : "true");
+            mPriceLayout->setVisible(false);
+            mPriceLayout->setUserString("Hidden", "true");
             mPtr = MWMechanics::getPlayer();
             setSoulGem(ptr);
-            mPrice->setVisible(false);
-            mPriceText->setVisible(false);
         }
+
+        if (MyGUI::Widget* valuesLayout = mChanceLayout->getParent())
+            valuesLayout->setCoord(valuesLayout->getCoord());
 
         setItem(MWWorld::Ptr());
         startEditing();

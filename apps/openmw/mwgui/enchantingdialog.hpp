@@ -64,6 +64,7 @@ namespace MWGui
         std::unique_ptr<ItemSelectionDialog> mItemSelectionDialog;
 
         MyGUI::Widget* mChanceLayout;
+        MyGUI::Widget* mPriceLayout;
 
         MyGUI::Button* mCancelButton;
         ItemWidget* mItemBox;
