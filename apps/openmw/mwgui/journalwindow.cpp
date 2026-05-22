@@ -234,11 +234,7 @@ namespace
                 }
             }
 
-            // Latin = 26 (13 + 13)
             mIndexRowCount = 13;
-            bool isRussian = (mEncoding == ToUTF8::WINDOWS_1251);
-            if (isRussian) // Cyrillic is either (10 + 10 + 10) or (15 + 15)
-                mIndexRowCount = MWGui::getCyrillicIndexPageCount();
 
             mControllerButtons.mA = "#{Interface:Select}";
             mControllerButtons.mX = "#{OMWEngine:JournalQuests}";
@@ -499,6 +495,11 @@ namespace
 
             if (!mTopicIndexBook)
                 mTopicIndexBook = createTopicIndexBook();
+
+            const size_t indexCharacterCount = static_cast<size_t>(getIndexCharacterCount());
+            const size_t indexColumnCount = static_cast<size_t>(std::max(1, mIndexPagesCount));
+            mIndexRowCount = (indexCharacterCount + indexColumnCount - 1) / indexColumnCount;
+            mSelectedIndex = std::min(mSelectedIndex, indexCharacterCount - 1);
 
             if (mIndexPagesCount == 3)
             {
@@ -775,8 +776,7 @@ namespace
 
         void setIndexControllerFocus(bool focused)
         {
-            size_t col = mSelectedIndex / mIndexRowCount;
-            size_t row = mSelectedIndex % mIndexRowCount;
+            const auto [col, row] = getIndexPosition(mSelectedIndex);
             mTopicIndexBook->setColour(col, row, 0, focused ? MWGui::journalHeaderColour : MyGUI::Colour::Black);
 
             if (useControllerSelectionHighlight())
@@ -792,31 +792,54 @@ namespace
         {
             setIndexControllerFocus(false);
 
-            int numChars = mEncoding == ToUTF8::WINDOWS_1251 ? 30 : 26;
-            size_t col = mSelectedIndex / mIndexRowCount;
+            const int numChars = getIndexCharacterCount();
+            const auto [col, row] = getIndexPosition(mSelectedIndex);
 
             if (offset == -1) // Up
             {
-                if (mSelectedIndex % mIndexRowCount == 0)
-                    mSelectedIndex = (col * mIndexRowCount) + mIndexRowCount - 1;
-                else
-                    mSelectedIndex--;
+                const size_t rowCount = getIndexRowCount(col);
+                const size_t selectedRow = row == 0 ? rowCount - 1 : row - 1;
+                mSelectedIndex = getIndexFromPosition(col, selectedRow);
             }
             else if (offset == 1) // Down
             {
-                if (mSelectedIndex % mIndexRowCount == mIndexRowCount - 1)
-                    mSelectedIndex = col * mIndexRowCount;
-                else
-                    mSelectedIndex++;
+                const size_t rowCount = getIndexRowCount(col);
+                const size_t selectedRow = row + 1 < rowCount ? row + 1 : 0;
+                mSelectedIndex = getIndexFromPosition(col, selectedRow);
             }
             else
             {
                 // mSelectedIndex is unsigned, so we have to be careful with our math.
-                if (offset < 0)
-                    offset += numChars;
+                int wrappedOffset = offset % numChars;
+                if (wrappedOffset < 0)
+                    wrappedOffset += numChars;
 
-                mSelectedIndex = (mSelectedIndex + offset) % numChars;
+                mSelectedIndex = (mSelectedIndex + wrappedOffset) % numChars;
             }
+
+            setIndexControllerFocus(true);
+            setText(PageOneNum, 1); // Redraw the list
+        }
+
+        void moveSelectedIndexHorizontal(int offset)
+        {
+            if (offset == 0)
+                return;
+
+            setIndexControllerFocus(false);
+
+            const auto [currentCol, currentRow] = getIndexPosition(mSelectedIndex);
+            const size_t colCount = getIndexColumnCount();
+            size_t col = currentCol;
+
+            if (offset < 0)
+                col = col == 0 ? colCount - 1 : col - 1;
+            else
+                col = col + 1 < colCount ? col + 1 : 0;
+
+            const size_t rowCount = getIndexRowCount(col);
+            const size_t row = std::min(currentRow, rowCount - 1);
+            mSelectedIndex = getIndexFromPosition(col, row);
 
             setIndexControllerFocus(true);
             setText(PageOneNum, 1); // Redraw the list
@@ -941,9 +964,9 @@ namespace
                     moveSelectedIndex(1);
             }
             else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT && !mQuestMode && !mTopicsMode)
-                moveSelectedIndex(-static_cast<int>(mIndexRowCount));
+                moveSelectedIndexHorizontal(-1);
             else if (arg.button == SDL_CONTROLLER_BUTTON_DPAD_RIGHT && !mQuestMode && !mTopicsMode)
-                moveSelectedIndex(static_cast<int>(mIndexRowCount));
+                moveSelectedIndexHorizontal(1);
             else if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER && (mQuestMode || mTopicsMode))
             {
                 // Scroll up 5 items in the list of quests or topics
@@ -1169,6 +1192,50 @@ namespace
             bool isRussian = (mEncoding == ToUTF8::WINDOWS_1251);
             size_t ch = isRussian ? mSelectedIndex + russianOffset : mSelectedIndex + 'A';
             return static_cast<Utf8Stream::UnicodeChar>(ch);
+        }
+
+        int getIndexCharacterCount() const { return mEncoding == ToUTF8::WINDOWS_1251 ? 30 : 26; }
+
+        size_t getIndexColumnCount() const { return static_cast<size_t>(std::max(1, mIndexPagesCount)); }
+
+        size_t getIndexRowCount(size_t col) const
+        {
+            const size_t indexCharacterCount = static_cast<size_t>(getIndexCharacterCount());
+            const size_t colCount = getIndexColumnCount();
+            const size_t base = indexCharacterCount / colCount;
+            const size_t remainder = indexCharacterCount % colCount;
+            return base + (col < remainder ? 1 : 0);
+        }
+
+        std::pair<size_t, size_t> getIndexPosition(size_t index) const
+        {
+            const size_t indexCharacterCount = static_cast<size_t>(getIndexCharacterCount());
+            size_t safeIndex = std::min(index, indexCharacterCount - 1);
+            const size_t colCount = getIndexColumnCount();
+
+            size_t col = 0;
+            while (col + 1 < colCount)
+            {
+                const size_t rowCount = getIndexRowCount(col);
+                if (safeIndex < rowCount)
+                    break;
+                safeIndex -= rowCount;
+                col++;
+            }
+            return std::make_pair(col, safeIndex);
+        }
+
+        size_t getIndexFromPosition(size_t col, size_t row) const
+        {
+            size_t index = 0;
+            for (size_t i = 0; i < col; ++i)
+                index += getIndexRowCount(i);
+
+            const size_t rowCount = getIndexRowCount(col);
+            if (rowCount > 0)
+                index += std::min(row, rowCount - 1);
+
+            return std::min(index, static_cast<size_t>(getIndexCharacterCount() - 1));
         }
 
         bool useControllerSelectionHighlight() const

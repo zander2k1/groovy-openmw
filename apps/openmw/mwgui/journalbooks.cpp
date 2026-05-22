@@ -1,5 +1,7 @@
 #include "journalbooks.hpp"
 
+#include <algorithm>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 
@@ -10,6 +12,24 @@
 
 namespace
 {
+    constexpr int JournalIndexColumnWidth = 92;
+    constexpr int JournalIndexColumnHeight = 260;
+    constexpr int LatinIndexCharacterCount = 26;
+    constexpr int CyrillicIndexCharacterCount = 30;
+
+    int getJournalIndexRowsPerColumn()
+    {
+        const int fontHeight = std::max(1, Settings::gui().mJournalFontSize.get());
+        return std::max(1, JournalIndexColumnHeight / fontHeight);
+    }
+
+    int getJournalIndexPageCount(int indexCharacterCount)
+    {
+        const int rowsPerColumn = getJournalIndexRowsPerColumn();
+        const int requiredColumns = (indexCharacterCount + rowsPerColumn - 1) / rowsPerColumn;
+        return std::clamp(requiredColumns, 2, 3);
+    }
+
     struct AddContent
     {
         std::shared_ptr<MWGui::BookTypesetter> mTypesetter;
@@ -150,9 +170,7 @@ namespace MWGui
 
     int getCyrillicIndexPageCount()
     {
-        // For small font size split alphabet to two columns (2x15 characers), for big font size split it to three
-        // colums (3x10 characters).
-        return Settings::gui().mJournalFontSize < 18 ? 2 : 3;
+        return getJournalIndexPageCount(CyrillicIndexCharacterCount);
     }
 
     JournalBooks::JournalBooks(std::shared_ptr<JournalViewModel> model, ToUTF8::FromType encoding)
@@ -231,12 +249,13 @@ namespace MWGui
 
     std::shared_ptr<BookTypesetter> JournalBooks::createLatinJournalIndex()
     {
-        std::shared_ptr<BookTypesetter> typesetter = BookTypesetter::create(92, 260);
+        std::shared_ptr<BookTypesetter> typesetter
+            = BookTypesetter::create(JournalIndexColumnWidth, JournalIndexColumnHeight);
 
         typesetter->setSectionAlignment(BookTypesetter::AlignCenter);
 
-        // Latin journal index always has two columns for now.
-        mIndexPagesCount = 2;
+        mIndexPagesCount = getJournalIndexPageCount(LatinIndexCharacterCount);
+        const int rowsPerColumn = (LatinIndexCharacterCount + mIndexPagesCount - 1) / mIndexPagesCount;
 
         char ch = 'A';
         std::string buffer;
@@ -252,7 +271,7 @@ namespace MWGui
             BookTypesetter::Style* style = typesetter->createHotStyle(body, textColours.journalTopic,
                 textColours.journalTopicOver, textColours.journalTopicPressed, Utf8Stream::UnicodeChar(ch));
 
-            if (i == 13)
+            if (i > 0 && i % rowsPerColumn == 0)
                 typesetter->sectionBreak();
 
             typesetter->write(style, buffer);
@@ -266,21 +285,21 @@ namespace MWGui
 
     std::shared_ptr<BookTypesetter> JournalBooks::createCyrillicJournalIndex()
     {
-        std::shared_ptr<BookTypesetter> typesetter = BookTypesetter::create(92, 260);
+        std::shared_ptr<BookTypesetter> typesetter
+            = BookTypesetter::create(JournalIndexColumnWidth, JournalIndexColumnHeight);
 
         typesetter->setSectionAlignment(BookTypesetter::AlignCenter);
 
         BookTypesetter::Style* body = typesetter->createStyle("DialogueBoldFont", MyGUI::Colour::Black, false);
 
-        // for small font size split alphabet to two columns (2x15 characers), for big font size split it to three
-        // colums (3x10 characters).
         mIndexPagesCount = getCyrillicIndexPageCount();
-        int sectionBreak = 30 / mIndexPagesCount;
+        const int rowsPerColumn = (CyrillicIndexCharacterCount + mIndexPagesCount - 1) / mIndexPagesCount;
 
         unsigned char ch[3] = { 0xd0, 0x90, 0x00 }; // CYRILLIC CAPITAL A is a 0xd090 in UTF-8
 
         std::string buffer;
 
+        int writtenCount = 0;
         for (int i = 0; i < 32; ++i)
         {
             buffer = "( ";
@@ -301,11 +320,12 @@ namespace MWGui
             if (i == 26 || i == 28)
                 continue;
 
-            if (i % sectionBreak == 0)
+            if (writtenCount > 0 && writtenCount % rowsPerColumn == 0)
                 typesetter->sectionBreak();
 
             typesetter->write(style, buffer);
             typesetter->lineBreak();
+            writtenCount++;
         }
 
         return typesetter;
