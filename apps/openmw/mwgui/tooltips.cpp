@@ -464,6 +464,8 @@ namespace MWGui
             }
         };
 
+        constexpr int sCollapsedTooltipProgressBarWidth = 160;
+
         auto renderDialogueCollapsedBar = [&](DialogueWindow* dialogueWindow) -> bool {
             if (!dialogueWindow || !dialogueWindow->hasActor())
                 return false;
@@ -486,8 +488,7 @@ namespace MWGui
             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
             setCoord(winRect.left, posY, width, barHeight);
 
-            const int desiredBarWidth = static_cast<int>(dialogueWindow->getDispositionBarWidth() * 0.7f);
-            const int barWidth = std::max(0, std::min(desiredBarWidth, width - paddingX * 2));
+            const int barWidth = std::max(0, std::min(sCollapsedTooltipProgressBarWidth, width - paddingX * 2));
             const int barLeft = std::max(paddingX, width - paddingX - barWidth);
             const int labelWidth = std::max(0, barLeft - paddingX);
 
@@ -520,7 +521,6 @@ namespace MWGui
                 std::string mLabel;
                 std::string mValue;
                 bool mProgress = false;
-                float mProgressScale = 1.f;
                 int mProgressValue = 0;
                 int mProgressRange = 0;
                 std::string mProgressText;
@@ -547,7 +547,6 @@ namespace MWGui
                 row.mLabel = std::string(focus->getUserString("CollapsedLabel"));
                 row.mValue = std::string(focus->getUserString("CollapsedValue"));
                 row.mProgress = true;
-                row.mProgressScale = 0.4f;
                 row.mProgressRange = toInt(focus, "Range_LevelProgress");
                 row.mProgressValue = toInt(focus, "RangePosition_LevelProgress");
                 row.mProgressText = std::string(focus->getUserString("Caption_LevelProgressText"));
@@ -706,7 +705,7 @@ namespace MWGui
 
                     if (row.mProgress)
                     {
-                        const int barWidth = std::max(0, static_cast<int>(valueWidth * row.mProgressScale));
+                        const int barWidth = std::min(std::max(0, valueWidth), sCollapsedTooltipProgressBarWidth);
                         const int barLeft = paddingX * 2 + labelWidth + (valueWidth - barWidth);
                         MyGUI::ProgressBar* bar = mDynamicToolTipBox->createWidget<MyGUI::ProgressBar>(
                             "MW_Progress_Red", MyGUI::IntCoord(barLeft, y, barWidth, rowHeight),
@@ -720,7 +719,8 @@ namespace MWGui
                         MyGUI::TextBox* text = bar->createWidget<MyGUI::TextBox>(
                             "ProgressText", MyGUI::IntCoord(0, textTop, barWidth, textHeight), MyGUI::Align::Stretch);
                         text->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
-                        text->setCaption(row.mProgressText);
+                        text->setCaption(
+                            row.mProgressText.empty() ? MyGUI::utility::toString(pos, "/", range) : row.mProgressText);
                     }
                     else
                     {
@@ -1775,7 +1775,7 @@ namespace MWGui
             const bool hasDamage = damageInfo.mMin > 0 || damageInfo.mMax > 0;
             if (showChargeBar)
             {
-                const int maxBarWidth = 160;
+                const int maxBarWidth = sCollapsedTooltipProgressBarWidth;
                 const int minBarWidth = 48;
                 const int barHeight = 18;
 
