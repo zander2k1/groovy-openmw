@@ -545,7 +545,8 @@ namespace MWGui
                 {
                     // The section won't completely fit on the current page. Finish the current page and start a new
                     // one.
-                    mBook->mPages.emplace_back(curPageStart, curPageStop);
+                    if (curPageStart != curPageStop)
+                        mBook->mPages.emplace_back(curPageStart, curPageStop);
 
                     curPageStart = i->mRect.top;
                     curPageStop = i->mRect.bottom;
@@ -564,6 +565,9 @@ namespace MWGui
                                 break;
                             }
                         }
+
+                        if (splitPos <= curPageStart)
+                            splitPos = std::min(i->mRect.bottom, curPageStart + mPageHeight);
 
                         mBook->mPages.emplace_back(curPageStart, splitPos);
                         curPageStart = splitPos;

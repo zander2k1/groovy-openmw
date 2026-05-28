@@ -13,7 +13,7 @@
 namespace
 {
     constexpr int JournalIndexColumnWidth = 92;
-    constexpr int JournalIndexColumnHeight = 260;
+    constexpr int JournalIndexColumnHeight = 286;
     constexpr int LatinIndexCharacterCount = 26;
     constexpr int CyrillicIndexCharacterCount = 30;
 
@@ -146,7 +146,7 @@ namespace
         void operator()(std::string_view topicName)
         {
             mTypesetter->write(mBodyStyle, topicName);
-            mTypesetter->sectionBreak();
+            mTypesetter->lineBreak();
         }
     };
 
@@ -160,7 +160,7 @@ namespace
         void operator()(std::string_view topicName)
         {
             mTypesetter->write(mBodyStyle, topicName);
-            mTypesetter->sectionBreak();
+            mTypesetter->lineBreak();
         }
     };
 }

@@ -242,8 +242,14 @@ namespace
 
             setVisible(OptionsBTN, false);
             setVisible(CloseBTN, false);
+            setVisible(JournalBTN, false);
+            setVisible(PrevPageBTN, false);
+            setVisible(NextPageBTN, false);
             getWidget<MyGUI::Widget>(OptionsBTN)->setEnabled(false);
             getWidget<MyGUI::Widget>(CloseBTN)->setEnabled(false);
+            getWidget<MyGUI::Widget>(JournalBTN)->setEnabled(false);
+            getWidget<MyGUI::Widget>(PrevPageBTN)->setEnabled(false);
+            getWidget<MyGUI::Widget>(NextPageBTN)->setEnabled(false);
 
             mQuestMode = false;
             mAllQuests = false;
@@ -376,8 +382,8 @@ namespace
 
         void updateCloseJournalButton()
         {
-            setVisible(CloseBTN, mStates.size() < 2);
-            setVisible(JournalBTN, mStates.size() >= 2);
+            setVisible(CloseBTN, true);
+            setVisible(JournalBTN, false);
             MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
         }
 
@@ -402,16 +408,8 @@ namespace
             MyGUI::Widget* nextPageBtn = getWidget<MyGUI::Widget>(NextPageBTN);
             MyGUI::Widget* prevPageBtn = getWidget<MyGUI::Widget>(PrevPageBTN);
 
-            MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-            bool nextPageVisible = relPages > 2;
-            nextPageBtn->setVisible(nextPageVisible);
-            bool prevPageVisible = page > 0;
-            prevPageBtn->setVisible(prevPageVisible);
-
-            if (focus == nextPageBtn && !nextPageVisible && prevPageVisible)
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(prevPageBtn);
-            else if (focus == prevPageBtn && !prevPageVisible && nextPageVisible)
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nextPageBtn);
+            nextPageBtn->setVisible(false);
+            prevPageBtn->setVisible(false);
 
             setVisible(PageOneNum, relPages > 0);
             setVisible(PageTwoNum, relPages > 1);
@@ -452,7 +450,7 @@ namespace
 
             setVisible(OptionsOverlay, false);
             setVisible(OptionsBTN, true);
-            setVisible(JournalBTN, true);
+            setVisible(JournalBTN, false);
 
             mOptionsMode = false;
             mTopicsMode = false;
@@ -481,7 +479,7 @@ namespace
 
             setVisible(OptionsOverlay, false);
             setVisible(OptionsBTN, true);
-            setVisible(JournalBTN, true);
+            setVisible(JournalBTN, false);
 
             mOptionsMode = false;
 

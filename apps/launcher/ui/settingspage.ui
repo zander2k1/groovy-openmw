@@ -1411,7 +1411,7 @@
                <number>12</number>
               </property>
               <property name="maximum">
-               <number>25</number>
+               <number>22</number>
               </property>
               <property name="singleStep">
                <number>1</number>
