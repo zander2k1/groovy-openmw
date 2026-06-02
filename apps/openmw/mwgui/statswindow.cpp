@@ -1187,7 +1187,6 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             winMgr->setControllerTooltipVisible(active && Settings::gui().mControllerTooltips);
-            winMgr->setCursorVisible(false);
 
             if (active && !mControllerItems.empty())
             {
@@ -1373,8 +1372,6 @@ namespace MWGui
     void StatsWindow::updateControllerFocus(size_t prevFocus, size_t newFocus)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
 
         if (prevFocus < mControllerItems.size())
         {

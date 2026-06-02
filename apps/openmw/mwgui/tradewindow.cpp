@@ -296,7 +296,6 @@ namespace MWGui
                 mControllerTabHighlight->setVisible(false);
             mItemView->setActiveControllerWindow(true);
             mItemView->refreshControllerFocus();
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
         }
     }
 
@@ -804,7 +803,6 @@ namespace MWGui
     {
         if (Settings::gui().mControllerMenus)
         {
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
             if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             {
                 if (mControllerTabWidgets.empty())

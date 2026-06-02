@@ -1160,8 +1160,6 @@ namespace MWGui
     void ReviewDialog::updateControllerFocus(size_t prevFocus, size_t newFocus)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
 
         if (prevFocus < mControllerItems.size())
         {

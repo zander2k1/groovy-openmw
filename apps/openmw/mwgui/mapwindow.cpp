@@ -22,7 +22,6 @@
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
-#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -845,15 +844,6 @@ namespace MWGui
         mButton->setEnabled(false);
         mButton->setVisible(false);
 
-        if (!mCursorAnchor)
-        {
-            mCursorAnchor
-                = mMainWidget->createWidget<MyGUI::Widget>({}, MyGUI::IntCoord(0, 0, 2, 4), MyGUI::Align::Default);
-            mCursorAnchor->setVisible(false);
-            mCursorAnchor->setNeedMouseFocus(false);
-            mCursorAnchor->setEnabled(false);
-        }
-
         getWidget(mEventBoxGlobal, "EventBoxGlobal");
         mEventBoxGlobal->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
         mEventBoxGlobal->eventMouseButtonPressed += MyGUI::newDelegate(this, &MapWindow::onDragStart);
@@ -1349,13 +1339,6 @@ namespace MWGui
         mButton->setCaptionWithReplacing(global ? "#{sLocal}" : "#{sWorld}");
         mControllerButtons.mX = global ? "#{Interface:Local}" : "#{Interface:World}";
         MWBase::Environment::get().getWindowManager()->updateControllerButtonsOverlay();
-
-        if (Settings::gui().mControllerMenus)
-        {
-            MWBase::Environment::get().getWindowManager()->setCursorActive(true);
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(true);
-            warpCursorToMapCenter();
-        }
     }
 
     void MapWindow::onPinToggled()
@@ -1566,25 +1549,6 @@ namespace MWGui
         }
     }
 
-    void MapWindow::warpCursorToMapCenter()
-    {
-        if (!mCursorAnchor)
-            return;
-
-        MyGUI::IntSize viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        MyGUI::IntCoord parentCoord = mMainWidget->getAbsoluteCoord();
-
-        constexpr int anchorWidth = 2;
-        constexpr int anchorHeight = 4;
-        const int targetX = viewSize.width / 2;
-        const int targetY = viewSize.height / 2;
-        const int localLeft = targetX - parentCoord.left - anchorWidth / 2;
-        const int localTop = targetY - parentCoord.top - anchorHeight / 4;
-
-        mCursorAnchor->setCoord(localLeft, localTop, anchorWidth, anchorHeight);
-        MWBase::Environment::get().getInputManager()->warpMouseToWidget(mCursorAnchor);
-    }
-
     void MapWindow::setActiveControllerWindow(bool active)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
@@ -1595,14 +1559,6 @@ namespace MWGui
 
             MyGUI::Window* window = mMainWidget->castType<MyGUI::Window>();
             window->setCoord(coord.left, active ? coord.top : viewSize.height + 1, coord.width, coord.height);
-        }
-
-        if (Settings::gui().mControllerMenus)
-        {
-            winMgr->setControllerTooltipVisible(active && Settings::gui().mControllerTooltips);
-            winMgr->setCursorVisible(active);
-            if (active)
-                warpCursorToMapCenter();
         }
 
         WindowBase::setActiveControllerWindow(active);
@@ -1641,9 +1597,6 @@ namespace MWGui
     EditNoteDialog::EditNoteDialog()
         : WindowModal(Settings::gui().mControllerMenus ? "openmw_edit_note_xbox.layout" : "openmw_edit_note.layout")
     {
-        if (Settings::gui().mControllerMenus)
-            mDisableGamepadCursor = true;
-
         getWidget(mTextEdit, "TextEdit");
         getWidget(mDeleteButton, "DeleteButton");
 
@@ -1698,38 +1651,6 @@ namespace MWGui
         center();
         auto winMgr = MWBase::Environment::get().getWindowManager();
         winMgr->setKeyFocusWidget(mTextEdit);
-
-        if (Settings::gui().mControllerMenus)
-        {
-            winMgr->setCursorActive(false);
-            winMgr->setCursorVisible(false);
-            MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);
-        }
-    }
-
-    void EditNoteDialog::onClose()
-    {
-        WindowModal::onClose();
-
-        if (!Settings::gui().mControllerMenus)
-            return;
-
-        auto winMgr = MWBase::Environment::get().getWindowManager();
-        MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
-        WindowBase* active = winMgr->getActiveControllerWindow();
-        if (!active || !inputMgr)
-            return;
-
-        inputMgr->setGamepadGuiCursorEnabled(active->isGamepadCursorAllowed());
-        if (dynamic_cast<MapWindow*>(active) != nullptr)
-        {
-            winMgr->setCursorActive(true);
-            winMgr->setCursorVisible(true);
-
-            // Ensure the tooltip system immediately picks up the map widget under the cursor.
-            const MyGUI::IntPoint& mousePos = MyGUI::InputManager::getInstance().getMousePosition();
-            MyGUI::InputManager::getInstance().injectMouseMove(mousePos.left, mousePos.top, 0);
-        }
     }
 
     void EditNoteDialog::onCancelButtonClicked(MyGUI::Widget* /*sender*/)

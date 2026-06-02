@@ -1284,9 +1284,8 @@ namespace MWGui
             mLastInventoryControllerWindow = activeIndex;
         reapplyActiveControllerWindow();
 
-        const bool keyboardVisible = mVirtualKeyboard && mVirtualKeyboard->isVisible();
         MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(
-            keyboardVisible ? false : mGuiModeStates[mode].mWindows[activeIndex]->isGamepadCursorAllowed());
+            mGuiModeStates[mode].mWindows[activeIndex]->isGamepadCursorAllowed());
 
         WindowBase* activeWindow = mGuiModeStates[mode].mWindows[activeIndex];
         if (activeWindow->isVisible())
@@ -1295,12 +1294,17 @@ namespace MWGui
         updateControllerButtonsOverlay();
         setCursorActive(false);
 
-        if (dynamic_cast<MapWindow*>(activeWindow))
+        MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
+        const bool joystickLastUsed = inputMgr && inputMgr->joystickLastUsed();
+        const bool mapWindowActive = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
+        if (Settings::gui().mControllerMenus && joystickLastUsed)
         {
-            setCursorActive(true);
-            setCursorVisible(true);
+            setCursorVisible(mapWindowActive);
+            if (mapWindowActive)
+                setCursorActive(true);
         }
 
+        const bool keyboardVisible = mVirtualKeyboard && mVirtualKeyboard->isVisible();
         if (keyboardVisible)
         {
             // Keep the keyboard target in sync with the active tab.
@@ -1325,67 +1329,6 @@ namespace MWGui
 
     void WindowManager::update(float frameDuration)
     {
-        const bool luaUiWantsCursorNow = LuaUi::isAnyElementVisibleOnLayer("Windows")
-            || LuaUi::isAnyElementVisibleOnLayer("Dialogue") || LuaUi::isAnyElementVisibleOnLayer("JournalBooks")
-            || LuaUi::isAnyElementVisibleOnLayer("Modal") || LuaUi::isAnyElementVisibleOnLayer("Popup");
-
-        if (luaUiWantsCursorNow != mLuaUiWantsCursor)
-        {
-            MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager();
-
-            if (luaUiWantsCursorNow)
-            {
-                if (!mHasSavedLuaUiCursorState)
-                {
-                    mSavedLuaUiCursorVisible = mCursorVisible;
-                    mSavedLuaUiCursorActive = mCursorActive;
-                    mHasSavedLuaUiCursorState = true;
-                }
-
-                if (inputManager != nullptr && !mHasSavedGamepadGuiCursorEnabled)
-                {
-                    mSavedGamepadGuiCursorEnabled = inputManager->isGamepadGuiCursorEnabled();
-                    mHasSavedGamepadGuiCursorEnabled = true;
-                }
-                if (inputManager != nullptr)
-                    inputManager->setGamepadGuiCursorEnabled(true);
-
-                mLuaUiWantsCursor = true;
-                setCursorActive(true);
-                setCursorVisible(true);
-            }
-            else
-            {
-                mLuaUiWantsCursor = false;
-                if (inputManager != nullptr && mHasSavedGamepadGuiCursorEnabled)
-                    inputManager->setGamepadGuiCursorEnabled(mSavedGamepadGuiCursorEnabled);
-                mHasSavedGamepadGuiCursorEnabled = false;
-
-                if (mHasSavedLuaUiCursorState)
-                {
-                    setCursorActive(mSavedLuaUiCursorActive);
-                    setCursorVisible(mSavedLuaUiCursorVisible);
-                }
-                mHasSavedLuaUiCursorState = false;
-            }
-
-            updateVisible();
-            updateControllerButtonsOverlay();
-        }
-
-        if (mLuaUiWantsCursor)
-        {
-            if (MWBase::InputManager* inputManager = MWBase::Environment::get().getInputManager())
-            {
-                if (!inputManager->isGamepadGuiCursorEnabled())
-                    inputManager->setGamepadGuiCursorEnabled(true);
-            }
-            if (!mCursorActive)
-                setCursorActive(true);
-            if (!mCursorVisible)
-                setCursorVisible(true);
-        }
-
         handleScheduledMessageBoxes();
 
         bool gameRunning
@@ -1452,6 +1395,32 @@ namespace MWGui
 
         if (mInventoryTabsOverlay && mInventoryTabsOverlay->isVisible())
             mInventoryTabsOverlay->onFrame(frameDuration);
+
+        if (isGuiMode())
+        {
+            MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
+            const bool joystickLastUsed = inputMgr && inputMgr->joystickLastUsed();
+            auto isLuaWidget = [](MyGUI::Widget* widget) {
+                for (MyGUI::Widget* current = widget; current != nullptr; current = current->getParent())
+                {
+                    if (dynamic_cast<LuaUi::WidgetExtension*>(current) != nullptr)
+                        return true;
+                }
+                return false;
+            };
+            MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+            const bool luaMenuVisible = LuaUi::isAnyElementVisibleOnLayer("Windows")
+                || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+            if (joystickLastUsed && luaMenuVisible)
+            {
+                if (!inputMgr->isGamepadGuiCursorEnabled())
+                    inputMgr->setGamepadGuiCursorEnabled(true);
+                if (!mCursorVisible)
+                    setCursorVisible(true);
+                if (!mCursorActive)
+                    setCursorActive(true);
+            }
+        }
 
         if (!gameRunning)
         {
@@ -1608,35 +1577,34 @@ namespace MWGui
 
     void WindowManager::setDragDrop(bool dragDrop)
     {
-        mToolTips->setEnabled(!dragDrop);
+        mToolTips->setDragDrop(dragDrop);
         MWBase::Environment::get().getInputManager()->setDragDrop(dragDrop);
     }
 
     void WindowManager::setCursorVisible(bool visible)
     {
-        if (mLuaUiWantsCursor)
-        {
-            mCursorVisible = visible;
-            return;
-        }
-
         if (Settings::gui().mControllerMenus)
         {
-            const GuiMode mode = getMode();
-            if (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion)
+            MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
+            const bool joystickLastUsed = inputMgr && inputMgr->joystickLastUsed();
+            if (joystickLastUsed)
             {
-                if (mode == GM_Inventory)
+                const GuiMode mode = getMode();
+                if (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion)
                 {
-                    // Use the actual active controller window so modals (e.g. edit note dialog)
-                    // can override the map cursor visibility.
-                    WindowBase* activeWindow = getActiveControllerWindow();
-                    visible = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
+                    if (mode == GM_Inventory)
+                    {
+                        // Use the actual active controller window so modals (e.g. edit note dialog)
+                        // can override the map cursor visibility.
+                        WindowBase* activeWindow = getActiveControllerWindow();
+                        visible = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
+                    }
+                    else
+                        visible = false;
                 }
-                else
+                else if (mode == GM_SpellCreation)
                     visible = false;
             }
-            else if (mode == GM_SpellCreation)
-                visible = false;
         }
         mCursorVisible = visible;
     }
@@ -2209,8 +2177,7 @@ namespace MWGui
 
     bool WindowManager::isGuiMode() const
     {
-        return !mGuiModes.empty() || isConsoleMode() || isPostProcessorHudVisible() || isInteractiveMessageBoxActive()
-            || mLuaUiWantsCursor;
+        return !mGuiModes.empty() || isConsoleMode() || isPostProcessorHudVisible() || isInteractiveMessageBoxActive();
     }
 
     bool WindowManager::isGuiModeForScript() const
@@ -3422,8 +3389,6 @@ namespace MWGui
         mVirtualKeyboard->setTooltipSourceWindow(tooltipSourceWindow);
 
         mVirtualKeyboard->setVisible(true);
-        setCursorActive(false);
-        MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);
 
         updateControllerButtonsOverlay();
         return true;

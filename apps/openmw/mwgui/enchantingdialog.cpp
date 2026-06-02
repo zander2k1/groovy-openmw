@@ -450,7 +450,6 @@ namespace MWGui
         {
             MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
             winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
-            winMgr->setCursorVisible(!winMgr->getControllerTooltipVisible());
         }
 
         updateControllerFocusHighlight();

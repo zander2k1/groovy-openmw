@@ -388,7 +388,6 @@ namespace MWGui
                 mControllerTabHighlight->setVisible(false);
             mItemView->setActiveControllerWindow(true);
             mItemView->refreshControllerFocus();
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
         }
     }
 
@@ -700,8 +699,6 @@ namespace MWGui
             notifyContentChanged();
         }
         adjustPanes();
-        if (Settings::gui().mControllerMenus)
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
 
         mItemTransfer->addTarget(*mItemView);
     }
@@ -1268,7 +1265,6 @@ namespace MWGui
 
         if (Settings::gui().mControllerMenus)
         {
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
             if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
             {
                 if (mControllerTabWidgets.empty())
@@ -1404,7 +1400,6 @@ namespace MWGui
 
         if (mFilterEdit && active && winMgr->getMode() != MWGui::GM_Barter)
             clearFilter();
-        winMgr->setCursorVisible(false);
         if (!active)
             mControllerTabsActive = false;
         if (active && Settings::gui().mControllerMenus && !mControllerTabWidgets.empty()
@@ -1416,7 +1411,6 @@ namespace MWGui
         mItemView->setActiveControllerWindow(active && !mControllerTabsActive);
         if (active && !mControllerTabsActive)
             mItemView->refreshControllerFocus();
-        winMgr->setCursorVisible(false);
         if (active)
         {
             adjustPanes();

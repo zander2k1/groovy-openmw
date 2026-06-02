@@ -57,6 +57,7 @@ namespace MWGui
         void update(float frameDuration);
 
         void setEnabled(bool enabled);
+        void setDragDrop(bool dragDrop);
 
         bool toggleFullHelp(); ///< show extra info in item tooltips (owner, script)
         bool getFullHelp() const;
@@ -130,6 +131,7 @@ namespace MWGui
         int mLastMouseY;
 
         bool mEnabled;
+        bool mDragDrop;
 
         bool mFullHelp;
 

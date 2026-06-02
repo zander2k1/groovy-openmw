@@ -144,6 +144,7 @@ namespace MWGui
         , mLastMouseX(0)
         , mLastMouseY(0)
         , mEnabled(true)
+        , mDragDrop(false)
         , mFullHelp(false)
         , mFrameDuration(0.f)
     {
@@ -165,6 +166,11 @@ namespace MWGui
     void ToolTips::setEnabled(bool enabled)
     {
         mEnabled = enabled;
+    }
+
+    void ToolTips::setDragDrop(bool dragDrop)
+    {
+        mDragDrop = dragDrop;
     }
 
     void ToolTips::onFrame(float frameDuration)
@@ -421,6 +427,7 @@ namespace MWGui
                 return confirmDialog->getTooltipSourceWindow() == nullptr;
             return false;
         }();
+        const bool keepEmptyTooltipBar = !suppressControllerBar && (controllerInventory || controllerTooltipAnchor);
         auto getOwningWindow = [](MyGUI::Widget* widget) -> MyGUI::Window* {
             while (widget != nullptr)
             {
@@ -1557,6 +1564,14 @@ namespace MWGui
                 showEmptyControllerBar(
                     activeWindow->mMainWidget->getAbsoluteCoord(), activeWindow->mMainWidget->getWidth());
         };
+        if (mDragDrop)
+        {
+            if (keepEmptyTooltipBar)
+                showEmptyControllerBarForActive(activeControllerWindow);
+            else
+                mDynamicToolTipBox->setVisible(false);
+            return;
+        }
         auto renderCollapsedTextBar = [&](const std::string& text, const MyGUI::IntCoord& winRect, int width) -> bool {
             if (text.empty())
                 return false;
@@ -1935,7 +1950,7 @@ namespace MWGui
             {
                 mFocusObject = MWWorld::Ptr();
                 mDynamicToolTipBox->setVisible(false);
-                if (controllerActive && !suppressControllerBar)
+                if (keepEmptyTooltipBar)
                 {
                     MyGUI::IntCoord barRect = controllerWinRect;
                     int barWidth = barRect.width;
@@ -1953,7 +1968,7 @@ namespace MWGui
                 // Offer amount dialog: keep the top tooltip strip visible but empty.
                 mFocusObject = MWWorld::Ptr();
                 mDynamicToolTipBox->setVisible(false);
-                if (controllerActive && !suppressControllerBar)
+                if (keepEmptyTooltipBar)
                 {
                     MyGUI::IntCoord barRect = controllerWinRect;
                     int barWidth = barRect.width;
@@ -1989,12 +2004,8 @@ namespace MWGui
             else if (!winMgr->getCursorVisible() && !winMgr->getControllerTooltipVisible()
                 && !(controllerActive && controllerTooltipAnchor && !winMgr->getControllerTooltipEnabled()))
             {
-                if (controllerActive && !suppressControllerBar)
-                {
-                    if (activeControllerWindow)
-                        showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
-                            activeControllerWindow->mMainWidget->getWidth());
-                }
+                if (keepEmptyTooltipBar)
+                    showEmptyControllerBarForActive(activeControllerWindow);
                 return;
             }
 
@@ -2004,12 +2015,8 @@ namespace MWGui
             {
                 if (mFocusObject.isEmpty())
                 {
-                    if (controllerActive && !suppressControllerBar)
-                    {
-                        if (activeControllerWindow)
-                            showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
-                                activeControllerWindow->mMainWidget->getWidth());
-                    }
+                    if (keepEmptyTooltipBar)
+                        showEmptyControllerBarForActive(activeControllerWindow);
                     return;
                 }
 
@@ -2053,12 +2060,8 @@ namespace MWGui
 
                 if (mRemainingDelay > 0)
                 {
-                    if (controllerActive && !suppressControllerBar)
-                    {
-                        if (activeControllerWindow)
-                            showEmptyControllerBar(activeControllerWindow->mMainWidget->getAbsoluteCoord(),
-                                activeControllerWindow->mMainWidget->getWidth());
-                    }
+                    if (keepEmptyTooltipBar)
+                        showEmptyControllerBarForActive(activeControllerWindow);
                     return;
                 }
 
@@ -2138,7 +2141,7 @@ namespace MWGui
                     }
                     if (focus == nullptr)
                     {
-                        if (controllerActive && !suppressControllerBar)
+                        if (keepEmptyTooltipBar)
                         {
                             showEmptyControllerBarForActive(activeControllerWindow);
                         }
@@ -2156,7 +2159,10 @@ namespace MWGui
 
                 if (isTooltipDisabled(focus))
                 {
-                    mDynamicToolTipBox->setVisible(false);
+                    if (keepEmptyTooltipBar)
+                        showEmptyControllerBarForActive(activeControllerWindow);
+                    else
+                        mDynamicToolTipBox->setVisible(false);
                     return;
                 }
 
@@ -2198,7 +2204,7 @@ namespace MWGui
                     }
                     if (!focus)
                     {
-                        if (controllerActive && !suppressControllerBar)
+                        if (keepEmptyTooltipBar)
                         {
                             showEmptyControllerBarForActive(activeControllerWindow);
                         }
@@ -2237,7 +2243,7 @@ namespace MWGui
                     }
                     if (focus == nullptr || focus->getUserString("ToolTipType").empty())
                     {
-                        if (controllerActive && !suppressControllerBar)
+                        if (keepEmptyTooltipBar)
                         {
                             showEmptyControllerBarForActive(activeControllerWindow);
                         }
@@ -2284,7 +2290,7 @@ namespace MWGui
                     {
                         // Marker widgets can still receive focus when partially visible or outside explored areas.
                         // In that case, ignore them for tooltip rendering so we don't hide the controller bar.
-                        if (controllerActive && !suppressControllerBar)
+                        if (keepEmptyTooltipBar)
                         {
                             std::string cellName;
                             if (MyGUI::Window* owner = getOwningWindow(focus))
@@ -2323,7 +2329,11 @@ namespace MWGui
                 {
                     mFocusObject = *focus->getUserData<MWWorld::Ptr>();
                     if (mFocusObject.isEmpty())
+                    {
+                        if (keepEmptyTooltipBar)
+                            showEmptyControllerBarForActive(activeControllerWindow);
                         return;
+                    }
 
                     focusItemCount = mFocusObject.getCellRef().getCount();
                     allowFocusBar = true;
@@ -2356,14 +2366,18 @@ namespace MWGui
                         = winMgr->getInventoryWindow()->getAvatarSelectedItem(relMousePos.left, relMousePos.top);
 
                     mFocusObject = item;
-                    if (!mFocusObject.isEmpty())
+                    if (mFocusObject.isEmpty())
                     {
-                        focusItemCount = mFocusObject.getCellRef().getCount();
-                        allowFocusBar = true;
-                        if (!controllerCollapseTooltip)
-                            tooltipSize = getToolTipViaPtr(
-                                mFocusObject.getCellRef().getCount(), false, false, tooltipWidth, true);
+                        if (keepEmptyTooltipBar)
+                            showEmptyControllerBarForActive(activeControllerWindow);
+                        return;
                     }
+
+                    focusItemCount = mFocusObject.getCellRef().getCount();
+                    allowFocusBar = true;
+                    if (!controllerCollapseTooltip)
+                        tooltipSize
+                            = getToolTipViaPtr(mFocusObject.getCellRef().getCount(), false, false, tooltipWidth, true);
                 }
                 else if (type == "Spell")
                 {
@@ -2733,7 +2747,14 @@ namespace MWGui
         const MWWorld::Class& object = mFocusObject.getClass();
         if (!object.hasToolTip(mFocusObject))
         {
-            mDynamicToolTipBox->setVisible(false);
+            if (menuMode && forcedWidth > 0)
+            {
+                mDynamicToolTipBox->setVisible(true);
+                mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
+                tooltipSize = MyGUI::IntSize(forcedWidth, 28);
+            }
+            else
+                mDynamicToolTipBox->setVisible(false);
         }
         else
         {

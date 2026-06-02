@@ -81,12 +81,6 @@ namespace MWGui
         WindowModal::onOpen();
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
-        if (Settings::gui().mControllerMenus)
-        {
-            MWBase::Environment::get().getWindowManager()->setCursorActive(false);
-            MWBase::Environment::get().getWindowManager()->setCursorVisible(false);
-            MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(false);
-        }
     }
 
     // widget controls

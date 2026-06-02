@@ -1051,13 +1051,6 @@ namespace MWGui
         else
             setControllerEffectsFocus(false);
         winMgr->setKeyFocusWidget(widget);
-        if (Settings::gui().mControllerMenus)
-        {
-            // Spell creation is fully controller-driven; keep the cursor hidden.
-            winMgr->setCursorVisible(false);
-            // Keep the hidden mouse aligned with controller focus so stale hover styles/tooltips don't stick.
-            MWBase::Environment::get().getInputManager()->warpMouseToWidget(widget);
-        }
         updateControllerFocusHighlight();
     }
 
@@ -1074,8 +1067,6 @@ namespace MWGui
         {
             winMgr->setControllerTooltipVisible(Settings::gui().mControllerTooltips);
         }
-        if (Settings::gui().mControllerMenus)
-            winMgr->setCursorVisible(false);
 
         updateControllerFocusHighlight();
     }
