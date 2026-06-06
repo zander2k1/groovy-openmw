@@ -553,6 +553,9 @@ namespace MWInput
             {
                 mMouseManager->injectMouseMove(xMove, yMove, mouseWheelMove);
                 mMouseManager->warpMouse();
+                // This branch treats joystick motion as cursor motion, so it must also
+                // restore visibility in engines where active/visible are tracked separately.
+                winMgr->setCursorVisible(true);
                 winMgr->setCursorActive(true);
             }
         }
@@ -801,12 +804,12 @@ namespace MWInput
             if (arg.button == SDL_CONTROLLER_BUTTON_START && winMgr->isVirtualKeyboardVisible())
                 return true;
 
+            bool treatAsMouse = winMgr->getCursorVisible();
             MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
             const bool mapWindowActive = dynamic_cast<MWGui::MapWindow*>(topWin) != nullptr;
             const bool isMapDpad = mapWindowActive && isDpadButton(arg.button);
 
             // Update cursor state.
-            bool treatAsMouse = winMgr->getCursorVisible();
             if (!isMapDpad)
                 winMgr->setCursorActive(false);
 
@@ -827,6 +830,8 @@ namespace MWInput
                 const bool settingsCursorOverride
                     = winMgr->isSettingsWindowVisible() && !MyGUI::InputManager::getInstance().isModalAny();
                 mGamepadGuiCursorEnabled = settingsCursorOverride ? true : topWin->isGamepadCursorAllowed();
+                if (!mGamepadGuiCursorEnabled)
+                    treatAsMouse = false;
 
                 // Fall through to mouse click
                 if (mGamepadGuiCursorEnabled && treatAsMouse && arg.button == SDL_CONTROLLER_BUTTON_A)

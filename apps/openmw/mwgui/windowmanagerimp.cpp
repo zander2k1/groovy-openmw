@@ -183,6 +183,23 @@ namespace MWGui
             x = std::clamp(x, 0.f, 1.f - w);
             y = std::clamp(y, 0.f, 1.f - h);
         }
+
+        bool isLuaWidget(MyGUI::Widget* widget)
+        {
+            for (MyGUI::Widget* current = widget; current != nullptr; current = current->getParent())
+            {
+                if (dynamic_cast<LuaUi::WidgetExtension*>(current) != nullptr)
+                    return true;
+            }
+            return false;
+        }
+
+        bool isLuaMenuVisible()
+        {
+            MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+            return LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal")
+                || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+        }
     }
 
     namespace
@@ -1160,6 +1177,13 @@ namespace MWGui
             return;
 
         GuiMode mode = mGuiModes.back();
+        if (mode == GM_Inventory && isLuaMenuVisible())
+        {
+            WindowBase* activeWindow = getActiveControllerWindow();
+            if (!activeWindow || !activeWindow->isVisible())
+                return;
+        }
+
         size_t winCount = mGuiModeStates[mode].mWindows.size();
 
         size_t activeIndex = 0;
@@ -1396,32 +1420,6 @@ namespace MWGui
         if (mInventoryTabsOverlay && mInventoryTabsOverlay->isVisible())
             mInventoryTabsOverlay->onFrame(frameDuration);
 
-        if (isGuiMode())
-        {
-            MWBase::InputManager* inputMgr = MWBase::Environment::get().getInputManager();
-            const bool joystickLastUsed = inputMgr && inputMgr->joystickLastUsed();
-            auto isLuaWidget = [](MyGUI::Widget* widget) {
-                for (MyGUI::Widget* current = widget; current != nullptr; current = current->getParent())
-                {
-                    if (dynamic_cast<LuaUi::WidgetExtension*>(current) != nullptr)
-                        return true;
-                }
-                return false;
-            };
-            MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
-            const bool luaMenuVisible = LuaUi::isAnyElementVisibleOnLayer("Windows")
-                || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
-            if (joystickLastUsed && luaMenuVisible)
-            {
-                if (!inputMgr->isGamepadGuiCursorEnabled())
-                    inputMgr->setGamepadGuiCursorEnabled(true);
-                if (!mCursorVisible)
-                    setCursorVisible(true);
-                if (!mCursorActive)
-                    setCursorActive(true);
-            }
-        }
-
         if (!gameRunning)
         {
             return;
@@ -1592,11 +1590,18 @@ namespace MWGui
                 const GuiMode mode = getMode();
                 if (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion)
                 {
+                    WindowBase* activeWindow = getActiveControllerWindow();
+                    const bool luaOnlyMenuVisible = isLuaMenuVisible() && (!activeWindow || !activeWindow->isVisible());
+                    if (luaOnlyMenuVisible)
+                    {
+                        mCursorVisible = visible;
+                        return;
+                    }
+
                     if (mode == GM_Inventory)
                     {
                         // Use the actual active controller window so modals (e.g. edit note dialog)
                         // can override the map cursor visibility.
-                        WindowBase* activeWindow = getActiveControllerWindow();
                         visible = dynamic_cast<MapWindow*>(activeWindow) != nullptr;
                     }
                     else
@@ -1876,8 +1881,7 @@ namespace MWGui
                     return window != GW_None && (mAllowed & window) && !(mForceHidden & window);
                 };
                 const size_t index = std::min(mLastInventoryControllerWindow, winCount - 1);
-                WindowBase* target = mGuiModeStates[mode].mWindows[index];
-                if (target && target->isVisible() && canActivateIndex(index))
+                if (canActivateIndex(index))
                     setActiveControllerWindow(mode, index);
                 else
                     cycleActiveControllerWindow(true);
