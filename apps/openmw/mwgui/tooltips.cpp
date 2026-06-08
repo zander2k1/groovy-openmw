@@ -211,7 +211,8 @@ namespace MWGui
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         const GuiMode mode = winMgr->getMode();
         bool guiMode = winMgr->isGuiMode();
-        const bool luaUiWindowsVisible = LuaUi::isAnyElementVisibleOnLayer("Windows");
+        const bool luaUiWindowsVisible
+            = LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal");
 
         CountDialog* countDialog = winMgr->getCountDialog();
         const bool countDialogVisible = countDialog && countDialog->isVisible();
@@ -1545,7 +1546,7 @@ namespace MWGui
         };
 
         auto showEmptyControllerBar = [&](const MyGUI::IntCoord& winRect, int width) {
-            if (luaUiWindowsVisible)
+            if (luaUiWindowsVisible && (!activeControllerWindow || !activeControllerWindow->isVisible()))
                 return;
             const int height = 28;
             const int posY = std::max(0, winRect.top - height - 4);

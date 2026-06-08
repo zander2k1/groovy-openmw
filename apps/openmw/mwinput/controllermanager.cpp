@@ -10,6 +10,8 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm/refid.hpp>
 #include <components/files/conversion.hpp>
+#include <components/lua_ui/util.hpp>
+#include <components/lua_ui/widget.hpp>
 #include <components/sdlutil/sdlmappings.hpp>
 #include <components/settings/values.hpp>
 
@@ -115,6 +117,45 @@ namespace
     {
         return mode == MWGui::GM_Inventory || mode == MWGui::GM_Container || mode == MWGui::GM_Companion
             || mode == MWGui::GM_Barter;
+    }
+
+    bool isLuaWidget(MyGUI::Widget* widget)
+    {
+        for (MyGUI::Widget* current = widget; current != nullptr; current = current->getParent())
+        {
+            if (dynamic_cast<LuaUi::WidgetExtension*>(current) != nullptr)
+                return true;
+        }
+        return false;
+    }
+
+    bool isLuaMenuVisible()
+    {
+        MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+        return LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal")
+            || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+    }
+
+    bool shouldUseGamepadCursorClick(MWBase::WindowManager* winMgr, bool gamepadGuiCursorEnabled)
+    {
+        bool cursorAllowed = gamepadGuiCursorEnabled;
+        if (Settings::gui().mControllerMenus && winMgr->isGuiMode())
+        {
+            MWGui::WindowBase* topWin = winMgr->getActiveControllerWindow();
+            if (topWin && topWin->isVisible())
+            {
+                const bool settingsCursorOverride
+                    = winMgr->isSettingsWindowVisible() && !MyGUI::InputManager::getInstance().isModalAny();
+                cursorAllowed = settingsCursorOverride ? true : topWin->isGamepadCursorAllowed();
+            }
+        }
+        return cursorAllowed && winMgr->getCursorVisible();
+    }
+
+    bool shouldSuppressLuaControllerA(MWBase::WindowManager* winMgr, bool gamepadGuiCursorEnabled, int button)
+    {
+        return button == SDL_CONTROLLER_BUTTON_A && shouldUseGamepadCursorClick(winMgr, gamepadGuiCursorEnabled)
+            && winMgr->isGuiMode() && isLuaMenuVisible();
     }
 
     bool usesTriggerScroll(MWGui::WindowBase* window, MWBase::WindowManager* winMgr)
@@ -593,8 +634,12 @@ namespace MWInput
         }
 
         mLastControllerDeviceId = deviceID;
-        MWBase::Environment::get().getLuaManager()->inputEvent(
-            { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (!shouldSuppressLuaControllerA(winMgr, mGamepadGuiCursorEnabled, arg.button))
+        {
+            MWBase::Environment::get().getLuaManager()->inputEvent(
+                { MWBase::LuaManager::InputEvent::ControllerPressed, arg.button });
+        }
 
         mJoystickLastUsed = true;
 
@@ -616,12 +661,13 @@ namespace MWInput
             mGuiNavHoldTime = 0.f;
             mGuiNavRepeatTime = 0.f;
         }
-        if (MWBase::Environment::get().getWindowManager()->isGuiMode())
+        if (winMgr->isGuiMode())
         {
+            const bool useGamepadCursorClick = shouldUseGamepadCursorClick(winMgr, mGamepadGuiCursorEnabled);
             if (gamepadToGuiControl(arg))
                 return;
 
-            if (mGamepadGuiCursorEnabled)
+            if (useGamepadCursorClick)
             {
                 // Temporary mouse binding until keyboard controls are available:
                 if (arg.button == SDL_CONTROLLER_BUTTON_A) // We'll pretend that A is left click.
@@ -677,8 +723,12 @@ namespace MWInput
         mLastControllerDeviceId = deviceID;
         if (Settings::input().mEnableController)
         {
-            MWBase::Environment::get().getLuaManager()->inputEvent(
-                { MWBase::LuaManager::InputEvent::ControllerReleased, arg.button });
+            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            if (!shouldSuppressLuaControllerA(winMgr, mGamepadGuiCursorEnabled, arg.button))
+            {
+                MWBase::Environment::get().getLuaManager()->inputEvent(
+                    { MWBase::LuaManager::InputEvent::ControllerReleased, arg.button });
+            }
         }
 
         if (MWBase::Environment::get().getInputManager()->controlsDisabled())
@@ -731,7 +781,9 @@ namespace MWInput
         }
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
-            if (mGamepadGuiCursorEnabled && (!Settings::gui().mControllerMenus || mGamepadMousePressed))
+            if ((shouldUseGamepadCursorClick(MWBase::Environment::get().getWindowManager(), mGamepadGuiCursorEnabled)
+                    && !Settings::gui().mControllerMenus)
+                || mGamepadMousePressed)
             {
                 // Temporary mouse binding until keyboard controls are available:
                 if (arg.button == SDL_CONTROLLER_BUTTON_A) // We'll pretend that A is left click.
@@ -797,6 +849,7 @@ namespace MWInput
     bool ControllerManager::gamepadToGuiControl(const SDL_ControllerButtonEvent& arg)
     {
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        const bool useGamepadCursorClick = shouldUseGamepadCursorClick(winMgr, mGamepadGuiCursorEnabled);
 
         if (Settings::gui().mControllerMenus)
         {
@@ -861,7 +914,7 @@ namespace MWInput
                 break;
             case SDL_CONTROLLER_BUTTON_A:
                 // If we are using the joystick as a GUI mouse, A must be handled via mouse.
-                if (mGamepadGuiCursorEnabled)
+                if (useGamepadCursorClick)
                     return false;
                 key = MyGUI::KeyCode::Space;
                 break;
