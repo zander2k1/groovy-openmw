@@ -252,6 +252,32 @@ namespace MWGui
             return false;
         }
 
+        LuaUi::WidgetExtension* findLuaWidget(MyGUI::Widget* widget)
+        {
+            for (MyGUI::Widget* current = widget; current; current = current->getParent())
+            {
+                if (auto* luaWidget = dynamic_cast<LuaUi::WidgetExtension*>(current))
+                    return luaWidget;
+            }
+            return nullptr;
+        }
+
+        LuaUi::WidgetExtension* resolveLuaKeyboardWidget()
+        {
+            MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+            if (LuaUi::WidgetExtension* luaWidget = findLuaWidget(input.getMouseFocusWidget()))
+            {
+                if (luaWidget->keyboardTargetEdit())
+                    return luaWidget;
+            }
+            if (LuaUi::WidgetExtension* luaWidget = findLuaWidget(input.getKeyFocusWidget()))
+            {
+                if (luaWidget->keyboardTargetEdit())
+                    return luaWidget;
+            }
+            return nullptr;
+        }
+
         // Pick the edit box that should receive virtual keyboard input.
         MyGUI::EditBox* resolveKeyboardEdit(WindowBase* window)
         {
@@ -1591,8 +1617,7 @@ namespace MWGui
                 if (mode == GM_Inventory || mode == GM_Container || mode == GM_Barter || mode == GM_Companion)
                 {
                     WindowBase* activeWindow = getActiveControllerWindow();
-                    const bool luaOnlyMenuVisible = isLuaMenuVisible() && (!activeWindow || !activeWindow->isVisible());
-                    if (luaOnlyMenuVisible)
+                    if (isLuaMenuVisible())
                     {
                         mCursorVisible = visible;
                         return;
@@ -3244,7 +3269,6 @@ namespace MWGui
             mInventoryTabsOverlay->setVisible(false);
             return;
         }
-
         // setButtons will handle setting visibility based on if any buttons are defined.
         mControllerButtonsOverlay->setButtons(topWin->getControllerButtons());
         mControllerButtonsOverlay->setAnchor(6);
@@ -3253,18 +3277,26 @@ namespace MWGui
 
     bool WindowManager::toggleVirtualKeyboard()
     {
-        if (!Settings::gui().mControllerMenus || !isGuiMode() || isConsoleMode() || !mVirtualKeyboard)
+        if (!Settings::gui().mControllerMenus || isConsoleMode() || !mVirtualKeyboard)
             return false;
 
         if (mVirtualKeyboard->isVisible())
         {
+            const bool luaKeyboard = mVirtualKeyboardOpenedFromLua;
             for (WindowBase* hidden : mVirtualKeyboardHiddenWindows)
                 hidden->setVisibleNoStateChange(true);
             mVirtualKeyboard->setVisible(false);
             mVirtualKeyboard->clearTargetEdit();
             mVirtualKeyboard->setTooltipSourceWindow(nullptr);
             mVirtualKeyboardHiddenWindows.clear();
-            if (WindowBase* active = getActiveControllerWindow())
+            mVirtualKeyboardOpenedFromLua = false;
+            if (luaKeyboard)
+            {
+                MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(true);
+                setCursorVisible(true);
+                setCursorActive(true);
+            }
+            else if (WindowBase* active = getActiveControllerWindow())
                 MWBase::Environment::get().getInputManager()->setGamepadGuiCursorEnabled(
                     active->isGamepadCursorAllowed());
             updateControllerButtonsOverlay();
@@ -3272,10 +3304,15 @@ namespace MWGui
         }
 
         WindowBase* topWin = getActiveControllerWindow();
-        if (!topWin)
+        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+        LuaUi::WidgetExtension* focusedLuaWidget = resolveLuaKeyboardWidget();
+        MyGUI::EditBox* focusedLuaEdit = focusedLuaWidget ? focusedLuaWidget->keyboardTargetEdit() : nullptr;
+        if (!isGuiMode() && !focusedLuaEdit)
+            return false;
+        if (!topWin && !focusedLuaEdit)
             return false;
 
-        const bool supportsKeyboard = dynamic_cast<AlchemyWindow*>(topWin) != nullptr
+        const bool supportsKeyboard = focusedLuaEdit || dynamic_cast<AlchemyWindow*>(topWin) != nullptr
             || dynamic_cast<EnchantingDialog*>(topWin) != nullptr || dynamic_cast<TextInputDialog*>(topWin) != nullptr
             || dynamic_cast<CreateClassDialog*>(topWin) != nullptr
             || dynamic_cast<DescriptionDialog*>(topWin) != nullptr || dynamic_cast<InventoryWindow*>(topWin) != nullptr
@@ -3285,9 +3322,9 @@ namespace MWGui
         if (!supportsKeyboard)
             return false;
 
-        MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-        MyGUI::EditBox* edit = focus ? focus->castType<MyGUI::EditBox>(false) : nullptr;
-        if (edit)
+        MyGUI::EditBox* edit
+            = focusedLuaEdit ? focusedLuaEdit : (focus ? focus->castType<MyGUI::EditBox>(false) : nullptr);
+        if (edit && !focusedLuaEdit)
         {
             if (getMode() == GM_Barter)
             {
@@ -3301,7 +3338,7 @@ namespace MWGui
                 edit = nullptr;
             }
         }
-        if (getMode() == GM_Barter)
+        if (!focusedLuaEdit && getMode() == GM_Barter)
         {
             // Ignore stale focus from the other barter pane.
             if (!focus || !isChildOf(focus, topWin->mMainWidget))
@@ -3346,6 +3383,19 @@ namespace MWGui
         }
         if (!edit)
             return false;
+
+        if (focusedLuaEdit)
+        {
+            MyGUI::LayerManager::getInstance().attachToLayerNode("Popup", mVirtualKeyboard->mMainWidget);
+            mVirtualKeyboard->setTargetEdit(edit, focusedLuaWidget);
+            setKeyFocusWidget(edit);
+            mVirtualKeyboard->setTooltipSourceWindow(nullptr);
+            mVirtualKeyboardOpenedFromLua = true;
+            mVirtualKeyboard->setVisible(true);
+            MyGUI::LayerManager::getInstance().upLayerItem(mVirtualKeyboard->mMainWidget);
+            updateControllerButtonsOverlay();
+            return true;
+        }
 
         // Hide underlying windows while the keyboard is open.
         auto addHiddenWindow = [this](WindowBase* window) {

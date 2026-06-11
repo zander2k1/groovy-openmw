@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include <MyGUI_Button.h>
+#include <MyGUI_EditBox.h>
 #include <MyGUI_InputManager.h>
 
 #include <SDL.h>
@@ -134,6 +135,26 @@ namespace
         MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
         return LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal")
             || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+    }
+
+    LuaUi::WidgetExtension* findLuaWidget(MyGUI::Widget* widget)
+    {
+        for (MyGUI::Widget* current = widget; current != nullptr; current = current->getParent())
+        {
+            if (auto* luaWidget = dynamic_cast<LuaUi::WidgetExtension*>(current))
+                return luaWidget;
+        }
+        return nullptr;
+    }
+
+    bool isLuaTextInputFocused()
+    {
+        MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+        if (LuaUi::WidgetExtension* luaWidget = findLuaWidget(input.getMouseFocusWidget()))
+            return luaWidget->isTextInput();
+        if (LuaUi::WidgetExtension* luaWidget = findLuaWidget(input.getKeyFocusWidget()))
+            return luaWidget->isTextInput();
+        return false;
     }
 
     bool shouldUseGamepadCursorClick(MWBase::WindowManager* winMgr, bool gamepadGuiCursorEnabled)
@@ -620,10 +641,10 @@ namespace MWInput
         if (!Settings::input().mEnableController || mBindingsManager->isDetectingBindingState())
             return;
 
+        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
         if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
         {
-            MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
-            if (winMgr->isGuiMode() && isInventoryMode(winMgr->getMode()))
+            if (!winMgr->isVirtualKeyboardVisible() && winMgr->isGuiMode() && isInventoryMode(winMgr->getMode()))
             {
                 bool& held
                     = (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER) ? mLeftShoulderHeld : mRightShoulderHeld;
@@ -634,7 +655,20 @@ namespace MWInput
         }
 
         mLastControllerDeviceId = deviceID;
-        MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (winMgr->isVirtualKeyboardVisible() && gamepadToGuiControl(arg))
+        {
+            mJoystickLastUsed = true;
+            return;
+        }
+
+        if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK
+            && !MWBase::Environment::get().getInputManager()->controlsDisabled() && isLuaTextInputFocused()
+            && winMgr->toggleVirtualKeyboard())
+        {
+            mJoystickLastUsed = true;
+            return;
+        }
+
         if (!shouldSuppressLuaControllerA(winMgr, mGamepadGuiCursorEnabled, arg.button))
         {
             MWBase::Environment::get().getLuaManager()->inputEvent(
@@ -679,8 +713,19 @@ namespace MWInput
                         = kSoftwareMouseFocusAssistSize - 1 - kSoftwareMouseFocusAssistLeft;
                     constexpr int kSoftwareMouseFocusAssistDown
                         = kSoftwareMouseFocusAssistSize - 1 - kSoftwareMouseFocusAssistUp;
+                    const bool luaMenuVisible = isLuaMenuVisible();
+                    if (luaMenuVisible)
+                    {
+                        mMouseManager->injectMouseMove(0.f, 0.f, 0.f);
+                        MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+                        LuaUi::WidgetExtension* mouseLuaWidget = findLuaWidget(input.getMouseFocusWidget());
+                        LuaUi::WidgetExtension* keyLuaWidget = findLuaWidget(input.getKeyFocusWidget());
+                        if (mouseLuaWidget && mouseLuaWidget->isTextInput() && mouseLuaWidget != keyLuaWidget)
+                            input.setKeyFocusWidget(nullptr);
+                    }
+
                     const bool useFocusAssist
-                        = Settings::input().mEnableSoftwareMouse && Settings::gui().mControllerMenus;
+                        = Settings::input().mEnableSoftwareMouse && Settings::gui().mControllerMenus && !luaMenuVisible;
                     bool mousePressSuccess = useFocusAssist
                         ? mMouseManager->injectMouseButtonPressWithFocusAssist(SDL_BUTTON_LEFT,
                             kSoftwareMouseFocusAssistLeft, kSoftwareMouseFocusAssistUp, kSoftwareMouseFocusAssistRight,
@@ -721,9 +766,17 @@ namespace MWInput
         }
 
         mLastControllerDeviceId = deviceID;
+        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
+            mLeftShoulderHeld = false;
+        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
+            mRightShoulderHeld = false;
+
         if (Settings::input().mEnableController)
         {
             MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+            if (winMgr->isVirtualKeyboardVisible())
+                return;
+
             if (!shouldSuppressLuaControllerA(winMgr, mGamepadGuiCursorEnabled, arg.button))
             {
                 MWBase::Environment::get().getLuaManager()->inputEvent(
@@ -742,10 +795,6 @@ namespace MWInput
             return;
 
         mJoystickLastUsed = true;
-        if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER)
-            mLeftShoulderHeld = false;
-        else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
-            mRightShoulderHeld = false;
         if (MWBase::Environment::get().getWindowManager()->isGuiMode() && Settings::gui().mControllerMenus)
         {
             if (arg.button == SDL_CONTROLLER_BUTTON_LEFTSHOULDER || arg.button == SDL_CONTROLLER_BUTTON_RIGHTSHOULDER)
@@ -789,6 +838,16 @@ namespace MWInput
                 if (arg.button == SDL_CONTROLLER_BUTTON_A) // We'll pretend that A is left click.
                 {
                     bool mousePressSuccess = mMouseManager->injectMouseButtonRelease(SDL_BUTTON_LEFT);
+                    if (isLuaMenuVisible())
+                    {
+                        mMouseManager->injectMouseMove(0.f, 0.f, 0.f);
+                        MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+                        if (LuaUi::WidgetExtension* luaWidget = findLuaWidget(input.getMouseFocusWidget()))
+                        {
+                            if (luaWidget->isTextInput())
+                                input.setKeyFocusWidget(luaWidget->keyboardTargetEdit());
+                        }
+                    }
                     mGamepadMousePressed = false;
                     if (mBindingsManager->isDetectingBindingState()) // If the player just triggered binding, don't let
                                                                      // button release bind.
@@ -855,6 +914,10 @@ namespace MWInput
         {
             // Block Start while the virtual keyboard is open.
             if (arg.button == SDL_CONTROLLER_BUTTON_START && winMgr->isVirtualKeyboardVisible())
+                return true;
+
+            if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK && isLuaTextInputFocused()
+                && winMgr->toggleVirtualKeyboard())
                 return true;
 
             bool treatAsMouse = winMgr->getCursorVisible();

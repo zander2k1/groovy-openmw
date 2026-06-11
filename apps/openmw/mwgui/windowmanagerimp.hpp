@@ -406,6 +406,7 @@ namespace MWGui
         void updateControllerButtonsOverlay() override;
         bool toggleVirtualKeyboard() override;
         bool isVirtualKeyboardVisible() const override;
+        bool isVirtualKeyboardOpenedFromLua() const override { return mVirtualKeyboardOpenedFromLua; }
 
         // Used in Lua bindings
         const std::vector<GuiMode>& getGuiModeStack() const override { return mGuiModes; }
@@ -475,6 +476,7 @@ namespace MWGui
         DebugWindow* mDebugWindow;
         VirtualKeyboard* mVirtualKeyboard;
         std::vector<WindowBase*> mVirtualKeyboardHiddenWindows;
+        bool mVirtualKeyboardOpenedFromLua = false;
         PostProcessorHud* mPostProcessorHud;
         JailScreen* mJailScreen;
         ContainerWindow* mContainerWindow;

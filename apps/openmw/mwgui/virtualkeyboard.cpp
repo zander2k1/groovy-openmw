@@ -16,12 +16,14 @@
 #include <components/esm/refid.hpp>
 #include <components/files/istreamptr.hpp>
 #include <components/l10n/messagebundles.hpp>
+#include <components/lua_ui/widget.hpp>
 #include <components/misc/strings/algorithm.hpp>
 #include <components/resource/resourcesystem.hpp>
 #include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>
 #include <components/vfs/pathutil.hpp>
 #include <components/vfs/recursivedirectoryiterator.hpp>
+#include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -357,15 +359,29 @@ namespace MWGui
         return window->getHeight();
     }
 
-    void VirtualKeyboard::setTargetEdit(MyGUI::EditBox* edit)
+    void VirtualKeyboard::setTargetEdit(MyGUI::EditBox* edit, LuaUi::WidgetExtension* luaWidget)
     {
         mTargetEdit = edit;
+        mTargetLuaWidget = luaWidget;
+        if (mTargetEdit)
+        {
+            mEditBuffer = mTargetLuaWidget ? mTargetLuaWidget->keyboardTargetText() : mTargetEdit->getOnlyText();
+            mEditCursor = std::min(mTargetEdit->getTextCursor(), mEditBuffer.size());
+        }
+        else
+        {
+            mEditBuffer.clear();
+            mEditCursor = 0;
+        }
         syncInputBar();
     }
 
     void VirtualKeyboard::clearTargetEdit()
     {
         mTargetEdit = nullptr;
+        mTargetLuaWidget = nullptr;
+        mEditBuffer.clear();
+        mEditCursor = 0;
         syncInputBar();
     }
 
@@ -435,6 +451,7 @@ namespace MWGui
                 updateKeyCaptions();
                 break;
             case Action::Done:
+                commitEditBuffer();
                 MWBase::Environment::get().getWindowManager()->toggleVirtualKeyboard();
                 mShifted = false;
                 updateKeyCaptions();
@@ -698,11 +715,12 @@ namespace MWGui
         const int rowCount = static_cast<int>(mNavRows.size());
         const int spacing = 4;
         const int requiredKeyRowsHeight = rowCount * rowHeight + (rowCount - 1) * spacing;
-        if (requiredKeyRowsHeight > keyRows->getHeight())
-            keyRows->setSize(keyRows->getWidth(), requiredKeyRowsHeight);
+        keyRows->setSize(keyRows->getWidth(), requiredKeyRowsHeight);
+        if (auto* keyRowsBox = keyRows->castType<Gui::VBox>(false))
+            keyRowsBox->notifyChildrenSizeChanged();
 
         const MyGUI::IntCoord keyRowsCoord = keyRows->getCoord();
-        const int requiredMainHeight = keyRowsCoord.top + keyRows->getHeight();
+        const int requiredMainHeight = keyRowsCoord.top + keyRows->getHeight() + 12;
         if (requiredMainHeight > mMainWidget->getHeight())
             mMainWidget->setSize(mMainWidget->getWidth(), requiredMainHeight);
     }
@@ -729,21 +747,37 @@ namespace MWGui
             return;
         }
 
-        std::string caption = mTargetEdit->getCaption().asUTF8();
+        std::string caption = mEditBuffer.asUTF8();
         if (mCursorBlinkVisible)
             caption += "|";
         mInputBar->setCaption(MyGUI::UString(caption));
+    }
+
+    void VirtualKeyboard::commitEditBuffer()
+    {
+        if (!mTargetEdit)
+            return;
+        mEditCursor = std::min(mEditCursor, mEditBuffer.size());
+        if (mTargetLuaWidget)
+            mTargetLuaWidget->setKeyboardTargetText(mEditBuffer);
+        else
+        {
+            mTargetEdit->setOnlyText(mEditBuffer);
+            mTargetEdit->setCaption(mEditBuffer);
+            mTargetEdit->eventEditTextChange(mTargetEdit);
+        }
+        mTargetEdit->setTextCursor(mEditCursor);
     }
 
     void VirtualKeyboard::injectText(std::string_view text)
     {
         if (!mTargetEdit)
             return;
-        MyGUI::InputManager::getInstance().setKeyFocusWidget(mTargetEdit);
         MyGUI::UString ustring(text);
-        MyGUI::UString::utf32string utf32string = ustring.asUTF32();
-        for (MyGUI::UString::utf32string::const_iterator it = utf32string.begin(); it != utf32string.end(); ++it)
-            MyGUI::InputManager::getInstance().injectKeyPress(MyGUI::KeyCode::None, *it);
+        mEditCursor = std::min(mEditCursor, mEditBuffer.size());
+        mEditBuffer.insert(mEditCursor, ustring);
+        mEditCursor += ustring.size();
+        commitEditBuffer();
         syncInputBar();
     }
 
@@ -751,9 +785,13 @@ namespace MWGui
     {
         if (!mTargetEdit)
             return;
-        MyGUI::InputManager::getInstance().setKeyFocusWidget(mTargetEdit);
-        MyGUI::InputManager::getInstance().injectKeyPress(MyGUI::KeyCode::Backspace);
-        MyGUI::InputManager::getInstance().injectKeyRelease(MyGUI::KeyCode::Backspace);
+        mEditCursor = std::min(mEditCursor, mEditBuffer.size());
+        if (mEditCursor > 0)
+        {
+            mEditBuffer.erase(mEditCursor - 1, 1);
+            --mEditCursor;
+            commitEditBuffer();
+        }
         syncInputBar();
     }
 

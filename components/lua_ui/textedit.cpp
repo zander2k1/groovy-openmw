@@ -1,5 +1,9 @@
 #include "textedit.hpp"
 
+#include <algorithm>
+
+#include <MyGUI_InputManager.h>
+
 #include "alignment.hpp"
 
 namespace LuaUi
@@ -8,6 +12,8 @@ namespace LuaUi
     {
         mEditBox = createWidget<MyGUI::EditBox>("LuaTextEdit", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
         mEditBox->eventEditTextChange += MyGUI::newDelegate(this, &LuaTextEdit::textChange);
+        mEditBox->eventMouseButtonPressed += MyGUI::newDelegate(this, &LuaTextEdit::mousePress);
+        mEditBox->eventMouseButtonReleased += MyGUI::newDelegate(this, &LuaTextEdit::mouseRelease);
         mEditBox->setMaxTextLength(std::numeric_limits<std::size_t>::max());
         registerEvents(mEditBox);
         WidgetExtension::initialize();
@@ -16,6 +22,8 @@ namespace LuaUi
     void LuaTextEdit::deinitialize()
     {
         mEditBox->eventEditTextChange -= MyGUI::newDelegate(this, &LuaTextEdit::textChange);
+        mEditBox->eventMouseButtonPressed -= MyGUI::newDelegate(this, &LuaTextEdit::mousePress);
+        mEditBox->eventMouseButtonReleased -= MyGUI::newDelegate(this, &LuaTextEdit::mouseRelease);
         clearEvents(mEditBox);
         WidgetExtension::deinitialize();
     }
@@ -39,9 +47,35 @@ namespace LuaUi
         mAutoSize = (readOnly || !mMultiline) && propertyValue("autoSize", false);
 
         // change caption last, for multiline and wordwrap to apply
-        mEditBox->setCaption(propertyValue("text", std::string()));
+        MyGUI::UString propertyText = propertyValue("text", std::string());
+        if (mKeyboardText && propertyText == *mKeyboardText)
+            mKeyboardText.reset();
+        else if (mKeyboardText && mLastPropertyText && propertyText != *mLastPropertyText)
+            mKeyboardText.reset();
+
+        if (mKeyboardText)
+            mEditBox->setCaption(*mKeyboardText);
+        else
+            mEditBox->setCaption(propertyText);
+        mLastPropertyText = propertyText;
 
         WidgetExtension::updateProperties();
+    }
+
+    MyGUI::UString LuaTextEdit::keyboardTargetText() const
+    {
+        return mKeyboardText.value_or(mEditBox ? mEditBox->getOnlyText() : MyGUI::UString());
+    }
+
+    void LuaTextEdit::setKeyboardTargetText(const MyGUI::UString& text)
+    {
+        mKeyboardText = text;
+        if (!mEditBox)
+            return;
+        mEditBox->setOnlyText(text);
+        mEditBox->setCaption(text);
+        mEditBox->setTextCursor(std::min(mEditBox->getTextCursor(), text.size()));
+        textChange(mEditBox);
     }
 
     void LuaTextEdit::textChange(MyGUI::EditBox*)
@@ -49,6 +83,27 @@ namespace LuaUi
         protectedCall([this](LuaUtil::LuaView& view) {
             triggerEvent("textChanged", sol::make_object(view.sol(), mEditBox->getCaption().asUTF8()));
         });
+    }
+
+    void LuaTextEdit::activateEditBox()
+    {
+        MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
+        if (input.getKeyFocusWidget() != mEditBox)
+            input.setKeyFocusWidget(nullptr);
+        input.setKeyFocusWidget(mEditBox);
+        mEditBox->setTextCursor(std::min(mEditBox->getTextCursor(), mEditBox->getOnlyText().size()));
+    }
+
+    void LuaTextEdit::mousePress(MyGUI::Widget*, int, int, MyGUI::MouseButton button)
+    {
+        if (button == MyGUI::MouseButton::Left && isTextInput())
+            activateEditBox();
+    }
+
+    void LuaTextEdit::mouseRelease(MyGUI::Widget*, int, int, MyGUI::MouseButton button)
+    {
+        if (button == MyGUI::MouseButton::Left && isTextInput())
+            activateEditBox();
     }
 
     void LuaTextEdit::updateCoord()

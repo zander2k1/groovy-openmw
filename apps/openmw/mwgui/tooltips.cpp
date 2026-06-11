@@ -209,6 +209,9 @@ namespace MWGui
         }
 
         MWBase::WindowManager* winMgr = MWBase::Environment::get().getWindowManager();
+        if (winMgr->isVirtualKeyboardOpenedFromLua())
+            return;
+
         const GuiMode mode = winMgr->getMode();
         bool guiMode = winMgr->isGuiMode();
         const bool luaUiWindowsVisible
@@ -400,6 +403,8 @@ namespace MWGui
             if (!Settings::gui().mControllerMenus)
                 return false;
             if (winMgr->isConsoleMode())
+                return true;
+            if (winMgr->isVirtualKeyboardOpenedFromLua())
                 return true;
             switch (winMgr->getMode())
             {

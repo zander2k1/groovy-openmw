@@ -9,8 +9,14 @@
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
+#include <MyGUI_UString.h>
 
 #include "windowbase.hpp"
+
+namespace LuaUi
+{
+    class WidgetExtension;
+}
 
 namespace MWGui
 {
@@ -23,7 +29,7 @@ namespace MWGui
         void onFrame(float dt) override;
         int getHeight() const;
 
-        void setTargetEdit(MyGUI::EditBox* edit);
+        void setTargetEdit(MyGUI::EditBox* edit, LuaUi::WidgetExtension* luaWidget = nullptr);
         void clearTargetEdit();
         void setTooltipSourceWindow(WindowBase* window) { mTooltipSourceWindow = window; }
         WindowBase* getTooltipSourceWindow() const { return mTooltipSourceWindow; }
@@ -60,6 +66,9 @@ namespace MWGui
 
         MyGUI::EditBox* mInputBar = nullptr;
         MyGUI::EditBox* mTargetEdit = nullptr;
+        LuaUi::WidgetExtension* mTargetLuaWidget = nullptr;
+        MyGUI::UString mEditBuffer;
+        size_t mEditCursor = 0;
         WindowBase* mTooltipSourceWindow = nullptr;
         MyGUI::Widget* mControllerHighlight = nullptr;
         std::vector<KeySpec> mKeys;
@@ -108,6 +117,7 @@ namespace MWGui
         void ensureRowsVisible();
         void centerInMenuArea();
         void syncInputBar();
+        void commitEditBuffer();
         void injectText(std::string_view text);
         void injectBackspace();
         void selectNav(size_t row, size_t col);

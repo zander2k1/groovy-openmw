@@ -406,6 +406,7 @@ namespace MWBase
         virtual void updateControllerButtonsOverlay() = 0;
         virtual bool toggleVirtualKeyboard() = 0;
         virtual bool isVirtualKeyboardVisible() const = 0;
+        virtual bool isVirtualKeyboardOpenedFromLua() const = 0;
 
         // Used in Lua bindings
         virtual const std::vector<MWGui::GuiMode>& getGuiModeStack() const = 0;

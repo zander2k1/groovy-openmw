@@ -5,12 +5,18 @@
 #include <map>
 #include <vector>
 
+#include <MyGUI_UString.h>
 #include <MyGUI_Widget.h>
 #include <sol/sol.hpp>
 
 #include <components/lua/asyncpackage.hpp>
 
 #include "properties.hpp"
+
+namespace MyGUI
+{
+    class EditBox;
+}
 
 namespace LuaUi
 {
@@ -81,6 +87,9 @@ namespace LuaUi
         MyGUI::IntCoord calculateCoord() const;
 
         virtual bool isTextInput() { return false; }
+        virtual MyGUI::EditBox* keyboardTargetEdit() { return nullptr; }
+        virtual MyGUI::UString keyboardTargetText() const { return {}; }
+        virtual void setKeyboardTargetText(const MyGUI::UString&) {}
         bool collectWarnings(Warnings& warnings, int depth, bool generateWarningStrings) const;
         std::string diagnosticName() const;
 
