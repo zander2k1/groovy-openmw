@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QMenu>
+#include <QSet>
 #include <QSignalBlocker>
 #include <QString>
 
@@ -41,6 +42,26 @@ namespace
     void saveSettingFloat(const QDoubleSpinBox& spinBox, Settings::SettingValue<float>& value)
     {
         value.set(static_cast<float>(spinBox.value()));
+    }
+
+    void setComboBoxValue(QComboBox& comboBox, const std::string& value)
+    {
+        const QString currentValue = QString::fromStdString(value);
+        int index = comboBox.findData(currentValue);
+        if (index == -1)
+        {
+            comboBox.addItem(currentValue, currentValue);
+            index = comboBox.count() - 1;
+        }
+        comboBox.setCurrentIndex(index);
+    }
+
+    std::string getComboBoxValue(const QComboBox& comboBox)
+    {
+        const QVariant value = comboBox.currentData();
+        if (value.isValid())
+            return value.toString().toStdString();
+        return comboBox.currentText().toStdString();
     }
 
     void loadSettingInt(const Settings::SettingValue<int>& value, QComboBox& comboBox)
@@ -195,6 +216,18 @@ namespace
         FileType{ Role_OpenMWLog, "openmw.log", false },
         FileType{ Role_OpenMWCSLog, "openmw-cs.log", false },
         FileType{ Role_SettingsCfg, "settings.cfg", true },
+    };
+
+    struct BuiltinFontOption
+    {
+        const char* id;
+        const char* label;
+    };
+
+    constexpr std::array defaultFontFallbacks{
+        BuiltinFontOption{ "magic_cards_regular", "magic_cards_regular (classic)" },
+        BuiltinFontOption{ "century_gothic_font_regular", "century_gothic_font_regular (classic)" },
+        BuiltinFontOption{ "century_gothic_big", "century_gothic_big (classic)" },
     };
 }
 
@@ -536,7 +569,6 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
         loadSettingBool(Settings::gui().mXboxAlchemyUi, *xboxAlchemyUiCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
-        loadSettingBool(Settings::gui().mXboxStyledFonts, *xboxStyledFontsCheckBox);
         loadSettingBool(Settings::gui().mXboxTabOrder, *xboxTabOrderCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
@@ -554,6 +586,9 @@ bool Launcher::SettingsPage::loadSettings()
         setScalingValues(interfaceScaling, effectiveDialogueScaling, effectiveSettingsScaling);
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         journalFontSizeSpinBox->setValue(Settings::gui().mJournalFontSize);
+        populateFontSelectors();
+        setComboBoxValue(*defaultFontComboBox, Settings::gui().mDefaultFont.get());
+        setComboBoxValue(*dialogueBookFontComboBox, Settings::gui().mDialogueAndBookFont.get());
         loadSettingFloat(Settings::input().mGamepadCursorSpeed, *gamepadCursorSpeedSpinBox);
         loadSettingBool(Settings::input().mEnableSoftwareMouse, *enableSoftwareMouseCheckBox);
         controllerIconStyleComboBox->setCurrentIndex(
@@ -752,6 +787,75 @@ void Launcher::SettingsPage::populateLoadedConfigs()
     }
 }
 
+QStringList Launcher::SettingsPage::collectOmwFontNames() const
+{
+    QSet<QString> seenFonts;
+    QStringList fontNames;
+
+    auto tryAddFont = [&](const QString& fontName) {
+        if (fontName.compare(QStringLiteral("DemonicLetters"), Qt::CaseInsensitive) == 0)
+            return;
+
+        const QString normalized = fontName.toLower();
+        if (seenFonts.contains(normalized))
+            return;
+
+        seenFonts.insert(normalized);
+        fontNames.append(fontName);
+    };
+
+    auto scanFontsDirectory = [&](const QString& directoryPath) {
+        if (directoryPath.isEmpty())
+            return;
+
+        const QDir dataDir(directoryPath);
+        const QDir fontsDir(dataDir.filePath(QStringLiteral("fonts")));
+        if (!fontsDir.exists())
+            return;
+
+        const QFileInfoList fontFiles = fontsDir.entryInfoList(QDir::Files | QDir::Readable, QDir::Name);
+        for (const QFileInfo& fontFile : fontFiles)
+        {
+            if (fontFile.suffix().compare(QStringLiteral("omwfont"), Qt::CaseInsensitive) == 0)
+                tryAddFont(fontFile.completeBaseName());
+        }
+    };
+
+    for (const Config::SettingValue& dataDir : mGameSettings.getDataDirs())
+        scanFontsDirectory(dataDir.value);
+    scanFontsDirectory(mGameSettings.getDataLocal());
+    scanFontsDirectory(mGameSettings.getResourcesVfs());
+
+    std::sort(fontNames.begin(), fontNames.end(),
+        [](const QString& lhs, const QString& rhs) { return lhs.compare(rhs, Qt::CaseInsensitive) < 0; });
+
+    return fontNames;
+}
+
+void Launcher::SettingsPage::populateFontSelectors()
+{
+    const QStringList detectedFonts = collectOmwFontNames();
+
+    defaultFontComboBox->clear();
+    dialogueBookFontComboBox->clear();
+
+    for (const QString& fontName : detectedFonts)
+    {
+        defaultFontComboBox->addItem(fontName, fontName);
+        dialogueBookFontComboBox->addItem(fontName, fontName);
+    }
+
+    for (const BuiltinFontOption& fallbackFont : defaultFontFallbacks)
+    {
+        const QString fontId = QString::fromLatin1(fallbackFont.id);
+        const QString fontLabel = QString::fromLatin1(fallbackFont.label);
+        if (defaultFontComboBox->findData(fontId) == -1)
+            defaultFontComboBox->addItem(fontLabel, fontId);
+        if (dialogueBookFontComboBox->findData(fontId) == -1)
+            dialogueBookFontComboBox->addItem(fontLabel, fontId);
+    }
+}
+
 void Launcher::SettingsPage::saveSettings()
 {
     // Game mechanics
@@ -910,7 +1014,8 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
         saveSettingBool(*xboxAlchemyUiCheckBox, Settings::gui().mXboxAlchemyUi);
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
-        saveSettingBool(*xboxStyledFontsCheckBox, Settings::gui().mXboxStyledFonts);
+        Settings::gui().mDefaultFont.set(getComboBoxValue(*defaultFontComboBox));
+        Settings::gui().mDialogueAndBookFont.set(getComboBoxValue(*dialogueBookFontComboBox));
         saveSettingBool(*xboxTabOrderCheckBox, Settings::gui().mXboxTabOrder);
         saveSettingBool(*useZoomOnMapCheckBox, Settings::map().mAllowZooming);
         saveSettingBool(*graphicHerbalismCheckBox, Settings::game().mGraphicHerbalism);

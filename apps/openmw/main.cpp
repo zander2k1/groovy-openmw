@@ -164,16 +164,15 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
 
     // other settings
     auto fallbackMap = variables["fallback"].as<Fallback::FallbackMap>().mMap;
-    if (Settings::gui().mXboxStyledFonts)
-    {
-        fallbackMap["Fonts_Font_0"] = "MontserratMedium";
-        fallbackMap["Fonts_Font_1"] = "MontserratSemiBold";
-    }
-    else
-    {
-        fallbackMap["Fonts_Font_0"] = "MysticCards";
-        fallbackMap["Fonts_Font_1"] = "MysticCards";
-    }
+    std::string defaultFont = Settings::gui().mDefaultFont.get();
+    std::string dialogueAndBookFont = Settings::gui().mDialogueAndBookFont.get();
+    if (defaultFont.empty())
+        defaultFont = "MontserratMedium";
+    if (dialogueAndBookFont.empty())
+        dialogueAndBookFont = "MontserratSemiBold";
+    fallbackMap["Fonts_Font_0"] = std::move(defaultFont);
+    fallbackMap["Fonts_Font_1"] = std::move(dialogueAndBookFont);
+    fallbackMap["Fonts_Font_2"] = "DemonicLetters";
     Fallback::Map::init(fallbackMap);
     engine.setSoundUsage(!variables["no-sound"].as<bool>());
     engine.setActivationDistanceOverride(variables["activate-dist"].as<int>());

@@ -54,7 +54,8 @@ namespace Settings
         SettingValue<bool> mXboxStyledDialog{ mIndex, "GUI", "xbox styled dialog" };
         SettingValue<bool> mXboxAlchemyUi{ mIndex, "GUI", "xbox alchemy ui", true };
         SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap", true };
-        SettingValue<bool> mXboxStyledFonts{ mIndex, "GUI", "xbox styled fonts" };
+        SettingValue<std::string> mDefaultFont{ mIndex, "GUI", "default font", "MontserratMedium" };
+        SettingValue<std::string> mDialogueAndBookFont{ mIndex, "GUI", "dialogue and book font", "MontserratSemiBold" };
         SettingValue<bool> mXboxTabOrder{ mIndex, "GUI", "xbox tab order", false };
         SettingValue<MyGUI::Colour> mColorTopicSpecific{ mIndex, "GUI", "color topic specific" };
         SettingValue<MyGUI::Colour> mColorTopicSpecificOver{ mIndex, "GUI", "color topic specific over" };

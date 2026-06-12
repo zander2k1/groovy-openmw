@@ -1707,6 +1707,22 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Primary UI font. Lists detected .omwfont files from active fonts folders, excluding DemonicLetters.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font used for dialogue, books, and journal book pages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dialogue &amp; Book Font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Size of text in journal, books, and scrolls.</source>
         <translation type="unfinished"></translation>
     </message>

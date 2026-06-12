@@ -51,6 +51,7 @@ namespace Launcher
         void adjustCustomScaleWithInterfaceDelta(QDoubleSpinBox* spinBox, double delta) const;
         void clampCustomScale(QDoubleSpinBox* spinBox, double value);
         void populateLoadedConfigs();
+        void populateFontSelectors();
 
         const Files::ConfigurationManager& mCfgMgr;
 
@@ -69,6 +70,7 @@ namespace Launcher
          * @param filePaths the file paths of the content files to be examined
          */
         void loadCellsForAutocomplete(QStringList filePaths);
+        QStringList collectOmwFontNames() const;
     };
 }
 #endif
