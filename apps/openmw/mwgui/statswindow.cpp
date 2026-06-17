@@ -111,9 +111,6 @@ namespace MWGui
             MyGUI::TextBox* healthName = nullptr;
             MyGUI::TextBox* magickaName = nullptr;
             MyGUI::TextBox* fatigueName = nullptr;
-            MyGUI::TextBox* healthValue = nullptr;
-            MyGUI::TextBox* magickaValue = nullptr;
-            MyGUI::TextBox* fatigueValue = nullptr;
 
             getWidget(healthWidget, "Health");
             getWidget(magickaWidget, "Magicka");
@@ -121,9 +118,6 @@ namespace MWGui
             getWidget(healthName, "Health_str");
             getWidget(magickaName, "Magicka_str");
             getWidget(fatigueName, "Fatigue_str");
-            getWidget(healthValue, "HBarT");
-            getWidget(magickaValue, "MBarT");
-            getWidget(fatigueValue, "FBarT");
 
             if (healthWidget)
                 healthWidget->setUserString("ToolTipDynamic", "Stats");
@@ -132,9 +126,9 @@ namespace MWGui
             if (fatigueWidget)
                 fatigueWidget->setUserString("ToolTipDynamic", "Stats");
 
-            addStaticControllerEntry(healthWidget, { healthName, healthValue });
-            addStaticControllerEntry(magickaWidget, { magickaName, magickaValue });
-            addStaticControllerEntry(fatigueWidget, { fatigueName, fatigueValue });
+            addStaticControllerEntry(healthWidget, { healthName });
+            addStaticControllerEntry(magickaWidget, { magickaName });
+            addStaticControllerEntry(fatigueWidget, { fatigueName });
 
             MyGUI::Widget* levelWidget = nullptr;
             MyGUI::Widget* raceWidget = nullptr;
