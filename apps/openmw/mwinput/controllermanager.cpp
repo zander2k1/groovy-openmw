@@ -133,8 +133,8 @@ namespace
     bool isLuaMenuVisible()
     {
         MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
-        return LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal")
-            || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+        return LuaUi::isAnyMenuElementVisible() || isLuaWidget(input.getKeyFocusWidget())
+            || isLuaWidget(input.getMouseFocusWidget());
     }
 
     LuaUi::WidgetExtension* findLuaWidget(MyGUI::Widget* widget)
@@ -421,7 +421,8 @@ namespace MWInput
             mIgnoreGuiCursorUntilRelease = false;
 
         const bool settingsVisible = winMgr->isSettingsWindowVisible();
-        const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible);
+        const bool luaMenuVisible = isLuaMenuVisible();
+        const bool allowGuiMouseInThisContext = (mGamepadGuiCursorEnabled || settingsVisible || luaMenuVisible);
 
         const bool allowJoystickDpadInMode
             = !isCharGenMouseAllowed(winMgr->getMode()) || winMgr->isVirtualKeyboardVisible();
@@ -438,7 +439,7 @@ namespace MWInput
             {
                 if (topWin->isVisible())
                 {
-                    if (mJoystickLastUsed && !topWin->isGamepadCursorAllowed())
+                    if (mJoystickLastUsed && !topWin->isGamepadCursorAllowed() && !luaMenuVisible)
                     {
                         winMgr->setCursorActive(false);
                         winMgr->setCursorVisible(false);

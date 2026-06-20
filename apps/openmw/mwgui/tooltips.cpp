@@ -214,8 +214,7 @@ namespace MWGui
 
         const GuiMode mode = winMgr->getMode();
         bool guiMode = winMgr->isGuiMode();
-        const bool luaUiWindowsVisible
-            = LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal");
+        const bool luaUiWindowsVisible = LuaUi::isAnyMenuElementVisible();
 
         CountDialog* countDialog = winMgr->getCountDialog();
         const bool countDialogVisible = countDialog && countDialog->isVisible();

@@ -17,6 +17,7 @@ namespace LuaUi
     void clearMenuInterface();
 
     bool isAnyElementVisibleOnLayer(std::string_view layerName);
+    bool isAnyMenuElementVisible();
     bool warnUnused(std::vector<std::string>& warnings, sol::object table, const std::string& tableName,
         const std::vector<std::string_view>& usedKeys, bool generateWarningStrings);
 }

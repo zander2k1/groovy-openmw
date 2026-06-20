@@ -197,8 +197,8 @@ namespace MWGui
         bool isLuaMenuVisible()
         {
             MyGUI::InputManager& input = MyGUI::InputManager::getInstance();
-            return LuaUi::isAnyElementVisibleOnLayer("Windows") || LuaUi::isAnyElementVisibleOnLayer("Modal")
-                || isLuaWidget(input.getKeyFocusWidget()) || isLuaWidget(input.getMouseFocusWidget());
+            return LuaUi::isAnyMenuElementVisible() || isLuaWidget(input.getKeyFocusWidget())
+                || isLuaWidget(input.getMouseFocusWidget());
         }
     }
 

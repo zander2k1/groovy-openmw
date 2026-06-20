@@ -78,6 +78,42 @@ namespace LuaUi
         return visible;
     }
 
+    bool isAnyMenuElementVisible()
+    {
+        static constexpr std::string_view sIgnoredLayers[] = {
+            "HUD",
+            "DrowningBar",
+            "Notification",
+            "HitOverlay",
+            "FadeToBlack",
+            "LoadingScreen",
+            "LoadingScreenBackground",
+            "Scene",
+        };
+
+        bool visible = false;
+        auto check = [&](Element* element) {
+            if (visible || element == nullptr || element->mRoot == nullptr)
+                return;
+            MyGUI::Widget* w = element->mRoot->widget();
+            if (!w || !w->getInheritedVisible())
+                return;
+            MyGUI::ILayer* layer = w->getLayer();
+            if (!layer)
+                return;
+
+            const std::string_view layerName = layer->getName();
+            if (std::ranges::find(sIgnoredLayers, layerName) != std::end(sIgnoredLayers))
+                return;
+
+            visible = true;
+        };
+
+        Element::forEach(true, check);
+        Element::forEach(false, check);
+        return visible;
+    }
+
     bool warnUnused(std::vector<std::string>& warnings, sol::object object, const std::string& tableName,
         const std::vector<std::string_view>& usedKeys, bool generateWarningStrings)
     {
