@@ -451,7 +451,7 @@ namespace MWGui
 
         mHealth->setValue(current, modified);
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
-        mHealth->setUserString("Caption_HealthDescription", "#{sHealthDesc}\n" + valStr);
+        mHealth->setUserString("Caption_HealthDescription", "#{sHealthDesc}");
         const std::string label
             = std::string(MWBase::Environment::get().getWindowManager()->getGameSettingString("sHealth", "Health"));
         mHealth->setUserString("CollapsedLabel", label);
@@ -465,7 +465,7 @@ namespace MWGui
 
         mMagicka->setValue(current, modified);
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
-        mMagicka->setUserString("Caption_HealthDescription", "#{sMagDesc}\n" + valStr);
+        mMagicka->setUserString("Caption_HealthDescription", "#{sMagDesc}");
         const std::string label
             = std::string(MWBase::Environment::get().getWindowManager()->getGameSettingString("sMagic", "Magicka"));
         mMagicka->setUserString("CollapsedLabel", label);
@@ -479,7 +479,7 @@ namespace MWGui
 
         mFatigue->setValue(current, modified);
         std::string valStr = MyGUI::utility::toString(current) + " / " + MyGUI::utility::toString(modified);
-        mFatigue->setUserString("Caption_HealthDescription", "#{sFatDesc}\n" + valStr);
+        mFatigue->setUserString("Caption_HealthDescription", "#{sFatDesc}");
         const std::string label
             = std::string(MWBase::Environment::get().getWindowManager()->getGameSettingString("sFatigue", "Fatigue"));
         mFatigue->setUserString("CollapsedLabel", label);

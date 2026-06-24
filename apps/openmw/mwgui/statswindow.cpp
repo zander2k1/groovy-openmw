@@ -427,19 +427,19 @@ namespace MWGui
         if (id == "HBar")
         {
             getWidget(w, "Health");
-            w->setUserString("Caption_HealthDescription", "#{sHealthDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sHealthDesc}");
             setCollapsedPair("Health_str", w, valStr);
         }
         else if (id == "MBar")
         {
             getWidget(w, "Magicka");
-            w->setUserString("Caption_HealthDescription", "#{sMagDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sMagDesc}");
             setCollapsedPair("Magicka_str", w, valStr);
         }
         else if (id == "FBar")
         {
             getWidget(w, "Fatigue");
-            w->setUserString("Caption_HealthDescription", "#{sFatDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sFatDesc}");
             setCollapsedPair("Fatigue_str", w, valStr);
         }
     }

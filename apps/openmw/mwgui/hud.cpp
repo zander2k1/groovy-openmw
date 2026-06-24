@@ -128,21 +128,21 @@ namespace MWGui
             mHealth->setProgressRange(std::max(0, modified));
             mHealth->setProgressPosition(std::max(0, current));
             getWidget(w, "HealthFrame");
-            w->setUserString("Caption_HealthDescription", "#{sHealthDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sHealthDesc}");
         }
         else if (id == "MBar")
         {
             mMagicka->setProgressRange(std::max(0, modified));
             mMagicka->setProgressPosition(std::max(0, current));
             getWidget(w, "MagickaFrame");
-            w->setUserString("Caption_HealthDescription", "#{sMagDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sMagDesc}");
         }
         else if (id == "FBar")
         {
             mStamina->setProgressRange(std::max(0, modified));
             mStamina->setProgressPosition(std::max(0, current));
             getWidget(w, "FatigueFrame");
-            w->setUserString("Caption_HealthDescription", "#{sFatDesc}\n" + valStr);
+            w->setUserString("Caption_HealthDescription", "#{sFatDesc}");
         }
     }
 
