@@ -23,6 +23,7 @@ namespace MWGui
             , remainingEnchantCharge(-1)
             , isPotion(false)
             , isIngredient(false)
+            , centerEffectsAsBlock(false)
             , wordWrap(true)
         {
         }
@@ -45,6 +46,7 @@ namespace MWGui
 
         bool isPotion; // potions do not show target in the tooltip
         bool isIngredient; // ingredients have no effect magnitude
+        bool centerEffectsAsBlock;
         bool wordWrap;
     };
 

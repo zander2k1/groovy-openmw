@@ -218,7 +218,7 @@ namespace MWGui
              * @param various flags, see MWEffectList::EffectFlags
              */
             void createEffectWidgets(std::vector<MyGUI::Widget*>& effects, MyGUI::Widget* creator,
-                MyGUI::IntCoord& coord, bool center, int flags);
+                MyGUI::IntCoord& coord, bool center, int flags, bool centerAsBlock = false);
 
         protected:
             virtual ~MWEffectList();

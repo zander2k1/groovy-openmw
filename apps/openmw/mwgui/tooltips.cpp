@@ -2435,6 +2435,7 @@ namespace MWGui
                                 += MWGui::ToolTips::getValueString(MWMechanics::calcSpellCost(*spell), "#{sCastCost}");
 
                         info.effects = std::move(effects);
+                        info.centerEffectsAsBlock = true;
                         return info;
                     };
 
@@ -2918,7 +2919,8 @@ namespace MWGui
                     std::max(0, contentProbeHeight - totalSize.height)),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
-            MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
+            const bool centerEffectsAsBlock = info.centerEffectsAsBlock;
+            MyGUI::IntCoord coord(0, 6, centerEffectsAsBlock ? 0 : totalSize.width, 24);
 
             Widgets::MWEffectListPtr effectsWidget
                 = effectArea->createWidget<Widgets::MWEffectList>("MW_StatName", coord, MyGUI::Align::Default);
@@ -2929,7 +2931,15 @@ namespace MWGui
             flag |= info.isIngredient ? Widgets::MWEffectList::EF_NoMagnitude : 0;
             flag |= info.isIngredient ? Widgets::MWEffectList::EF_Constant : 0;
             const bool centerEffects = menuMode ? true : (info.isPotion || info.isIngredient);
-            effectsWidget->createEffectWidgets(effectItems, effectArea, coord, centerEffects, flag);
+            effectsWidget->createEffectWidgets(
+                effectItems, effectArea, coord, centerEffects && !centerEffectsAsBlock, flag, centerEffectsAsBlock);
+
+            if (centerEffectsAsBlock)
+            {
+                const int centeredLeft = ((!menuMode) ? padding.left : contentLeft)
+                    + std::max(0, (((!menuMode) ? (300 - padding.left) : contentWidth) - coord.width) / 2);
+                effectArea->setCoord(centeredLeft, effectAreaTop, coord.width, effectArea->getHeight());
+            }
 
             if (menuMode)
                 effectArea->setSize(effectArea->getWidth(), std::max(effectArea->getHeight(), coord.top));
@@ -2947,7 +2957,8 @@ namespace MWGui
                     std::max(0, contentProbeHeight - totalSize.height)),
                 (!menuMode) ? MyGUI::Align::Stretch : (MyGUI::Align::Left | MyGUI::Align::Top));
 
-            MyGUI::IntCoord coord(0, 6, totalSize.width, 24);
+            const bool centerEnchantEffectsAsBlock = menuMode;
+            MyGUI::IntCoord coord(0, 6, centerEnchantEffectsAsBlock ? 0 : totalSize.width, 24);
 
             Widgets::MWEffectListPtr enchantWidget
                 = enchantArea->createWidget<Widgets::MWEffectList>("MW_StatName", coord, MyGUI::Align::Default);
@@ -2957,10 +2968,9 @@ namespace MWGui
             int flag
                 = (enchant->mData.mType == ESM::Enchantment::ConstantEffect) ? Widgets::MWEffectList::EF_Constant : 0;
             const bool centerEnchantEffects = false;
-            enchantWidget->createEffectWidgets(enchantEffectItems, enchantArea, coord, centerEnchantEffects, flag);
-
-            totalSize.height += coord.top - 6;
-            totalSize.width = std::max(totalSize.width, coord.width);
+            enchantWidget->createEffectWidgets(enchantEffectItems, enchantArea, coord,
+                centerEnchantEffects && !centerEnchantEffectsAsBlock, flag, centerEnchantEffectsAsBlock);
+            int enchantContentWidth = coord.width;
 
             int enchantAreaHeight = coord.top;
 
@@ -2980,21 +2990,20 @@ namespace MWGui
 
                 const int chargeWidth = maxChargeWidth;
                 const int chargeAndTextWidth = chargeWidth + chargeTextWidth;
-
-                totalSize.width = std::max(totalSize.width, chargeAndTextWidth);
-
-                chargeText->setCoord((totalSize.width - chargeAndTextWidth) / 2, coord.top + 6, chargeTextWidth, 18);
+                enchantContentWidth = std::max(enchantContentWidth, chargeAndTextWidth);
+                chargeText->setCoord(
+                    (enchantContentWidth - chargeAndTextWidth) / 2, coord.top + 6, chargeTextWidth, 18);
 
                 MyGUI::IntCoord chargeCoord;
-                if (totalSize.width < chargeWidth)
+                if (enchantContentWidth < chargeWidth)
                 {
-                    totalSize.width = chargeWidth;
                     chargeCoord = MyGUI::IntCoord(0, coord.top + 6, chargeWidth, 18);
                 }
                 else
                 {
                     chargeCoord = MyGUI::IntCoord(
-                        (totalSize.width - chargeAndTextWidth) / 2 + chargeTextWidth, coord.top + 6, chargeWidth, 18);
+                        (enchantContentWidth - chargeAndTextWidth) / 2 + chargeTextWidth, coord.top + 6, chargeWidth,
+                        18);
                 }
                 Widgets::MWDynamicStatPtr chargeWidget = enchantArea->createWidget<Widgets::MWDynamicStat>(
                     "MW_ChargeBar", chargeCoord, MyGUI::Align::Default);
@@ -3003,6 +3012,16 @@ namespace MWGui
 
                 enchantAreaHeight += 24;
             }
+
+            if (centerEnchantEffectsAsBlock)
+            {
+                const int centeredLeft = ((!menuMode) ? padding.left : contentLeft)
+                    + std::max(0, (((!menuMode) ? (300 - padding.left) : contentWidth) - enchantContentWidth) / 2);
+                enchantArea->setCoord(centeredLeft, enchantAreaTop, enchantContentWidth, enchantArea->getHeight());
+            }
+
+            totalSize.height += coord.top - 6;
+            totalSize.width = std::max(totalSize.width, enchantContentWidth);
 
             if (menuMode)
                 enchantArea->setSize(enchantArea->getWidth(), std::max(enchantArea->getHeight(), enchantAreaHeight));

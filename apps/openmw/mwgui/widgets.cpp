@@ -275,8 +275,8 @@ namespace MWGui::Widgets
         updateWidgets();
     }
 
-    void MWEffectList::createEffectWidgets(
-        std::vector<MyGUI::Widget*>& effects, MyGUI::Widget* creator, MyGUI::IntCoord& coord, bool center, int flags)
+    void MWEffectList::createEffectWidgets(std::vector<MyGUI::Widget*>& effects, MyGUI::Widget* creator,
+        MyGUI::IntCoord& coord, bool center, int flags, bool centerAsBlock)
     {
         // We don't know the width of all the elements beforehand, so we do it in
         // 2 steps: first, create all widgets and check their width....
@@ -298,19 +298,30 @@ namespace MWGui::Widgets
         }
 
         // ... then adjust the size for all widgets
+        const int centeredBlockLeft = (center && centerAsBlock && creator)
+            ? std::max(0, (creator->getWidth() - maxwidth) / 2)
+            : 0;
         for (MyGUI::Widget* effectWidget : effects)
         {
             effect = effectWidget->castType<MWSpellEffect>();
-            bool needcenter = center && (maxwidth > effect->getRequestedWidth());
-            int diff = maxwidth - effect->getRequestedWidth();
-            if (needcenter)
+            if (center && centerAsBlock)
             {
                 effect->setCoord(
-                    diff / 2, effect->getCoord().top, effect->getRequestedWidth(), effect->getCoord().height);
+                    centeredBlockLeft, effect->getCoord().top, effect->getRequestedWidth(), effect->getCoord().height);
             }
             else
             {
-                effect->setCoord(0, effect->getCoord().top, effect->getRequestedWidth(), effect->getCoord().height);
+                bool needcenter = center && (maxwidth > effect->getRequestedWidth());
+                int diff = maxwidth - effect->getRequestedWidth();
+                if (needcenter)
+                {
+                    effect->setCoord(
+                        diff / 2, effect->getCoord().top, effect->getRequestedWidth(), effect->getCoord().height);
+                }
+                else
+                {
+                    effect->setCoord(0, effect->getCoord().top, effect->getRequestedWidth(), effect->getCoord().height);
+                }
             }
         }
 
