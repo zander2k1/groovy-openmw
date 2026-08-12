@@ -28,7 +28,6 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
-#include "../mwbase/luamanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -532,13 +531,6 @@ namespace MWGui
         w->setUserString("RangePosition_SkillProgress", MyGUI::utility::toString(progressPercent));
     }
 
-    void setCustomSkillProgress(MyGUI::Widget* w, float progress)
-    {
-        const int progressPercent = std::clamp(static_cast<int>(progress * 100.f + 0.5f), 0, 100);
-        w->setUserString("Caption_SkillProgressText", MyGUI::utility::toString(progressPercent) + "/100");
-        w->setUserString("RangePosition_SkillProgress", MyGUI::utility::toString(progressPercent));
-    }
-
     void StatsWindow::setValue(ESM::RefId id, const MWMechanics::SkillValue& value)
     {
         mSkillValues[id] = value;
@@ -638,8 +630,6 @@ namespace MWGui
             updateControllerFocus(mControllerItems.size(), mControllerFocus);
         }
 
-        updateCustomSkillsFromLua();
-
         MWWorld::Ptr player = MWMechanics::getPlayer();
         const MWMechanics::NpcStats& playerStats = player.getClass().getNpcStats(player);
         const auto& store = MWBase::Environment::get().getESMStore();
@@ -686,162 +676,6 @@ namespace MWGui
 
         if (mChanged)
             updateSkillArea();
-    }
-
-    void StatsWindow::updateCustomSkillsFromLua()
-    {
-        MWBase::LuaManager* luaManager = MWBase::Environment::get().getLuaManager();
-        if (!luaManager)
-            return;
-
-        std::vector<MWBase::LuaManager::CustomSkillForStatsWindow> skills = luaManager->getCustomSkillsForStatsWindow();
-        skills.erase(std::remove_if(skills.begin(), skills.end(),
-                         [](const MWBase::LuaManager::CustomSkillForStatsWindow& s) {
-                             return !s.mVisible || s.mId.empty() || s.mName.empty();
-                         }),
-            skills.end());
-
-        if (skills.empty())
-        {
-            if (!mCustomSkillWidgetMap.empty())
-                mChanged = true;
-            mCustomSkillsUseSubsections = false;
-            return;
-        }
-
-        const bool useSubsections = std::any_of(skills.begin(), skills.end(),
-            [](const MWBase::LuaManager::CustomSkillForStatsWindow& s) { return !s.mSubsection.empty(); });
-        if (useSubsections != mCustomSkillsUseSubsections)
-        {
-            mChanged = true;
-            return;
-        }
-
-        if (skills.size() != mCustomSkillWidgetMap.size())
-        {
-            mChanged = true;
-            return;
-        }
-
-        for (const MWBase::LuaManager::CustomSkillForStatsWindow& skill : skills)
-        {
-            if (mCustomSkillWidgetMap.find(skill.mId) == mCustomSkillWidgetMap.end())
-            {
-                mChanged = true;
-                return;
-            }
-        }
-
-        const MWWorld::ESMStore& esmStore = *MWBase::Environment::get().getESMStore();
-
-        for (const MWBase::LuaManager::CustomSkillForStatsWindow& skill : skills)
-        {
-            const auto it = mCustomSkillWidgetMap.find(skill.mId);
-            if (it == mCustomSkillWidgetMap.end())
-                continue;
-
-            MyGUI::TextBox* nameWidget = it->second.first;
-            MyGUI::TextBox* valueWidget = it->second.second;
-            if (!nameWidget || !valueWidget)
-                continue;
-
-            const std::string defaultSubsection = "Misc";
-            const std::string& subsection = skill.mSubsection.empty() ? defaultSubsection : skill.mSubsection;
-
-            const auto updateToolTipStrings = [&](MyGUI::Widget* widget) {
-                widget->setUserString("ToolTipDynamic", "Stats");
-                widget->setUserString("ToolTipType", "Layout");
-                widget->setUserString("ToolTipLayout", "SkillToolTip");
-                widget->setUserString("Caption_SkillName", MyGUI::TextIterator::toTagsString(skill.mName));
-                widget->setUserString("Caption_SkillDescription", skill.mDescription);
-                widget->setUserString("ImageTexture_SkillImage", skill.mIconPath);
-                widget->setUserString("Range_SkillProgress", "100");
-
-                std::string attributeText;
-                if (!skill.mAttributeId.empty())
-                {
-                    const ESM::RefId attrId = ESM::RefId::deserializeText(skill.mAttributeId);
-                    if (const ESM::Attribute* attr = esmStore.get<ESM::Attribute>().search(attrId))
-                    {
-                        attributeText = "#{sGoverningAttribute}: " + MyGUI::TextIterator::toTagsString(attr->mName);
-                    }
-                }
-                widget->setUserString("Caption_SkillAttribute", attributeText);
-            };
-
-            updateToolTipStrings(nameWidget);
-            updateToolTipStrings(valueWidget);
-
-            if (nameWidget->isUserString("UserData^CustomSkillSubsection")
-                && nameWidget->getUserString("UserData^CustomSkillSubsection") != subsection)
-            {
-                mChanged = true;
-                return;
-            }
-            nameWidget->setUserString("UserData^CustomSkillSubsection", subsection);
-            valueWidget->setUserString("UserData^CustomSkillSubsection", subsection);
-
-            const int modified = skill.mModified;
-            const int base = skill.mBase;
-            std::string text = MyGUI::utility::toString(modified);
-            std::string state = "normal";
-            if (modified > base)
-                state = "increased";
-            else if (modified < base)
-                state = "decreased";
-
-            const int widthBefore = valueWidget->getTextSize().width;
-
-            valueWidget->setCaption(text);
-            valueWidget->_setWidgetState(state);
-            setControllerWidgetBaseState(valueWidget, state);
-
-            const int widthAfter = valueWidget->getTextSize().width;
-            if (widthBefore != widthAfter)
-            {
-                valueWidget->setCoord(valueWidget->getLeft() - (widthAfter - widthBefore), valueWidget->getTop(),
-                    valueWidget->getWidth() + (widthAfter - widthBefore), valueWidget->getHeight());
-                nameWidget->setSize(nameWidget->getWidth() - (widthAfter - widthBefore), nameWidget->getHeight());
-            }
-
-            const bool hasMax = skill.mMaxLevel >= 0;
-            const bool isMaxed = hasMax && base >= skill.mMaxLevel;
-            if (!isMaxed)
-            {
-                nameWidget->setUserString("Visible_SkillMaxed", "false");
-                nameWidget->setUserString("UserData^Hidden_SkillMaxed", "true");
-                nameWidget->setUserString("Visible_SkillProgressVBox", "true");
-                nameWidget->setUserString("UserData^Hidden_SkillProgressVBox", "false");
-
-                valueWidget->setUserString("Visible_SkillMaxed", "false");
-                valueWidget->setUserString("UserData^Hidden_SkillMaxed", "true");
-                valueWidget->setUserString("Visible_SkillProgressVBox", "true");
-                valueWidget->setUserString("UserData^Hidden_SkillProgressVBox", "false");
-
-                setCustomSkillProgress(nameWidget, std::clamp(skill.mProgress, 0.f, 1.f));
-                setCustomSkillProgress(valueWidget, std::clamp(skill.mProgress, 0.f, 1.f));
-            }
-            else
-            {
-                nameWidget->setUserString("Visible_SkillMaxed", "true");
-                nameWidget->setUserString("UserData^Hidden_SkillMaxed", "false");
-                nameWidget->setUserString("Visible_SkillProgressVBox", "false");
-                nameWidget->setUserString("UserData^Hidden_SkillProgressVBox", "true");
-
-                valueWidget->setUserString("Visible_SkillMaxed", "true");
-                valueWidget->setUserString("UserData^Hidden_SkillMaxed", "false");
-                valueWidget->setUserString("Visible_SkillProgressVBox", "false");
-                valueWidget->setUserString("UserData^Hidden_SkillProgressVBox", "true");
-            }
-
-            const std::string label = nameWidget->isUserString("Caption_SkillName")
-                ? std::string(nameWidget->getUserString("Caption_SkillName"))
-                : nameWidget->getCaption().asUTF8();
-            nameWidget->setUserString("CollapsedLabel", label);
-            valueWidget->setUserString("CollapsedLabel", label);
-            nameWidget->setUserString("CollapsedValue", text);
-            valueWidget->setUserString("CollapsedValue", text);
-        }
     }
 
     void StatsWindow::setFactions(const FactionList& factions)
@@ -1029,125 +863,6 @@ namespace MWGui
         }
     }
 
-    void StatsWindow::addCustomSkills(MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2)
-    {
-        mCustomSkillsUseSubsections = false;
-
-        MWBase::LuaManager* luaManager = MWBase::Environment::get().getLuaManager();
-        if (!luaManager)
-            return;
-
-        std::vector<MWBase::LuaManager::CustomSkillForStatsWindow> skills = luaManager->getCustomSkillsForStatsWindow();
-        skills.erase(std::remove_if(skills.begin(), skills.end(),
-                         [](const MWBase::LuaManager::CustomSkillForStatsWindow& s) {
-                             return !s.mVisible || s.mId.empty() || s.mName.empty();
-                         }),
-            skills.end());
-
-        if (skills.empty())
-            return;
-
-        mCustomSkillsUseSubsections = std::any_of(skills.begin(), skills.end(),
-            [](const MWBase::LuaManager::CustomSkillForStatsWindow& s) { return !s.mSubsection.empty(); });
-
-        if (!mSkillWidgets.empty())
-            addSeparator(coord1, coord2);
-
-        MyGUI::Widget* groupWidget = addGroup(
-            MWBase::Environment::get().getWindowManager()->getGameSettingString("sCustomSkills", "Other Skills"),
-            coord1, coord2);
-
-        const MWWorld::ESMStore& esmStore = *MWBase::Environment::get().getESMStore();
-
-        constexpr int subsectionHeaderIndent = 10;
-        constexpr int subsectionItemExtraIndent = 10;
-        const std::string defaultSubsection = "Misc";
-
-        const auto addIndentedGroup = [&](std::string_view label, int indent) -> MyGUI::Widget* {
-            MyGUI::TextBox* groupHeader = mSkillView->createWidget<MyGUI::TextBox>("SandBrightText",
-                MyGUI::IntCoord(indent, coord1.top, coord1.width + coord2.width - indent, coord1.height),
-                MyGUI::Align::Left | MyGUI::Align::Top | MyGUI::Align::HStretch);
-            groupHeader->setCaption(MyGUI::UString(label));
-            groupHeader->eventMouseWheel += MyGUI::newDelegate(this, &StatsWindow::onMouseWheel);
-            mSkillWidgets.push_back(groupHeader);
-
-            const int lineHeight = Settings::gui().mFontSize + 2;
-            coord1.top += lineHeight;
-            coord2.top += lineHeight;
-            return groupHeader;
-        };
-
-        std::sort(skills.begin(), skills.end(),
-            [useSubsections = mCustomSkillsUseSubsections](const MWBase::LuaManager::CustomSkillForStatsWindow& a,
-                const MWBase::LuaManager::CustomSkillForStatsWindow& b) {
-                if (useSubsections)
-                {
-                    if (a.mSubsection != b.mSubsection)
-                        return a.mSubsection < b.mSubsection;
-                }
-                if (a.mName != b.mName)
-                    return a.mName < b.mName;
-                return a.mId < b.mId;
-            });
-
-        MyGUI::Widget* currentGroupHeader = groupWidget;
-        std::string currentSubsection;
-
-        for (const MWBase::LuaManager::CustomSkillForStatsWindow& skill : skills)
-        {
-            const std::string& subsection = skill.mSubsection.empty() ? defaultSubsection : skill.mSubsection;
-            if (mCustomSkillsUseSubsections && subsection != currentSubsection)
-            {
-                currentSubsection = subsection;
-                currentGroupHeader = addIndentedGroup(currentSubsection, subsectionHeaderIndent);
-            }
-
-            const int originalLeft = coord1.left;
-            const int originalWidth = coord1.width;
-            if (mCustomSkillsUseSubsections)
-            {
-                coord1.left += subsectionItemExtraIndent;
-                coord1.width -= subsectionItemExtraIndent;
-            }
-
-            std::pair<MyGUI::TextBox*, MyGUI::TextBox*> widgets
-                = addValueItem(skill.mName, {}, "normal", coord1, coord2, currentGroupHeader);
-            mCustomSkillWidgetMap[skill.mId] = widgets;
-
-            coord1.left = originalLeft;
-            coord1.width = originalWidth;
-
-            const auto updateToolTipStrings = [&](MyGUI::Widget* widget) {
-                widget->setUserString("ToolTipDynamic", "Stats");
-                widget->setUserString("ToolTipType", "Layout");
-                widget->setUserString("ToolTipLayout", "SkillToolTip");
-                widget->setUserString("Caption_SkillName", MyGUI::TextIterator::toTagsString(skill.mName));
-                widget->setUserString("Caption_SkillDescription", skill.mDescription);
-                widget->setUserString("ImageTexture_SkillImage", skill.mIconPath);
-                widget->setUserString("Range_SkillProgress", "100");
-
-                std::string attributeText;
-                if (!skill.mAttributeId.empty())
-                {
-                    const ESM::RefId attrId = ESM::RefId::deserializeText(skill.mAttributeId);
-                    if (const ESM::Attribute* attr = esmStore.get<ESM::Attribute>().search(attrId))
-                    {
-                        attributeText = "#{sGoverningAttribute}: " + MyGUI::TextIterator::toTagsString(attr->mName);
-                    }
-                }
-                widget->setUserString("Caption_SkillAttribute", attributeText);
-            };
-
-            updateToolTipStrings(widgets.first);
-            updateToolTipStrings(widgets.second);
-
-            widgets.first->setUserString("UserData^CustomSkillSubsection", subsection);
-            widgets.second->setUserString("UserData^CustomSkillSubsection", subsection);
-        }
-
-        updateCustomSkillsFromLua();
-    }
-
     void StatsWindow::updateSkillArea()
     {
         mChanged = false;
@@ -1159,7 +874,6 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(widget);
         }
         mSkillWidgets.clear();
-        mCustomSkillWidgetMap.clear();
 
         const int valueSize = 40;
         MyGUI::IntCoord coord1(10, 0, mSkillView->getWidth() - (10 + valueSize) - 24, 18);
@@ -1173,8 +887,6 @@ namespace MWGui
 
         if (!mMiscSkills.empty())
             addSkills(mMiscSkills, "sSkillClassMisc", "Misc Skills", coord1, coord2);
-
-        addCustomSkills(coord1, coord2);
 
         MWBase::World* world = MWBase::Environment::get().getWorld();
         const MWWorld::ESMStore& store = world->getStore();

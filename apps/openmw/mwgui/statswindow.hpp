@@ -86,7 +86,6 @@ namespace MWGui
 
         void addSkills(const std::vector<ESM::RefId>& skills, const std::string& titleId,
             const std::string& titleDefault, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
-        void addCustomSkills(MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         void addSeparator(MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         MyGUI::Widget* addGroup(std::string_view label, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
         std::pair<MyGUI::TextBox*, MyGUI::TextBox*> addValueItem(std::string_view text, const std::string& value,
@@ -94,8 +93,6 @@ namespace MWGui
             MyGUI::Widget* groupHeader = nullptr);
         MyGUI::Widget* addItem(const std::string& text, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2,
             MyGUI::Widget* groupHeader = nullptr);
-
-        void updateCustomSkillsFromLua();
 
         void setFactions(const FactionList& factions);
         void setExpelled(const std::set<ESM::RefId>& expelled);
@@ -130,7 +127,6 @@ namespace MWGui
         std::map<ESM::RefId, MWMechanics::SkillValue> mSkillValues;
         std::map<ESM::RefId, MyGUI::TextBox*> mAttributeWidgets;
         std::map<ESM::RefId, std::pair<MyGUI::TextBox*, MyGUI::TextBox*>> mSkillWidgetMap;
-        std::map<std::string, std::pair<MyGUI::TextBox*, MyGUI::TextBox*>> mCustomSkillWidgetMap;
         std::map<std::string, MyGUI::Widget*> mFactionWidgetMap;
         FactionList mFactions; ///< Stores a list of factions and the current rank
         ESM::RefId mBirthSignId;
@@ -139,7 +135,6 @@ namespace MWGui
         std::set<ESM::RefId> mExpelled;
 
         bool mChanged;
-        bool mCustomSkillsUseSubsections = false;
         const int mMinFullWidth;
         size_t mControllerFocus = 0;
         std::vector<ControllerItem> mControllerItems;
