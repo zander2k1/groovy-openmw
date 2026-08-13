@@ -575,6 +575,7 @@ namespace MWGui
 
         mMessageBoxManager = std::make_unique<MessageBoxManager>(
             mStore->get<ESM::GameSetting>().find("fMessageTimePerChar")->mValue.getFloat());
+        mLoadingScreen->setMessageBoxManager(mMessageBoxManager.get());
 
         auto spellBuyingWindow = std::make_unique<SpellBuyingWindow>();
         mGuiModeStates[GM_SpellBuying] = GuiModeState(spellBuyingWindow.get());

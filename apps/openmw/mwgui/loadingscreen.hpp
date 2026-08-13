@@ -29,6 +29,7 @@ namespace MWGui
 {
     class BackgroundImage;
     class CopyFramebufferToTextureCallback;
+    class MessageBoxManager;
 
     class LoadingScreen : public WindowBase, public Loading::Listener
     {
@@ -46,6 +47,7 @@ namespace MWGui
 
         void setVisible(bool visible) override;
         void onResChange(int width, int height) override;
+        void setMessageBoxManager(MessageBoxManager* messageBoxManager);
 
         double getTargetFrameRate() const;
 
@@ -56,6 +58,7 @@ namespace MWGui
         void setupCopyFramebufferToTextureCallback();
 
         Resource::ResourceSystem* mResourceSystem;
+        MessageBoxManager* mMessageBoxManager = nullptr;
         osg::ref_ptr<osgViewer::Viewer> mViewer;
 
         double mTargetFrameRate;
@@ -79,8 +82,10 @@ namespace MWGui
         bool mUseLongerLoadingScreens;
         bool mShowWallpaper;
         bool mHasCompletedStartupLoad = false;
+        bool mIsSaveGameLoading = false;
         bool mLongerLoadingCandidate = false;
         bool mFakeLoadingActive = false;
+        double mLastSplashScreenEndTime = -100.0;
         double mFakeLoadingEndTime = 0.0;
         double mNextFakeProgressTime = 0.0;
         double mOldIcoMin = 0.0;

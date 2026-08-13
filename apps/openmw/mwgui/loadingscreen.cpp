@@ -1,5 +1,7 @@
 #include "loadingscreen.hpp"
 
+#include "messagebox.hpp"
+
 #include <array>
 #include <chrono>
 #include <thread>
@@ -64,6 +66,11 @@ namespace MWGui
 
     LoadingScreen::~LoadingScreen() {}
 
+    void LoadingScreen::setMessageBoxManager(MessageBoxManager* messageBoxManager)
+    {
+        mMessageBoxManager = messageBoxManager;
+    }
+
     void LoadingScreen::findSplashScreens()
     {
         auto isSupportedExtension = [](const std::string_view& ext) {
@@ -85,6 +92,9 @@ namespace MWGui
 
     void LoadingScreen::setLabel(const std::string& label, bool important)
     {
+        if (label == "#{OMWEngine:LoadingInProgress}")
+            mIsSaveGameLoading = true;
+
         mImportantLabel = important;
 
         mLoadingText->setCaptionWithReplacing(label);
@@ -178,15 +188,17 @@ namespace MWGui
         if (mNestedLoadingCount++ > 0 && mMainWidget->getVisible())
             return;
 
+        if (mMessageBoxManager)
+            mMessageBoxManager->clear();
+
         mXboxProgressPhase = 0;
         mXboxProgressRange = 1;
         mXboxProgress = 0;
         mFakeProgress = 0;
         mFakeLoadingActive = false;
-        mLongerLoadingCandidate
-            = mUseXboxSplashScreens && mUseLongerLoadingScreens && mHasCompletedStartupLoad && !mSplashScreens.empty();
-
         mLoadingOnTime = mTimer.time_m();
+        mLongerLoadingCandidate = mUseXboxSplashScreens && mUseLongerLoadingScreens && mHasCompletedStartupLoad
+            && !mSplashScreens.empty() && mLoadingOnTime >= mLastSplashScreenEndTime + 100.0;
 
         // Assign dummy bounding sphere callback to avoid the bounding sphere of the entire scene being recomputed after
         // each frame of loading We are already using node masks to avoid the scene from being updated/rendered, but
@@ -201,8 +213,13 @@ namespace MWGui
 
         setVisible(true);
 
-        mShowWallpaper = !mLongerLoadingCandidate
-            && MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_NoGame;
+        const bool splashCooldownElapsed = mLoadingOnTime >= mLastSplashScreenEndTime + 100.0;
+        mShowWallpaper = splashCooldownElapsed
+            && ((mUseXboxSplashScreens && mIsSaveGameLoading)
+                && ((mUseXboxSplashScreens && mIsSaveGameLoading)
+                    || (!mLongerLoadingCandidate
+                        && MWBase::Environment::get().getStateManager()->getState()
+                            == MWBase::StateManager::State_NoGame)));
 
         if (mShowWallpaper)
             changeWallpaper();
@@ -252,6 +269,9 @@ namespace MWGui
         mViewer->getSceneData()->setComputeBoundingSphereCallback(nullptr);
         mViewer->getSceneData()->dirtyBound();
 
+        if (mShowWallpaper)
+            mLastSplashScreenEndTime = mTimer.time_m();
+        mIsSaveGameLoading = false;
         setVisible(false);
 
         if (osgUtil::IncrementalCompileOperation* ico = mViewer->getIncrementalCompileOperation())
