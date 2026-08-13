@@ -171,9 +171,9 @@ color_misc=0,205,205 # ????
             <State name="highlighted" colour="#{fontcolour=active}" shift="0"/>
             <State name="pushed" colour="#{fontcolour=normal_pressed}" shift="0"/>
             <State name="disabled_checked" colour="#{fontcolour=disabled}" shift="0"/>
-            <State name="normal_checked" colour="#{fontcolour=active_over}" shift="0"/>
-            <State name="highlighted_checked" colour="#{fontcolour=active}" shift="0"/>
-            <State name="pushed_checked" colour="#{fontcolour=active_pressed}" shift="0"/>
+            <State name="normal_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
+            <State name="highlighted_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
+            <State name="pushed_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
         </BasisSkin>
     </Resource>
 
@@ -187,9 +187,9 @@ color_misc=0,205,205 # ????
             <State name="highlighted" colour="#{fontcolour=active}" shift="0"/>
             <State name="pushed" colour="#{fontcolour=disabled_pressed}" shift="0"/>
             <State name="disabled_checked" colour="#{fontcolour=disabled}" shift="0"/>
-            <State name="normal_checked" colour="#{fontcolour=active_over}" shift="0"/>
-            <State name="highlighted_checked" colour="#{fontcolour=active}" shift="0"/>
-            <State name="pushed_checked" colour="#{fontcolour=active_pressed}" shift="0"/>
+            <State name="normal_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
+            <State name="highlighted_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
+            <State name="pushed_checked" colour="#{fontcolour=xbox_active}" shift="0"/>
         </BasisSkin>
     </Resource>
 
