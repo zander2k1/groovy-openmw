@@ -202,8 +202,11 @@ namespace MWGui
     {
         MyGUI::IntSize gameWindowSize = MyGUI::RenderManager::getInstance().getViewSize();
         MyGUI::IntPoint pos;
-        pos.left = (gameWindowSize.width - mMainWidget->getWidth()) / 2;
-        pos.top = (gameWindowSize.height - mMainWidget->getHeight() - height - mBottomPadding);
+        pos.left = Settings::gui().mXboxHudMargins
+            ? gameWindowSize.width - mMainWidget->getWidth() - mBottomPadding
+            : (gameWindowSize.width - mMainWidget->getWidth()) / 2;
+        const int bottomPadding = mBottomPadding - (Settings::gui().mXboxHudMargins ? 5 : 0);
+        pos.top = gameWindowSize.height - mMainWidget->getHeight() - height - bottomPadding;
 
         mMainWidget->setPosition(pos);
     }
