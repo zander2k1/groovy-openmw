@@ -173,6 +173,8 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
     fallbackMap["Fonts_Font_0"] = std::move(defaultFont);
     fallbackMap["Fonts_Font_1"] = std::move(dialogueAndBookFont);
     fallbackMap["Fonts_Font_2"] = "DemonicLetters";
+    if (Settings::gui().mXboxFontColors)
+        Fallback::applyXboxFontColours(fallbackMap);
     Fallback::Map::init(fallbackMap);
     engine.setSoundUsage(!variables["no-sound"].as<bool>());
     engine.setActivationDistanceOverride(variables["activate-dist"].as<int>());

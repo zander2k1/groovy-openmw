@@ -560,8 +560,8 @@ namespace
 
             if (Settings::gui().mControllerMenus)
             {
-                list->setProperty(
-                    "ControllerHighlightSkin", useControllerSelectionHighlight() ? "ControllerHighlight" : "");
+                list->setProperty("ControllerHighlightSkin",
+                    useControllerSelectionHighlight() ? std::string(getControllerHighlightSkin()) : std::string());
             }
 
             list->adjustSize();
@@ -647,8 +647,8 @@ namespace
             list->sort();
             if (Settings::gui().mControllerMenus)
             {
-                list->setProperty(
-                    "ControllerHighlightSkin", useControllerSelectionHighlight() ? "ControllerHighlight" : "");
+                list->setProperty("ControllerHighlightSkin",
+                    useControllerSelectionHighlight() ? std::string(getControllerHighlightSkin()) : std::string());
             }
 
             list->adjustSize();
@@ -1018,7 +1018,7 @@ namespace
                 destroyQuestFilterHighlight();
 
                 mQuestFilterHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                    getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
                 mQuestFilterHighlight->setNeedMouseFocus(false);
                 mQuestFilterHighlight->setDepth(1);
             }

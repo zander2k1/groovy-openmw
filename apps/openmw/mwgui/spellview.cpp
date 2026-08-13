@@ -114,7 +114,7 @@ namespace MWGui
             MyGUI::Widget* highlight = nullptr;
             if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
             {
-                highlight = mScrollView->createWidget<MyGUI::Widget>("ControllerHighlight",
+                highlight = mScrollView->createWidget<MyGUI::Widget>(getControllerHighlightSkin(),
                     MyGUI::IntCoord(0, 0, 0, spellHeight), MyGUI::Align::Left | MyGUI::Align::Top);
                 highlight->setNeedMouseFocus(false);
                 highlight->setVisible(false);

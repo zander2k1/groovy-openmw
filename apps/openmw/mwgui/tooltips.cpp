@@ -106,6 +106,11 @@ namespace MWGui
             return false;
         }
 
+        const char* getTooltipTextSkin()
+        {
+            return Settings::gui().mXboxFontColors ? "ControllerButtonText" : "NormalText";
+        }
+
         WeaponDamageInfo getWeaponDamageInfo(const MWWorld::Ptr& ptr)
         {
             if (ptr.getType() != ESM::Weapon::sRecordId)
@@ -504,7 +509,7 @@ namespace MWGui
             const int barLeft = std::max(paddingX, width - paddingX - barWidth);
             const int labelWidth = std::max(0, barLeft - paddingX);
 
-            MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+            MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(getTooltipTextSkin(),
                 MyGUI::IntCoord(paddingX, y, labelWidth, rowHeight), MyGUI::Align::Left | MyGUI::Align::VCenter);
             label->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
             label->setCaption(name);
@@ -653,7 +658,7 @@ namespace MWGui
                     }
                 }
 
-                MyGUI::TextBox* labelWidget = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                MyGUI::TextBox* labelWidget = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(getTooltipTextSkin(),
                     MyGUI::IntCoord(textLeft, (barHeight - rowHeight) / 2, width - textLeft - paddingX, rowHeight),
                     MyGUI::Align::Left | MyGUI::Align::VCenter);
                 labelWidget->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
@@ -685,12 +690,13 @@ namespace MWGui
 
             mDynamicToolTipBox->setVisible(true);
             mDynamicToolTipBox->changeWidgetSkin(collapsed ? "HUD_Box" : "HUD_Box_NoTransp");
+            const char* tooltipTextSkin = collapsed ? getTooltipTextSkin() : "NormalText";
 
             for (const CollapsedRow& row : rows)
             {
                 if (row.mCenter)
                 {
-                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                         MyGUI::IntCoord(paddingX, y, width - paddingX * 2, rowHeight),
                         MyGUI::Align::Center | MyGUI::Align::VCenter);
                     label->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
@@ -698,7 +704,7 @@ namespace MWGui
                 }
                 else if (row.mLabelOnly)
                 {
-                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                         MyGUI::IntCoord(paddingX, y, width - paddingX * 2, rowHeight),
                         MyGUI::Align::Left | MyGUI::Align::VCenter);
                     label->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
@@ -709,7 +715,7 @@ namespace MWGui
                     const int labelWidth = width / 2 - paddingX * 2;
                     const int valueWidth = width - labelWidth - paddingX * 3;
 
-                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                    MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                         MyGUI::IntCoord(paddingX, y, labelWidth, rowHeight),
                         MyGUI::Align::Left | MyGUI::Align::VCenter);
                     label->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
@@ -736,7 +742,7 @@ namespace MWGui
                     }
                     else
                     {
-                        MyGUI::TextBox* value = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                        MyGUI::TextBox* value = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                             MyGUI::IntCoord(paddingX * 2 + labelWidth, y, valueWidth, rowHeight),
                             MyGUI::Align::Right | MyGUI::Align::VCenter);
                         value->setTextAlign(MyGUI::Align::Right | MyGUI::Align::VCenter);
@@ -1595,7 +1601,7 @@ namespace MWGui
             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
             setCoord(winRect.left, posY, width, barHeight);
 
-            MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+            MyGUI::TextBox* label = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(getTooltipTextSkin(),
                 MyGUI::IntCoord(paddingX, y, width - paddingX * 2, rowHeight),
                 MyGUI::Align::Center | MyGUI::Align::VCenter);
             label->setTextAlign(MyGUI::Align::Center | MyGUI::Align::VCenter);
@@ -1723,6 +1729,7 @@ namespace MWGui
             mDynamicToolTipBox->setVisible(true);
             mDynamicToolTipBox->changeWidgetSkin("HUD_Box");
             setCoord(winRect.left, posY, winRect.width, collapsedHeight);
+            const char* tooltipTextSkin = getTooltipTextSkin();
 
             const int padding = 6;
             const int iconSize = 16;
@@ -1735,7 +1742,7 @@ namespace MWGui
 
             auto addValueWithIcon = [&](const std::string& caption, std::string_view iconTexture,
                                         const std::string& textName, const std::string& iconName) {
-                MyGUI::TextBox* text = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                MyGUI::TextBox* text = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                     MyGUI::IntCoord(0, textTop, 0, textHeight), MyGUI::Align::VStretch | MyGUI::Align::Right, textName);
                 text->setTextAlign(MyGUI::Align::Right | MyGUI::Align::VCenter);
                 text->setCaption(caption);
@@ -1785,7 +1792,7 @@ namespace MWGui
 
             const int nameRight = std::max(padding, leftMostText->getLeft() - padding * 2);
             const int nameWidth = std::max(0, nameRight - padding);
-            MyGUI::TextBox* nameText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+            MyGUI::TextBox* nameText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                 MyGUI::IntCoord(padding, textTop, nameWidth, textHeight), MyGUI::Align::VStretch | MyGUI::Align::Left,
                 "CollapsedName");
             nameText->setTextAlign(MyGUI::Align::Left | MyGUI::Align::VCenter);
@@ -1828,7 +1835,7 @@ namespace MWGui
                     stats << "( " << damageInfo.mLabel << " " << damageInfo.mMin << " - " << damageInfo.mMax << " )";
                 const int statsLeft = padding;
                 const int statsWidth = std::max(0, winRect.width - padding * 2);
-                MyGUI::TextBox* statsText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>("NormalText",
+                MyGUI::TextBox* statsText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
                     MyGUI::IntCoord(statsLeft, textTop, statsWidth, textHeight),
                     MyGUI::Align::VStretch | MyGUI::Align::Left, "CollapsedStats");
                 statsText->setTextAlign(MyGUI::Align::HCenter | MyGUI::Align::VCenter);
@@ -3001,9 +3008,8 @@ namespace MWGui
                 }
                 else
                 {
-                    chargeCoord = MyGUI::IntCoord(
-                        (enchantContentWidth - chargeAndTextWidth) / 2 + chargeTextWidth, coord.top + 6, chargeWidth,
-                        18);
+                    chargeCoord = MyGUI::IntCoord((enchantContentWidth - chargeAndTextWidth) / 2 + chargeTextWidth,
+                        coord.top + 6, chargeWidth, 18);
                 }
                 Widgets::MWDynamicStatPtr chargeWidget = enchantArea->createWidget<Widgets::MWDynamicStat>(
                     "MW_ChargeBar", chargeCoord, MyGUI::Align::Default);

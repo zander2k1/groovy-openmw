@@ -11,6 +11,16 @@ namespace MWGui
         MyGUI::Colour normal;
         MyGUI::Colour notify;
 
+        MyGUI::Colour bigHeader;
+        MyGUI::Colour bigNormal;
+        MyGUI::Colour bigNormalOver;
+        MyGUI::Colour bigNormalPressed;
+        MyGUI::Colour bigNotify;
+
+        MyGUI::Colour bigLink;
+        MyGUI::Colour bigLinkOver;
+        MyGUI::Colour bigLinkPressed;
+
         MyGUI::Colour link;
         MyGUI::Colour linkOver;
         MyGUI::Colour linkPressed;
@@ -18,6 +28,10 @@ namespace MWGui
         MyGUI::Colour answer;
         MyGUI::Colour answerOver;
         MyGUI::Colour answerPressed;
+
+        MyGUI::Colour bigAnswer;
+        MyGUI::Colour bigAnswerOver;
+        MyGUI::Colour bigAnswerPressed;
 
         MyGUI::Colour journalLink;
         MyGUI::Colour journalLinkOver;

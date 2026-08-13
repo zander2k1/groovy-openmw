@@ -71,7 +71,7 @@ namespace MWGui
                 if (!highlightParent)
                     highlightParent = mMainWidget;
                 mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                    getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
                 mControllerHighlight->setNeedMouseFocus(false);
                 mControllerHighlight->setDepth(1);
                 mControllerHighlight->setVisible(false);
@@ -188,7 +188,7 @@ namespace MWGui
         if (MyGUI::Widget* client = mClassList->getClientWidget())
         {
             mControllerHighlight = client->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setVisible(false);
         }
@@ -493,7 +493,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setDepth(1);
             mControllerHighlight->setVisible(false);
@@ -738,7 +738,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);
@@ -1442,7 +1442,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setDepth(1);
             mControllerHighlight->setVisible(false);
@@ -1599,7 +1599,7 @@ namespace MWGui
                 if (!highlightParent)
                     highlightParent = mMainWidget;
                 mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                    getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
                 mControllerHighlight->setNeedMouseFocus(false);
                 mControllerHighlight->setDepth(1);
                 mControllerHighlight->setVisible(false);
@@ -1759,7 +1759,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setDepth(1);
             mControllerHighlight->setVisible(false);

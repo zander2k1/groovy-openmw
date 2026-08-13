@@ -8,6 +8,8 @@
 
 #include <components/debug/debuglog.hpp>
 
+const char* getControllerHighlightSkin();
+
 namespace MWGui
 {
     /** The Layout class is an utility class used to load MyGUI layouts

@@ -171,7 +171,7 @@ namespace MWGui
             MyGUI::Widget* highlight = nullptr;
             if (price <= playerGold && useControllerSelectionHighlight())
             {
-                highlight = mTrainingOptions->createWidget<MyGUI::Widget>("ControllerHighlight",
+                highlight = mTrainingOptions->createWidget<MyGUI::Widget>(getControllerHighlightSkin(),
                     MyGUI::IntCoord(
                         4, static_cast<int>(3 + i * lineHeight), mTrainingOptions->getWidth() - 10, lineHeight),
                     MyGUI::Align::Default);

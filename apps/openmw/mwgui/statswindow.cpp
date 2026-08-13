@@ -47,7 +47,8 @@ namespace
         if (!parent)
             return nullptr;
 
-        auto* highlight = parent->createWidget<MyGUI::Widget>("ControllerHighlight", coord, MyGUI::Align::Default);
+        auto* highlight
+            = parent->createWidget<MyGUI::Widget>(getControllerHighlightSkin(), coord, MyGUI::Align::Default);
         highlight->setNeedMouseFocus(false);
         highlight->setDepth(1);
         highlight->setVisible(false);
@@ -746,7 +747,7 @@ namespace MWGui
         MyGUI::Widget* highlight = nullptr;
         if (useControllerSelectionHighlight())
         {
-            highlight = mSkillView->createWidget<MyGUI::Widget>("ControllerHighlight",
+            highlight = mSkillView->createWidget<MyGUI::Widget>(getControllerHighlightSkin(),
                 MyGUI::IntCoord(coord1.left, coord1.top, coord1.width + coord2.width, coord1.height),
                 MyGUI::Align::Left | MyGUI::Align::Top | MyGUI::Align::HStretch);
             highlight->setNeedMouseFocus(false);
@@ -788,7 +789,7 @@ namespace MWGui
         MyGUI::Widget* highlight = nullptr;
         if (useControllerSelectionHighlight())
         {
-            highlight = mSkillView->createWidget<MyGUI::Widget>("ControllerHighlight",
+            highlight = mSkillView->createWidget<MyGUI::Widget>(getControllerHighlightSkin(),
                 MyGUI::IntCoord(coord1.left, coord1.top, coord1.width + coord2.width, coord1.height),
                 MyGUI::Align::Left | MyGUI::Align::Top | MyGUI::Align::HStretch);
             highlight->setNeedMouseFocus(false);
@@ -1263,7 +1264,7 @@ namespace MWGui
             if (MyGUI::Widget* parent = item.mTooltipWidget->getParent())
             {
                 item.mHighlight = parent->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", item.mTooltipWidget->getCoord(), MyGUI::Align::Default);
+                    getControllerHighlightSkin(), item.mTooltipWidget->getCoord(), MyGUI::Align::Default);
                 item.mHighlight->setNeedMouseFocus(false);
                 item.mHighlight->setDepth(1);
                 item.mHighlight->setVisible(false);
@@ -1306,7 +1307,7 @@ namespace MWGui
             if (MyGUI::Widget* parent = item.mTooltipWidget->getParent())
             {
                 item.mHighlight = parent->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", item.mTooltipWidget->getCoord(), MyGUI::Align::Default);
+                    getControllerHighlightSkin(), item.mTooltipWidget->getCoord(), MyGUI::Align::Default);
                 item.mHighlight->setNeedMouseFocus(false);
                 item.mHighlight->setDepth(1);
                 item.mHighlight->setVisible(false);

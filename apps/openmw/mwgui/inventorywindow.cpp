@@ -124,6 +124,19 @@ namespace MWGui
         mFilterEdit = nullptr;
         mTradeInfoPane->setVisible(false);
 
+        if (Settings::gui().mXboxFontColors)
+        {
+            const auto applyTabSkin = [](MyGUI::Button* button, const char* caption) {
+                button->changeWidgetSkin("MW_Button_XboxInventoryTab");
+                button->setCaptionWithReplacing(MyGUI::UString(caption));
+            };
+            applyTabSkin(mFilterAll, "#{sAllTab}");
+            applyTabSkin(mFilterWeapon, "#{sWeaponTab}");
+            applyTabSkin(mFilterApparel, "#{sApparelTab}");
+            applyTabSkin(mFilterMagic, "#{sMagicTab}");
+            applyTabSkin(mFilterMisc, "#{sMiscTab}");
+        }
+
         mAvatarImage->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onAvatarClicked);
         mAvatarImage->setRenderItemTexture(mPreviewTexture.get());
         // The widget is Y-down, the RTT image is Y-up, so this UV is inverted
@@ -146,7 +159,7 @@ namespace MWGui
         if (mCategories)
         {
             mControllerTabHighlight = mCategories->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerTabHighlight->setNeedMouseFocus(false);
             mControllerTabHighlight->setVisible(false);
         }

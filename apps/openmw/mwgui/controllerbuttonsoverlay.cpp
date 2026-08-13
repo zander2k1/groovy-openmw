@@ -6,6 +6,8 @@
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_Window.h>
 
+#include <components/settings/values.hpp>
+
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -55,6 +57,9 @@ namespace MWGui
             getWidget(mButtons[i].mImage, "Btn" + std::string(sButtonDefs[i].mName) + "Image");
             getWidget(mButtons[i].mText, "Btn" + std::string(sButtonDefs[i].mName) + "Text");
             getWidget(mButtons[i].mHBox, "Btn" + std::string(sButtonDefs[i].mName));
+
+            if (Settings::gui().mXboxFontColors)
+                mButtons[i].mText->changeWidgetSkin("ControllerButtonText");
 
             if (sButtonDefs[i].mInputType == InputType_Axis)
                 setIcon(mButtons[i].mImage, inputMgr->getControllerAxisIcon(sButtonDefs[i].mId.mAxis));

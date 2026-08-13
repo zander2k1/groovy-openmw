@@ -106,7 +106,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);
@@ -283,7 +283,8 @@ namespace MWGui
 
         if (!mTitle.empty())
         {
-            BookTypesetter::Style* title = typesetter->createStyle("DialogueBoldFont", colors.header, false);
+            const MyGUI::Colour& titleColour = Settings::gui().mXboxFontColors ? colors.bigHeader : colors.header;
+            BookTypesetter::Style* title = typesetter->createStyle("DialogueBoldFont", titleColour, false);
             typesetter->write(title, mTitle);
             typesetter->sectionBreak();
         }
@@ -319,7 +320,8 @@ namespace MWGui
 
         typesetter->addContent(text);
 
-        BookTypesetter::Style* textStyle = typesetter->createStyle("DialogueBoldFont", colors.normal, false);
+        const MyGUI::Colour& bodyColour = Settings::gui().mXboxFontColors ? colors.bigNormal : colors.normal;
+        BookTypesetter::Style* textStyle = typesetter->createStyle("DialogueBoldFont", bodyColour, false);
 
         size_t i = 0;
         for (const Token& token : tokens)
@@ -328,8 +330,12 @@ namespace MWGui
                 typesetter->write(textStyle, i, token.mStart);
 
             auto id = reinterpret_cast<TypesetBook::InteractiveId>(token.mTopic);
+            const MyGUI::Colour& linkColour = Settings::gui().mXboxFontColors ? colors.bigLink : colors.link;
+            const MyGUI::Colour& linkOver = Settings::gui().mXboxFontColors ? colors.bigLinkOver : colors.linkOver;
+            const MyGUI::Colour& linkPressed
+                = Settings::gui().mXboxFontColors ? colors.bigLinkPressed : colors.linkPressed;
             BookTypesetter::Style* linkStyle
-                = typesetter->createHotStyle(textStyle, colors.link, colors.linkOver, colors.linkPressed, id);
+                = typesetter->createHotStyle(textStyle, linkColour, linkOver, linkPressed, id);
             typesetter->write(linkStyle, token.mStart, token.mEnd);
             i = token.mEnd;
         }
@@ -346,7 +352,8 @@ namespace MWGui
     void Message::write(std::shared_ptr<BookTypesetter> typesetter, const MWDialogue::KeywordSearch&,
         std::unordered_map<std::string, std::unique_ptr<Link>>&) const
     {
-        const MyGUI::Colour& textColour = MWBase::Environment::get().getWindowManager()->getTextColours().notify;
+        const TextColours& colours = MWBase::Environment::get().getWindowManager()->getTextColours();
+        const MyGUI::Colour& textColour = Settings::gui().mXboxFontColors ? colours.bigNotify : colours.notify;
         BookTypesetter::Style* title = typesetter->createStyle("DialogueBoldFont", textColour, false);
         typesetter->sectionBreak(9);
         typesetter->write(title, mText);
@@ -732,7 +739,7 @@ namespace MWGui
             focusedTopic = mTopicsList->getItemNameAt(mControllerFocus);
 
         if (Settings::gui().mControllerMenus && Settings::gui().mControllerHighlightSelections)
-            mTopicsList->setProperty("ControllerHighlightSkin", "ControllerHighlight");
+            mTopicsList->setProperty("ControllerHighlightSkin", getControllerHighlightSkin());
         else
             mTopicsList->setProperty("ControllerHighlightSkin", "");
 
@@ -821,11 +828,13 @@ namespace MWGui
         for (const auto& text : mHistoryContents)
             text->write(typesetter, mKeywordSearch, mTopicLinks);
 
-        BookTypesetter::Style* body = typesetter->createStyle("DialogueBoldFont", MyGUI::Colour::White, false);
+        const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
+        const MyGUI::Colour& bodyColour
+            = Settings::gui().mXboxFontColors ? textColours.bigNormal : MyGUI::Colour::White;
+        BookTypesetter::Style* body = typesetter->createStyle("DialogueBoldFont", bodyColour, false);
 
         typesetter->sectionBreak(9);
         // choices
-        const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
         mChoices = MWBase::Environment::get().getDialogueManager()->getChoices();
         mChoiceStyles.clear();
         mControllerChoice = -1; // -1 so you must make a choice (and can't accidentally pick the first answer)
@@ -839,8 +848,13 @@ namespace MWGui
             mLinks.push_back(std::move(link));
 
             typesetter->lineBreak();
-            BookTypesetter::Style* questionStyle = typesetter->createHotStyle(
-                body, textColours.answer, textColours.answerOver, textColours.answerPressed, interactiveId);
+            const MyGUI::Colour& answer = Settings::gui().mXboxFontColors ? textColours.bigAnswer : textColours.answer;
+            const MyGUI::Colour& answerOver
+                = Settings::gui().mXboxFontColors ? textColours.bigAnswerOver : textColours.answerOver;
+            const MyGUI::Colour& answerPressed
+                = Settings::gui().mXboxFontColors ? textColours.bigAnswerPressed : textColours.answerPressed;
+            BookTypesetter::Style* questionStyle
+                = typesetter->createHotStyle(body, answer, answerOver, answerPressed, interactiveId);
             typesetter->write(questionStyle, choice.first);
             mChoiceStyles.push_back(questionStyle);
         }
@@ -857,8 +871,13 @@ namespace MWGui
                                              ->get<ESM::GameSetting>()
                                              .find("sGoodbye")
                                              ->mValue.getString();
-            BookTypesetter::Style* questionStyle = typesetter->createHotStyle(
-                body, textColours.answer, textColours.answerOver, textColours.answerPressed, interactiveId);
+            const MyGUI::Colour& answer = Settings::gui().mXboxFontColors ? textColours.bigAnswer : textColours.answer;
+            const MyGUI::Colour& answerOver
+                = Settings::gui().mXboxFontColors ? textColours.bigAnswerOver : textColours.answerOver;
+            const MyGUI::Colour& answerPressed
+                = Settings::gui().mXboxFontColors ? textColours.bigAnswerPressed : textColours.answerPressed;
+            BookTypesetter::Style* questionStyle
+                = typesetter->createHotStyle(body, answer, answerOver, answerPressed, interactiveId);
             typesetter->lineBreak();
             typesetter->write(questionStyle, goodbye);
         }
@@ -1026,7 +1045,7 @@ namespace MWGui
 
     void DialogueWindow::updateTopicFormat()
     {
-        if (!Settings::gui().mColorTopicEnable)
+        if (!Settings::gui().mColorTopicEnable || Settings::gui().mXboxFontColors)
             return;
 
         for (const std::string& keyword : mKeywords)

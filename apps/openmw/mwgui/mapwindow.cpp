@@ -1157,8 +1157,9 @@ namespace MWGui
         markerWidget->setUserString("ToolTipLayout", "TextToolTipOneLine");
 
         markerWidget->setNeedMouseFocus(true);
-        markerWidget->setColour(
-            MyGUI::Colour::parse(MyGUI::LanguageManager::getInstance().replaceTags("#{fontcolour=normal}")));
+        const char* markerColour = Settings::gui().mXboxFontColors ? "header" : "normal";
+        markerWidget->setColour(MyGUI::Colour::parse(
+            MyGUI::LanguageManager::getInstance().replaceTags("#{fontcolour=" + std::string(markerColour) + "}")));
         markerWidget->setDepth(Global_MarkerLayer);
         markerWidget->eventMouseDrag += MyGUI::newDelegate(this, &MapWindow::onMouseDrag);
         if (Settings::map().mAllowZooming)

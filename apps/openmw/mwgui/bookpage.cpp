@@ -13,6 +13,8 @@
 #include <components/sceneutil/depth.hpp>
 #include <components/settings/values.hpp>
 
+#include "layout.hpp"
+
 namespace
 {
     int getJournalUiFontHeight()
@@ -1480,7 +1482,7 @@ namespace MWGui
             }
 
             mControllerHighlight = createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setVisible(false);
         }

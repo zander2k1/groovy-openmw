@@ -308,7 +308,7 @@ namespace MWGui
         if (useControllerSelectionHighlight())
         {
             mControllerHighlight = mMainWidget->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setDepth(1);
             mControllerHighlight->setVisible(false);

@@ -99,7 +99,7 @@ namespace MWGui
         if (MyGUI::Widget* client = mRaceList->getClientWidget())
         {
             mControllerHighlight = client->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerHighlight->setNeedMouseFocus(false);
             mControllerHighlight->setVisible(false);
         }

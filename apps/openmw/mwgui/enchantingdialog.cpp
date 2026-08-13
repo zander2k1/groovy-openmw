@@ -94,7 +94,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);

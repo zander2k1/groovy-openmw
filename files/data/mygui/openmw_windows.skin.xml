@@ -30,6 +30,14 @@
         </BasisSkin>
     </Resource>
 
+    <Resource type="ResourceSkin" name="ControllerHighlightXbox" size="8 8" texture="transparent">
+        <Property key="Colour" value="0.5 0.5 0.5"/>
+        <Property key="Alpha" value="0.60"/>
+        <BasisSkin type="MainSkin" offset="0 0 8 8" align="Stretch">
+            <State name="normal"/>
+        </BasisSkin>
+    </Resource>
+
     <!-- Define the borders for pin button (up) -->
     <Resource type="AutoSizedResourceSkin" name="PU_B" texture="textures\menu_rightbuttonup_bottom.dds">
         <Property key="NeedMouse" value="false"/>

@@ -37,7 +37,8 @@ namespace
         if (!parent)
             return nullptr;
 
-        auto* highlight = parent->createWidget<MyGUI::Widget>("ControllerHighlight", coord, MyGUI::Align::Default);
+        auto* highlight
+            = parent->createWidget<MyGUI::Widget>(getControllerHighlightSkin(), coord, MyGUI::Align::Default);
         highlight->setNeedMouseFocus(false);
         highlight->setDepth(1);
         highlight->setVisible(false);
@@ -799,7 +800,7 @@ namespace MWGui
                 {
                     const MyGUI::IntCoord rowCoord(coord1.left, rowTop, coord1.width + coord2.width, coord1.height);
                     highlight = mSkillView->createWidget<MyGUI::Widget>(
-                        "ControllerHighlight", rowCoord, MyGUI::Align::Default);
+                        getControllerHighlightSkin(), rowCoord, MyGUI::Align::Default);
                     highlight->setNeedMouseFocus(false);
                     highlight->setDepth(1);
                     highlight->setVisible(false);
@@ -908,7 +909,7 @@ namespace MWGui
                     {
                         const MyGUI::IntCoord rowCoord(coord1.left, rowTop, coord1.width + coord2.width, coord1.height);
                         highlight = mSkillView->createWidget<MyGUI::Widget>(
-                            "ControllerHighlight", rowCoord, MyGUI::Align::Default);
+                            getControllerHighlightSkin(), rowCoord, MyGUI::Align::Default);
                         highlight->setNeedMouseFocus(false);
                         highlight->setDepth(1);
                         highlight->setVisible(false);
@@ -940,7 +941,7 @@ namespace MWGui
                     {
                         const MyGUI::IntCoord rowCoord(coord1.left, rowTop, coord1.width + coord2.width, coord1.height);
                         highlight = mSkillView->createWidget<MyGUI::Widget>(
-                            "ControllerHighlight", rowCoord, MyGUI::Align::Default);
+                            getControllerHighlightSkin(), rowCoord, MyGUI::Align::Default);
                         highlight->setNeedMouseFocus(false);
                         highlight->setDepth(1);
                         highlight->setVisible(false);
@@ -972,7 +973,7 @@ namespace MWGui
                     {
                         const MyGUI::IntCoord rowCoord(coord1.left, rowTop, coord1.width + coord2.width, coord1.height);
                         highlight = mSkillView->createWidget<MyGUI::Widget>(
-                            "ControllerHighlight", rowCoord, MyGUI::Align::Default);
+                            getControllerHighlightSkin(), rowCoord, MyGUI::Align::Default);
                         highlight->setNeedMouseFocus(false);
                         highlight->setDepth(1);
                         highlight->setVisible(false);

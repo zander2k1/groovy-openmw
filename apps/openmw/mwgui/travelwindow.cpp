@@ -88,7 +88,7 @@ namespace MWGui
         if (price <= playerGold && useControllerSelectionHighlight())
         {
             highlight = mDestinationsView->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", 0, mCurrentY, 200, lineHeight, MyGUI::Align::Default);
+                getControllerHighlightSkin(), 0, mCurrentY, 200, lineHeight, MyGUI::Align::Default);
             highlight->setNeedMouseFocus(false);
             highlight->setVisible(false);
         }

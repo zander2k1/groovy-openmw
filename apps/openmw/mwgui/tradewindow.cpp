@@ -10,6 +10,7 @@
 
 #include <components/misc/rng.hpp>
 #include <components/misc/strings/format.hpp>
+#include <components/settings/values.hpp>
 #include <components/widgets/numericeditbox.hpp>
 
 #include "../mwbase/dialoguemanager.hpp"
@@ -136,6 +137,19 @@ namespace MWGui
         getWidget(mFilterMisc, "MiscButton");
         getWidget(mCategories, "Categories");
 
+        if (Settings::gui().mXboxFontColors)
+        {
+            const auto applyTabSkin = [](MyGUI::Button* button, const char* caption) {
+                button->changeWidgetSkin("MW_Button_XboxInventoryTab");
+                button->setCaptionWithReplacing(MyGUI::UString(caption));
+            };
+            applyTabSkin(mFilterAll, "#{sAllTab}");
+            applyTabSkin(mFilterWeapon, "#{sWeaponTab}");
+            applyTabSkin(mFilterApparel, "#{sApparelTab}");
+            applyTabSkin(mFilterMagic, "#{sMagicTab}");
+            applyTabSkin(mFilterMisc, "#{sMiscTab}");
+        }
+
         getWidget(mMaxSaleButton, "MaxSaleButton");
         getWidget(mCancelButton, "CancelButton");
         getWidget(mOfferButton, "OfferButton");
@@ -162,7 +176,7 @@ namespace MWGui
         if (mCategories)
         {
             mControllerTabHighlight = mCategories->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerTabHighlight->setNeedMouseFocus(false);
             mControllerTabHighlight->setVisible(false);
         }

@@ -571,6 +571,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
+        loadSettingBool(Settings::gui().mXboxFontColors, *xboxFontColorsCheckBox);
         loadSettingBool(Settings::gui().mXboxHudMargins, *xboxHudMarginsCheckBox);
         loadSettingBool(Settings::gui().mXboxAlchemyUi, *xboxAlchemyUiCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
@@ -1017,6 +1018,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
+        saveSettingBool(*xboxFontColorsCheckBox, Settings::gui().mXboxFontColors);
         saveSettingBool(*xboxHudMarginsCheckBox, Settings::gui().mXboxHudMargins);
         saveSettingBool(*xboxAlchemyUiCheckBox, Settings::gui().mXboxAlchemyUi);
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);

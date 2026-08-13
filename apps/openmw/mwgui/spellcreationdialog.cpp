@@ -121,7 +121,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);
@@ -784,7 +784,7 @@ namespace MWGui
             if (!highlightParent)
                 highlightParent = mMainWidget;
             mControllerFocusHighlight = highlightParent->createWidget<MyGUI::Widget>(
-                "ControllerHighlight", MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
+                getControllerHighlightSkin(), MyGUI::IntCoord(0, 0, 0, 0), MyGUI::Align::Default);
             mControllerFocusHighlight->setNeedMouseFocus(false);
             mControllerFocusHighlight->setDepth(1);
             mControllerFocusHighlight->setVisible(false);
@@ -1177,7 +1177,7 @@ namespace MWGui
             ++i;
         }
         if (Settings::gui().mControllerMenus)
-            mAvailableEffectsList->setProperty("ControllerHighlightSkin", "ControllerHighlight");
+            mAvailableEffectsList->setProperty("ControllerHighlightSkin", getControllerHighlightSkin());
         else
             mAvailableEffectsList->setProperty("ControllerHighlightSkin", "");
 
@@ -1360,8 +1360,8 @@ namespace MWGui
             MyGUI::Widget* highlight = nullptr;
             if (Settings::gui().mControllerMenus)
             {
-                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(
-                    "ControllerHighlight", MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight), MyGUI::Align::Default);
+                highlight = mUsedEffectsView->createWidget<MyGUI::Widget>(getControllerHighlightSkin(),
+                    MyGUI::IntCoord(0, 0, viewWidth, minEffectHeight), MyGUI::Align::Default);
                 highlight->setNeedMouseFocus(false);
                 highlight->setDepth(1);
                 highlight->setVisible(false);

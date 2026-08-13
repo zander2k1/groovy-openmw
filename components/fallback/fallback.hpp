@@ -9,6 +9,8 @@
 
 namespace Fallback
 {
+    void applyXboxFontColours(std::map<std::string, std::string>& fallback);
+
     /// @brief contains settings imported from the Morrowind INI file.
     class Map
     {

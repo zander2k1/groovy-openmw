@@ -1605,6 +1605,16 @@
                </widget>
               </item>
               <item row="1" column="0">
+               <widget class="QCheckBox" name="xboxFontColorsCheckBox">
+                <property name="toolTip">
+                 <string>Use the original Xbox font colour palette for standard interface text, controls, and status bars.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Font Colors</string>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
                <widget class="QCheckBox" name="xboxHudMarginsCheckBox">
                 <property name="toolTip">
                  <string>Use the original Xbox HUD safe-area margins. Also applies to the top-left Xbox-styled minimap.</string>
@@ -1614,7 +1624,7 @@
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
+              <item row="3" column="0">
                <widget class="QCheckBox" name="xboxAlchemyUiCheckBox">
                 <property name="toolTip">
                  <string>Replace alchemy with an Xbox-style split menu flow.</string>
@@ -1624,7 +1634,7 @@
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
+              <item row="4" column="0">
                <widget class="QCheckBox" name="xboxStyledMinimapCheckBox">
                 <property name="toolTip">
                  <string>Move HUD minimap and active effects to the top-left in an Xbox-style layout.</string>
@@ -1634,7 +1644,7 @@
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
+              <item row="5" column="0">
                <widget class="QCheckBox" name="xboxTabOrderCheckBox">
                 <property name="toolTip">
                  <string>Use original Xbox tab order: Inventory, Magic, Map, Stats.</string>

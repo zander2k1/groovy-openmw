@@ -6,7 +6,6 @@
 
 namespace Gui
 {
-
     bool replaceTag(std::string_view tag, MyGUI::UString& out)
     {
         std::string_view fontcolour = "fontcolour=";

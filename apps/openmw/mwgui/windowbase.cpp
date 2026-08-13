@@ -36,6 +36,11 @@ size_t MWGui::wrap(size_t index, size_t max, int delta)
     return max - 1;
 }
 
+const char* getControllerHighlightSkin()
+{
+    return Settings::gui().mXboxFontColors ? "ControllerHighlightXbox" : "ControllerHighlight";
+}
+
 void MWGui::setControllerFocus(const std::vector<MyGUI::Button*>& buttons, size_t index, bool focused)
 {
     if (index < buttons.size())
