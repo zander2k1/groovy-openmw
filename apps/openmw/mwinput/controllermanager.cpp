@@ -207,6 +207,7 @@ namespace
         Auto,
         Steam,
         Xbox,
+        XboxClassic,
         Playstation,
         Switch,
         Gamecube,
@@ -219,6 +220,8 @@ namespace
             return ControllerIconStyle::Steam;
         if (style == "xbox")
             return ControllerIconStyle::Xbox;
+        if (style == "xbox_classic")
+            return ControllerIconStyle::XboxClassic;
         if (style == "playstation")
             return ControllerIconStyle::Playstation;
         if (style == "switch")
@@ -1429,6 +1432,7 @@ namespace MWInput
         const ControllerIconStyle style = getControllerIconStyle();
         const bool useWhiteBlackButtonIcons = Settings::input().mControllerWhiteBlackButtonIcons;
         bool isXbox = false;
+        bool isXboxClassic = false;
         bool isPsx = false;
         bool isSwitch = false;
         bool isGamecube = false;
@@ -1443,6 +1447,7 @@ namespace MWInput
         else
         {
             isXbox = style == ControllerIconStyle::Xbox;
+            isXboxClassic = style == ControllerIconStyle::XboxClassic;
             isPsx = style == ControllerIconStyle::Playstation;
             isSwitch = style == ControllerIconStyle::Switch;
             isGamecube = style == ControllerIconStyle::Gamecube;
@@ -1451,6 +1456,8 @@ namespace MWInput
         switch (button)
         {
             case SDL_CONTROLLER_BUTTON_A:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_a.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_a.dds";
                 if (isSwitch)
@@ -1459,6 +1466,8 @@ namespace MWInput
                     return "textures/omw_psx_button_x.dds";
                 return "textures/omw_steam_button_a.dds";
             case SDL_CONTROLLER_BUTTON_B:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_b.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_b.dds";
                 if (isSwitch)
@@ -1476,6 +1485,8 @@ namespace MWInput
                     return "textures/omw_psx_button_dpad.dds";
                 return "textures/omw_steam_button_dpad.dds";
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_lb_white.dds";
                 if (useWhiteBlackButtonIcons)
                     return "textures/omw_xbox_button_lb_WHITE.dds";
                 if (isXbox)
@@ -1488,6 +1499,8 @@ namespace MWInput
                     return "textures/omw_gamecube_button_lstick.dds";
                 return "textures/omw_steam_button_l3.dds";
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_rb_black.dds";
                 if (useWhiteBlackButtonIcons)
                     return "textures/omw_xbox_button_rb_BLACK.dds";
                 if (isGamecube)
@@ -1502,6 +1515,8 @@ namespace MWInput
             case SDL_CONTROLLER_BUTTON_START:
                 return "textures/omw_steam_button_menu.dds";
             case SDL_CONTROLLER_BUTTON_X:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_x.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_x.dds";
                 if (isSwitch)
@@ -1510,6 +1525,8 @@ namespace MWInput
                     return "textures/omw_psx_button_square.dds";
                 return "textures/omw_steam_button_x.dds";
             case SDL_CONTROLLER_BUTTON_Y:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_y.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_y.dds";
                 if (isSwitch)
@@ -1533,6 +1550,7 @@ namespace MWInput
     {
         const ControllerIconStyle style = getControllerIconStyle();
         bool isXbox = false;
+        bool isXboxClassic = false;
         bool isSwitch = false;
         bool isGamecube = false;
         if (style == ControllerIconStyle::Auto)
@@ -1544,6 +1562,7 @@ namespace MWInput
         else
         {
             isXbox = style == ControllerIconStyle::Xbox;
+            isXboxClassic = style == ControllerIconStyle::XboxClassic;
             isSwitch = style == ControllerIconStyle::Switch;
             isGamecube = style == ControllerIconStyle::Gamecube;
         }
@@ -1559,6 +1578,8 @@ namespace MWInput
             case SDL_CONTROLLER_AXIS_RIGHTY:
                 return "textures/omw_steam_button_rstick.dds";
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_lt.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_lt.dds";
                 if (isXbox)
@@ -1567,6 +1588,8 @@ namespace MWInput
                     return "textures/omw_switch_button_zl.dds";
                 return "textures/omw_steam_button_l2.dds";
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
+                if (isXboxClassic)
+                    return "textures/omw_xbox_classic_button_rt.dds";
                 if (isGamecube)
                     return "textures/omw_gamecube_button_rt.dds";
                 if (isXbox)

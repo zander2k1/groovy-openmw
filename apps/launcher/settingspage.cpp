@@ -114,12 +114,14 @@ namespace
             return 1;
         if (value == "xbox")
             return 2;
-        if (value == "playstation")
+        if (value == "xbox_classic")
             return 3;
-        if (value == "switch")
+        if (value == "playstation")
             return 4;
-        if (value == "gamecube")
+        if (value == "switch")
             return 5;
+        if (value == "gamecube")
+            return 6;
         return 0;
     }
 
@@ -132,10 +134,12 @@ namespace
             case 2:
                 return "xbox";
             case 3:
-                return "playstation";
+                return "xbox_classic";
             case 4:
-                return "switch";
+                return "playstation";
             case 5:
+                return "switch";
+            case 6:
                 return "gamecube";
             default:
                 return "auto";
