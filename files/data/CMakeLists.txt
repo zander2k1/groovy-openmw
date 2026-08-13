@@ -4,6 +4,8 @@ endif()
 
 set(BUILTIN_DATA_FILES
     textures/omw_map_color_palette.dds
+    textures/xbox/loading_bar.tga
+    textures/xbox/loading_bar_background.tga
     textures/omw_menu_scroll_down.dds
     textures/omw_menu_scroll_up.dds
     textures/omw_menu_scroll_left.dds
@@ -275,6 +277,7 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_magicselection_dialog.layout
     mygui/openmw_spell_buying_window.layout
     mygui/openmw_loading_screen.layout
+    mygui/openmw_loading_screen_xbox.layout
     mygui/openmw_levelup_dialog.layout
     mygui/openmw_wait_dialog.layout
     mygui/openmw_wait_dialog_progressbar.layout
@@ -303,5 +306,11 @@ set(BUILTIN_DATA_FILES
 )
 
 foreach (f ${BUILTIN_DATA_FILES})
+    copy_resource_file("${CMAKE_CURRENT_SOURCE_DIR}/${f}" "${OPENMW_RESOURCES_ROOT}" "resources/vfs/${f}")
+endforeach (f)
+
+# Bundle every engine splash image placed under textures/splash.
+file(GLOB_RECURSE SPLASH_SCREEN_FILES CONFIGURE_DEPENDS RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "textures/splash/*")
+foreach (f ${SPLASH_SCREEN_FILES})
     copy_resource_file("${CMAKE_CURRENT_SOURCE_DIR}/${f}" "${OPENMW_RESOURCES_ROOT}" "resources/vfs/${f}")
 endforeach (f)

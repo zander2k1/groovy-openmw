@@ -328,6 +328,11 @@ void Launcher::SettingsPage::on_skipMenuCheckBox_stateChanged(int state)
     startDefaultCharacterAtField->setEnabled(state == Qt::Checked);
 }
 
+void Launcher::SettingsPage::slotXboxSplashScreensToggled(bool checked)
+{
+    longerLoadingScreensCheckBox->setEnabled(checked);
+}
+
 void Launcher::SettingsPage::on_recommendedScalingDefaultsCheckBox_stateChanged(int state)
 {
     if (state == Qt::Checked)
@@ -575,6 +580,10 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mXboxHudMargins, *xboxHudMarginsCheckBox);
         loadSettingBool(Settings::gui().mXboxAlchemyUi, *xboxAlchemyUiCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledMinimap, *xboxStyledMinimapCheckBox);
+        connect(xboxSplashScreensCheckBox, &QCheckBox::toggled, this, &SettingsPage::slotXboxSplashScreensToggled);
+        loadSettingBool(Settings::gui().mXboxSplashScreens, *xboxSplashScreensCheckBox);
+        loadSettingBool(Settings::gui().mLongerLoadingScreens, *longerLoadingScreensCheckBox);
+        slotXboxSplashScreensToggled(xboxSplashScreensCheckBox->isChecked());
         loadSettingBool(Settings::gui().mXboxTabOrder, *xboxTabOrderCheckBox);
         loadSettingBool(Settings::map().mAllowZooming, *useZoomOnMapCheckBox);
         loadSettingBool(Settings::game().mGraphicHerbalism, *graphicHerbalismCheckBox);
@@ -1022,6 +1031,8 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*xboxHudMarginsCheckBox, Settings::gui().mXboxHudMargins);
         saveSettingBool(*xboxAlchemyUiCheckBox, Settings::gui().mXboxAlchemyUi);
         saveSettingBool(*xboxStyledMinimapCheckBox, Settings::gui().mXboxStyledMinimap);
+        saveSettingBool(*xboxSplashScreensCheckBox, Settings::gui().mXboxSplashScreens);
+        saveSettingBool(*longerLoadingScreensCheckBox, Settings::gui().mLongerLoadingScreens);
         Settings::gui().mDefaultFont.set(getComboBoxValue(*defaultFontComboBox));
         Settings::gui().mDialogueAndBookFont.set(getComboBoxValue(*dialogueBookFontComboBox));
         saveSettingBool(*xboxTabOrderCheckBox, Settings::gui().mXboxTabOrder);

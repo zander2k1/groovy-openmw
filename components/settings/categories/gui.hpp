@@ -56,6 +56,8 @@ namespace Settings
         SettingValue<bool> mXboxHudMargins{ mIndex, "GUI", "xbox hud margins" };
         SettingValue<bool> mXboxAlchemyUi{ mIndex, "GUI", "xbox alchemy ui", true };
         SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap", true };
+        SettingValue<bool> mXboxSplashScreens{ mIndex, "GUI", "xbox splash screens", true };
+        SettingValue<bool> mLongerLoadingScreens{ mIndex, "GUI", "longer loading screens", false };
         SettingValue<std::string> mDefaultFont{ mIndex, "GUI", "default font", "MontserratMedium" };
         SettingValue<std::string> mDialogueAndBookFont{ mIndex, "GUI", "dialogue and book font", "MontserratSemiBold" };
         SettingValue<bool> mXboxTabOrder{ mIndex, "GUI", "xbox tab order", false };

@@ -43,6 +43,7 @@ namespace Launcher
         void slotShadowDistLimitToggled(bool checked);
         void slotDistantLandToggled(bool checked);
         void slotControllerMenusToggled(bool checked);
+        void slotXboxSplashScreensToggled(bool checked);
         void slotOpenFile(QTreeWidgetItem* item);
 
     private:

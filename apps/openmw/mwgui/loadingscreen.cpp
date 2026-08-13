@@ -1,6 +1,8 @@
 #include "loadingscreen.hpp"
 
 #include <array>
+#include <chrono>
+#include <thread>
 
 #include <osgViewer/Viewer>
 
@@ -31,7 +33,8 @@ namespace MWGui
 {
 
     LoadingScreen::LoadingScreen(Resource::ResourceSystem* resourceSystem, osgViewer::Viewer* viewer)
-        : WindowBase("openmw_loading_screen.layout")
+        : WindowBase(
+            Settings::gui().mXboxSplashScreens ? "openmw_loading_screen_xbox.layout" : "openmw_loading_screen.layout")
         , mResourceSystem(resourceSystem)
         , mViewer(viewer)
         , mTargetFrameRate(120.0)
@@ -41,11 +44,16 @@ namespace MWGui
         , mImportantLabel(false)
         , mNestedLoadingCount(0)
         , mProgress(0)
+        , mUseXboxSplashScreens(Settings::gui().mXboxSplashScreens)
+        , mUseLongerLoadingScreens(Settings::gui().mLongerLoadingScreens)
         , mShowWallpaper(true)
     {
         getWidget(mLoadingText, "LoadingText");
-        getWidget(mProgressBar, "ProgressBar");
         getWidget(mLoadingBox, "LoadingBox");
+        getWidget(mDefaultProgressBar, "ProgressBar");
+        if (mUseXboxSplashScreens)
+            getWidget(mXboxProgressBar, "XboxProgressBar");
+        mProgressBar = mDefaultProgressBar;
         getWidget(mSceneImage, "Scene");
         getWidget(mSplashImage, "Splash");
 
@@ -65,7 +73,7 @@ namespace MWGui
                 && std::find(supportedExtensions.begin(), supportedExtensions.end(), ext) != supportedExtensions.end();
         };
 
-        constexpr VFS::Path::NormalizedView splash("splash/");
+        constexpr VFS::Path::NormalizedView splash("textures/splash/");
         for (const auto& name : mResourceSystem->getVFS()->getRecursiveDirectoryIterator(splash))
         {
             if (isSupportedExtension(Misc::getFileExtension(name)))
@@ -98,6 +106,29 @@ namespace MWGui
         WindowBase::setVisible(visible);
         mSplashImage->setVisible(visible);
         mSceneImage->setVisible(visible);
+    }
+
+    void LoadingScreen::onResChange(int, int)
+    {
+        updateXboxProgressBarLayout();
+    }
+
+    void LoadingScreen::updateXboxProgressBarLayout()
+    {
+        if (!mUseXboxSplashScreens)
+            return;
+
+        constexpr int referenceWidth = 1024;
+        constexpr int referenceHeight = 768;
+        constexpr int barLeft = 740;
+        constexpr int barTop = 646;
+        constexpr int barWidth = 192;
+        constexpr int barHeight = 12;
+
+        const int width = mMainWidget->getWidth();
+        const int height = mMainWidget->getHeight();
+        mXboxProgressBar->setCoord(barLeft * width / referenceWidth, barTop * height / referenceHeight,
+            barWidth * width / referenceWidth, barHeight * height / referenceHeight);
     }
 
     double LoadingScreen::getTargetFrameRate() const
@@ -147,6 +178,14 @@ namespace MWGui
         if (mNestedLoadingCount++ > 0 && mMainWidget->getVisible())
             return;
 
+        mXboxProgressPhase = 0;
+        mXboxProgressRange = 1;
+        mXboxProgress = 0;
+        mFakeProgress = 0;
+        mFakeLoadingActive = false;
+        mLongerLoadingCandidate
+            = mUseXboxSplashScreens && mUseLongerLoadingScreens && mHasCompletedStartupLoad && !mSplashScreens.empty();
+
         mLoadingOnTime = mTimer.time_m();
 
         // Assign dummy bounding sphere callback to avoid the bounding sphere of the entire scene being recomputed after
@@ -162,12 +201,19 @@ namespace MWGui
 
         setVisible(true);
 
-        mShowWallpaper = MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_NoGame;
+        mShowWallpaper = !mLongerLoadingCandidate
+            && MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_NoGame;
 
         if (mShowWallpaper)
-        {
             changeWallpaper();
-        }
+
+        const bool useXboxProgressBar = mUseXboxSplashScreens && mShowWallpaper;
+        mLoadingBox->setVisible(!useXboxProgressBar);
+        if (mUseXboxSplashScreens)
+            mXboxProgressBar->setVisible(useXboxProgressBar);
+        mProgressBar = useXboxProgressBar ? mXboxProgressBar : mDefaultProgressBar;
+        mProgressBar->setScrollViewPage(1);
+        updateXboxProgressBarLayout();
 
         MWBase::Environment::get().getWindowManager()->pushGuiMode(mShowWallpaper ? GM_LoadingWallpaper : GM_Loading);
     }
@@ -176,6 +222,19 @@ namespace MWGui
     {
         if (--mNestedLoadingCount > 0)
             return;
+
+        if (mLongerLoadingCandidate && mTimer.time_m() >= mLoadingOnTime + 200.0)
+            startLongerLoadingScreen();
+
+        while (mFakeLoadingActive && mTimer.time_m() < mFakeLoadingEndTime)
+        {
+            draw();
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        }
+        updateFakeProgress();
+        draw();
+        mFakeLoadingActive = false;
+        mHasCompletedStartupLoad = true;
 
         if (mLastRenderTime < mLoadingOnTime)
         {
@@ -223,6 +282,27 @@ namespace MWGui
 
     void LoadingScreen::setProgressRange(size_t range)
     {
+        if (mLongerLoadingCandidate)
+        {
+            mProgress = 0;
+            return;
+        }
+
+        if (mUseXboxSplashScreens)
+        {
+            // Loading is reported in several independent phases. Spread the first three over one continuous bar.
+            if (mProgress > 0)
+                mXboxProgressPhase = std::min(mXboxProgressPhase + 1, size_t(2));
+            mXboxProgressRange = std::max(range, size_t(1));
+            mProgress = 0;
+            mXboxProgress = std::max(mXboxProgress, mXboxProgressPhase * 100);
+            mProgressBar->setScrollRange(301);
+            mProgressBar->setScrollPosition(0);
+            mProgressBar->setTrackSize(
+                static_cast<int>(mXboxProgress / mProgressBar->getScrollRange() * mProgressBar->getLineSize()));
+            return;
+        }
+
         mProgressBar->setScrollRange(range + 1);
         mProgressBar->setScrollPosition(0);
         mProgressBar->setTrackSize(0);
@@ -231,6 +311,25 @@ namespace MWGui
 
     void LoadingScreen::setProgress(size_t value)
     {
+        if (mLongerLoadingCandidate)
+        {
+            draw();
+            return;
+        }
+
+        if (mUseXboxSplashScreens)
+        {
+            value = std::min(value, mXboxProgressRange);
+            mProgress = value;
+            const size_t progress = mXboxProgressPhase * 100 + value * 100 / mXboxProgressRange;
+            mXboxProgress = std::max(mXboxProgress, progress);
+            mProgressBar->setScrollPosition(0);
+            mProgressBar->setTrackSize(static_cast<int>(
+                mXboxProgress / static_cast<float>(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));
+            draw();
+            return;
+        }
+
         // skip expensive update if there isn't enough visible progress
         if (mProgressBar->getWidth() <= 0
             || value - mProgress < mProgressBar->getScrollRange() / mProgressBar->getWidth())
@@ -245,6 +344,18 @@ namespace MWGui
 
     void LoadingScreen::increaseProgress(size_t increase)
     {
+        if (mLongerLoadingCandidate)
+        {
+            draw();
+            return;
+        }
+
+        if (mUseXboxSplashScreens)
+        {
+            setProgress(mProgress + increase);
+            return;
+        }
+
         mProgressBar->setScrollPosition(0);
         size_t value = mProgress + increase;
         value = std::min(value, mProgressBar->getScrollRange() - 1);
@@ -275,6 +386,59 @@ namespace MWGui
         if (!mShowWallpaper && diff < initialDelay * 1000)
             return false;
         return true;
+    }
+
+    void LoadingScreen::updateFakeProgress()
+    {
+        if (!mFakeLoadingActive)
+            return;
+
+        const double now = mTimer.time_m();
+        if (now >= mFakeLoadingEndTime)
+        {
+            mFakeProgress = 300;
+        }
+        else if (now >= mNextFakeProgressTime)
+        {
+            const double elapsed = now - mLoadingOnTime;
+            const double duration = mFakeLoadingEndTime - mLoadingOnTime;
+            const size_t target = static_cast<size_t>(elapsed / duration * 300.0);
+            const size_t jitter = Misc::Rng::rollDice(12);
+            const size_t regularProgress = target > jitter ? target - jitter : size_t(0);
+            const size_t regularBurst = 2 + Misc::Rng::rollDice(4);
+            const bool longBurst = Misc::Rng::rollDice(4) == 0;
+            const size_t burst = regularBurst * (longBurst ? 2 + Misc::Rng::rollDice(2) : 1);
+            // Never reach the end before the timer expires, so a completed bar always closes the loading screen.
+            mFakeProgress = std::min(target, std::max(mFakeProgress + burst, regularProgress));
+            mNextFakeProgressTime = now + 160.0 + Misc::Rng::rollDice(441);
+        }
+
+        mProgressBar->setScrollRange(301);
+        mProgressBar->setScrollPosition(0);
+        mProgressBar->setTrackSize(static_cast<int>(
+            mFakeProgress / static_cast<float>(mProgressBar->getScrollRange()) * mProgressBar->getLineSize()));
+    }
+
+    void LoadingScreen::startLongerLoadingScreen()
+    {
+        if (mFakeLoadingActive)
+            return;
+
+        mShowWallpaper = true;
+        changeWallpaper();
+        mLoadingBox->setVisible(false);
+        mXboxProgressBar->setVisible(true);
+        mProgressBar = mXboxProgressBar;
+        mProgressBar->setScrollViewPage(1);
+        updateXboxProgressBarLayout();
+        const double now = mTimer.time_m();
+        const double duration = 10000.0 + Misc::Rng::rollDice(15001);
+        mFakeLoadingEndTime = mLoadingOnTime + duration;
+        mNextFakeProgressTime = now;
+        mFakeLoadingActive = true;
+
+        MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Loading);
+        MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_LoadingWallpaper);
     }
 
     void LoadingScreen::setupCopyFramebufferToTextureCallback()
@@ -317,6 +481,11 @@ namespace MWGui
 
     void LoadingScreen::draw()
     {
+        if (mLongerLoadingCandidate && !mFakeLoadingActive && mTimer.time_m() >= mLoadingOnTime + 200.0)
+            startLongerLoadingScreen();
+
+        updateFakeProgress();
+
         if (!needToDrawLoadingScreen())
             return;
 

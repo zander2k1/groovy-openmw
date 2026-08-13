@@ -38,6 +38,16 @@
             <State name="normal" offset="0 0 16 2"/>
         </BasisSkin>
     </Resource>
+    <Resource type="ResourceSkin" name="MW_Progress_Xbox_Loading_Small" size="16 16" texture="textures\xbox\loading_bar.tga" >
+        <BasisSkin type="MainSkin" offset="0 0 16 16" align="Stretch">
+            <State name="normal" offset="0 0 16 16"/>
+        </BasisSkin>
+    </Resource>
+    <Resource type="ResourceSkin" name="MW_Progress_Xbox_Loading_Background" size="128 128" texture="textures\xbox\loading_bar_background.tga" >
+        <BasisSkin type="MainSkin" offset="0 0 128 128" align="Stretch">
+            <State name="normal" offset="0 0 128 128"/>
+        </BasisSkin>
+    </Resource>
     <Resource type="ResourceSkin" name="ProgressText" size="16 14">
         <Property key="FontName" value="Default"/>
         <Property key="TextAlign" value="VCenter HCenter"/>
@@ -102,6 +112,14 @@
             <Widget type="Widget" skin="TransparentBG" position="2 2 60 2" align="Stretch" />
             <Widget type="Button" skin="MW_Progress_Loading_Small" position="0 0 1 6" align="Left VStretch" name="Track" />
             <Widget type="Widget" skin="MW_Box" position="0 0 64 6" align="Stretch" />
+        </Widget>
+    </Resource>
+    <Resource type="ResourceLayout" name="MW_ProgressScroll_Loading_Xbox" size="64 6">
+        <Widget type="Widget" position="0 0 64 6" name="Root">
+            <UserString key="TrackFill" value="true"/>
+            <Property key="VerticalAlignment" value="false"/>
+            <Widget type="Widget" skin="MW_Progress_Xbox_Loading_Background" position="0 0 64 6" align="Stretch" />
+            <Widget type="Button" skin="MW_Progress_Xbox_Loading_Small" position="2 2 1 2" align="Left VStretch" name="Track" />
         </Widget>
     </Resource>
 </MyGUI>

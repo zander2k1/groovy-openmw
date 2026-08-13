@@ -1654,6 +1654,26 @@
                 </property>
                </widget>
               </item>
+              <item row="6" column="0">
+               <widget class="QCheckBox" name="xboxSplashScreensCheckBox">
+                <property name="toolTip">
+                 <string>Show the original Xbox splash screens with their matching loading bar while loading the game.</string>
+                </property>
+                <property name="text">
+                 <string>XBOX Loading Screens</string>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QCheckBox" name="longerLoadingScreensCheckBox">
+                <property name="toolTip">
+                 <string>Keep splash screens visible for a random 10 to 25 seconds with a simulated loading bar that moves in bursts.</string>
+                </property>
+                <property name="text">
+                 <string>Longer Loading Screens</string>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>

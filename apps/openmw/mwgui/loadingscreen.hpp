@@ -45,6 +45,7 @@ namespace MWGui
         void increaseProgress(size_t increase = 1) override;
 
         void setVisible(bool visible) override;
+        void onResChange(int width, int height) override;
 
         double getTargetFrameRate() const;
 
@@ -69,8 +70,19 @@ namespace MWGui
         int mNestedLoadingCount;
 
         size_t mProgress;
+        size_t mXboxProgressPhase = 0;
+        size_t mXboxProgressRange = 1;
+        size_t mXboxProgress = 0;
+        size_t mFakeProgress = 0;
 
+        bool mUseXboxSplashScreens;
+        bool mUseLongerLoadingScreens;
         bool mShowWallpaper;
+        bool mHasCompletedStartupLoad = false;
+        bool mLongerLoadingCandidate = false;
+        bool mFakeLoadingActive = false;
+        double mFakeLoadingEndTime = 0.0;
+        double mNextFakeProgressTime = 0.0;
         double mOldIcoMin = 0.0;
         unsigned int mOldIcoMax = 0;
 
@@ -78,6 +90,8 @@ namespace MWGui
 
         MyGUI::TextBox* mLoadingText;
         MyGUI::ScrollBar* mProgressBar;
+        MyGUI::ScrollBar* mDefaultProgressBar;
+        MyGUI::ScrollBar* mXboxProgressBar;
         BackgroundImage* mSplashImage;
         BackgroundImage* mSceneImage;
 
@@ -88,6 +102,9 @@ namespace MWGui
         std::unique_ptr<MyGUI::ITexture> mGuiTexture;
 
         void changeWallpaper();
+        void updateXboxProgressBarLayout();
+        void startLongerLoadingScreen();
+        void updateFakeProgress();
 
         void draw();
     };
