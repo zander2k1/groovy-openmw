@@ -52,6 +52,7 @@ namespace Settings
         SettingValue<std::string> mVirtualKeyboardLayoutSecondary{ mIndex, "GUI", "virtual keyboard layout secondary" };
         SettingValue<bool> mColorTopicEnable{ mIndex, "GUI", "color topic enable" };
         SettingValue<bool> mXboxStyledDialog{ mIndex, "GUI", "xbox styled dialog" };
+        SettingValue<bool> mXboxHudMargins{ mIndex, "GUI", "xbox hud margins" };
         SettingValue<bool> mXboxAlchemyUi{ mIndex, "GUI", "xbox alchemy ui", true };
         SettingValue<bool> mXboxStyledMinimap{ mIndex, "GUI", "xbox styled minimap", true };
         SettingValue<std::string> mDefaultFont{ mIndex, "GUI", "default font", "MontserratMedium" };

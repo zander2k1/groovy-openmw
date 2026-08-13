@@ -32,8 +32,19 @@
 
 namespace MWGui
 {
+    namespace
+    {
+        std::string_view getHudLayout()
+        {
+            if (Settings::gui().mXboxHudMargins)
+                return Settings::gui().mXboxStyledMinimap ? "openmw_hud_xbox_margins_minimap.layout"
+                                                          : "openmw_hud_xbox_margins.layout";
+            return Settings::gui().mXboxStyledMinimap ? "openmw_hud_xbox_minimap.layout" : "openmw_hud.layout";
+        }
+    }
+
     HUD::HUD(CustomMarkerCollection& customMarkers, DragAndDrop* dragAndDrop, MWRender::LocalMap* localMapRender)
-        : WindowBase("openmw_hud.layout")
+        : WindowBase(getHudLayout())
         , LocalMapBase(customMarkers, localMapRender, Settings::map().mLocalMapHudFogOfWar)
         , mDragAndDrop(dragAndDrop)
     {
@@ -60,8 +71,6 @@ namespace MWGui
         getWidget(mDrowningFlash, "Flash");
         mDrowning->setProgressRange(200);
 
-        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-
         // Item and spell images and status bars
         getWidget(mWeapBox, "WeapBox");
         getWidget(mWeapImage, "WeapImage");
@@ -79,19 +88,14 @@ namespace MWGui
         mSneakBoxBaseLeft = mSneakBox->getLeft();
 
         getWidget(mEffectBox, "EffectBox");
-        mEffectBoxBaseRight = viewSize.width - mEffectBox->getRight();
 
         getWidget(mMinimapBox, "MiniMapBox");
-        mMinimapBoxBaseRight = viewSize.width - mMinimapBox->getRight();
-        mMinimapBoxBaseBottom = viewSize.height - mMinimapBox->getBottom();
         getWidget(mMinimap, "MiniMap");
         getWidget(mCompass, "Compass");
         getWidget(mMinimapButton, "MiniMapButton");
         mMinimapButton->eventMouseButtonClick += MyGUI::newDelegate(this, &HUD::onMapClicked);
 
         getWidget(mCellNameBox, "CellName");
-        mCellNameBaseLeft = mCellNameBox->getLeft();
-        mCellNameBaseTop = mCellNameBox->getTop();
         getWidget(mWeaponSpellBox, "WeaponSpellName");
 
         getWidget(mCrosshair, "Crosshair");
@@ -531,43 +535,13 @@ namespace MWGui
         if (!mWeaponVisible && !mSpellVisible)
             mWeaponSpellBox->setVisible(false);
 
-        mWeapBox->setPosition(mWeapBoxBaseLeft - weapDx, mWeapBox->getTop());
-        mSpellBox->setPosition(mSpellBoxBaseLeft - spellDx, mSpellBox->getTop());
-        mSneakBox->setPosition(mSneakBoxBaseLeft - sneakDx, mSneakBox->getTop());
-
-        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
-        const bool xboxStyledMinimap = Settings::gui().mXboxStyledMinimap;
-
-        const int minimapLeft = xboxStyledMinimap ? mMinimapBoxBaseRight
-                                                  : (viewSize.width - mMinimapBoxBaseRight) - mMinimapBox->getWidth();
-        const int minimapTop = xboxStyledMinimap ? mMinimapBoxBaseBottom
-                                                 : (viewSize.height - mMinimapBoxBaseBottom) - mMinimapBox->getHeight();
-        mMinimapBox->setPosition(minimapLeft, minimapTop);
-
-        // effect box can have variable width -> variable left coordinate
-        int effectsDx = 0;
-        if (!mMinimapBox->getVisible())
-            effectsDx = mEffectBoxBaseRight - mMinimapBoxBaseRight;
-
         mMapVisible = mMinimapBox->getVisible();
         if (!mMapVisible)
             mCellNameBox->setVisible(false);
 
-        if (xboxStyledMinimap)
-        {
-            constexpr int cellNameGap = 4;
-            constexpr int effectsGap = 4;
-            mCellNameBox->setTextAlign(MyGUI::Align::Left);
-            mCellNameBox->setPosition(mMinimapBox->getLeft(), mMinimapBox->getBottom() + cellNameGap);
-            mEffectBox->setPosition(mMinimapBox->getRight() + effectsGap, mMinimapBox->getTop());
-        }
-        else
-        {
-            mCellNameBox->setTextAlign(MyGUI::Align::Right);
-            mCellNameBox->setPosition(mCellNameBaseLeft, mCellNameBaseTop);
-            mEffectBox->setPosition(
-                (viewSize.width - mEffectBoxBaseRight) - mEffectBox->getWidth() + effectsDx, mEffectBox->getTop());
-        }
+        mWeapBox->setPosition(mWeapBoxBaseLeft - weapDx, mWeapBox->getTop());
+        mSpellBox->setPosition(mSpellBoxBaseLeft - spellDx, mSpellBox->getTop());
+        mSneakBox->setPosition(mSneakBoxBaseLeft - sneakDx, mSneakBox->getTop());
     }
 
     void HUD::updateEnemyHealthBar()

@@ -228,6 +228,9 @@ set(BUILTIN_DATA_FILES
     mygui/openmw_hud_box.skin.xml
     mygui/openmw_hud_energybar.skin.xml
     mygui/openmw_hud.layout
+    mygui/openmw_hud_xbox_margins.layout
+    mygui/openmw_hud_xbox_margins_minimap.layout
+    mygui/openmw_hud_xbox_minimap.layout
     mygui/openmw_infobox.layout
     mygui/openmw_interactive_messagebox.layout
     mygui/openmw_interactive_messagebox_notransp.layout

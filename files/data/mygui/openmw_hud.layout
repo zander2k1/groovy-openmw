@@ -32,7 +32,7 @@
         </Widget>
 
         <!-- Equipped weapon/selected spell name display for a few seconds after it changes -->
-        <Widget type="TextBox" skin="SandText" position="13 118 270 24" name="WeaponSpellName" align="Left Bottom HStretch">
+        <Widget type="TextBox" skin="SandText" position="13 118 270 24" name="WeaponSpellName" align="Left Bottom">
             <Property key="Visible" value="false"/>
             <Property key="TextAlign" value="Left"/>
             <Property key="TextShadow" value="true"/>
@@ -83,7 +83,7 @@
         </Widget>
 
         <!-- Cell name display when cell changes -->
-        <Widget type="TextBox" skin="SandText" position="0 89 288 24" name="CellName" align="Left Bottom HStretch">
+        <Widget type="TextBox" skin="SandText" position="0 89 288 24" name="CellName" align="Left Bottom">
             <Property key="Visible" value="false"/>
             <Property key="TextAlign" value="Right"/>
             <Property key="TextShadow" value="true"/>
