@@ -28,10 +28,50 @@ extern "C" __declspec(dllexport) DWORD AmdPowerXpressRequestHighPerformance = 0x
 #endif
 
 #include <filesystem>
+#include <fstream>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #if (defined(__APPLE__) || defined(__linux) || defined(__unix) || defined(__posix))
 #include <unistd.h>
 #endif
+
+namespace
+{
+    bool removeFontColourFallbacks(const std::filesystem::path& configPath)
+    {
+        std::ifstream input(configPath);
+        if (!input.is_open())
+            return false;
+
+        std::vector<std::string> lines;
+        std::string line;
+        bool removed = false;
+        while (std::getline(input, line))
+        {
+            const size_t first = line.find_first_not_of(" \t");
+            const std::string_view trimmed
+                = first == std::string::npos ? std::string_view{} : std::string_view(line).substr(first);
+            if (trimmed.starts_with("fallback=FontColor_color_"))
+            {
+                removed = true;
+                continue;
+            }
+            lines.push_back(std::move(line));
+        }
+
+        if (!removed)
+            return false;
+
+        std::ofstream output(configPath, std::ios::trunc);
+        if (!output.is_open())
+            return false;
+        for (const std::string& retainedLine : lines)
+            output << retainedLine << '\n';
+        return output.good();
+    }
+}
 
 /**
  * \brief Parses application command line and calls \ref Cfg::ConfigurationManager
@@ -68,10 +108,14 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
 
     cfgMgr.processPaths(variables, std::filesystem::current_path());
 
+    const bool removedFontColourFallbacks
+        = removeFontColourFallbacks(cfgMgr.getUserConfigPath() / Files::openmwCfgFile);
     cfgMgr.readConfiguration(variables, desc);
 
     Debug::setupLogging(cfgMgr.getLogPath(), "OpenMW");
     Log(Debug::Info) << Version::getOpenmwVersionDescription();
+    if (removedFontColourFallbacks)
+        Log(Debug::Info) << "Removed legacy FontColor fallbacks from the user openmw.cfg";
 
     Settings::Manager::load(cfgMgr);
 
@@ -173,6 +217,9 @@ bool parseOptions(int argc, char** argv, OMW::Engine& engine, Files::Configurati
     fallbackMap["Fonts_Font_0"] = std::move(defaultFont);
     fallbackMap["Fonts_Font_1"] = std::move(dialogueAndBookFont);
     fallbackMap["Fonts_Font_2"] = "DemonicLetters";
+    // MyGUI expands every resource skin at startup, including Xbox-only skins.
+    // Keep this tag available even when their palette is disabled.
+    fallbackMap.try_emplace("FontColor_color_xbox_active", "96,112,202");
     if (Settings::gui().mXboxFontColors)
         Fallback::applyXboxFontColours(fallbackMap);
     Fallback::Map::init(fallbackMap);
