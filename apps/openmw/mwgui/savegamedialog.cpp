@@ -209,7 +209,9 @@ namespace MWGui
         }
 
         MWBase::StateManager* mgr = MWBase::Environment::get().getStateManager();
-        if (mgr->characterBegin() == mgr->characterEnd())
+        const MWBase::StateManager::CharacterIterator characterBegin = mgr->characterBegin();
+        const MWBase::StateManager::CharacterIterator characterEnd = mgr->characterEnd();
+        if (characterBegin == characterEnd)
             return;
 
         mCurrentCharacter = mgr->getCurrentCharacter();
@@ -218,7 +220,7 @@ namespace MWGui
 
         size_t selectedIndex = MyGUI::ITEM_NONE;
 
-        for (MWBase::StateManager::CharacterIterator it = mgr->characterBegin(); it != mgr->characterEnd(); ++it)
+        for (MWBase::StateManager::CharacterIterator it = characterBegin; it != characterEnd; ++it)
         {
             if (it->begin() != it->end())
             {

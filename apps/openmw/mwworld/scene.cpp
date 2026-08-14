@@ -245,6 +245,10 @@ namespace
     {
         for (MWWorld::Ptr& ptr : mToInsert)
         {
+            // Pump the loading screen before the potentially expensive rendering and physics insertion.
+            if (mLoadingListener != nullptr)
+                mLoadingListener->increaseProgress(1);
+
             if (!ptr.mRef->isDeleted() && ptr.getRefData().isEnabled())
             {
                 try
@@ -256,9 +260,6 @@ namespace
                     Log(Debug::Error) << "failed to render '" << ptr.getCellRef().getRefId() << "': " << e.what();
                 }
             }
-
-            if (mLoadingListener != nullptr)
-                mLoadingListener->increaseProgress(1);
         }
     }
 
@@ -352,7 +353,7 @@ namespace MWWorld
         if (mChangeCellGridRequest.has_value())
         {
             changeCellGrid(mChangeCellGridRequest->mPosition, mChangeCellGridRequest->mCellIndex,
-                mChangeCellGridRequest->mChangeEvent);
+                mChangeCellGridRequest->mChangeEvent, false);
             mChangeCellGridRequest.reset();
         }
 
@@ -479,6 +480,9 @@ namespace MWWorld
             }
         }
 
+        if (loadingListener != nullptr)
+            loadingListener->increaseProgress(0);
+
         ESM::visit(ESM::VisitOverload{
                        [&](const ESM::Cell& c) {
                            if (const auto pathgrid = mWorld.getStore().get<ESM::Pathgrid>().search(c))
@@ -495,7 +499,13 @@ namespace MWWorld
         if (respawn)
             cell.respawn();
 
+        if (loadingListener != nullptr)
+            loadingListener->increaseProgress(0);
+
         insertCell(cell, loadingListener, navigatorUpdateGuard);
+
+        if (loadingListener != nullptr)
+            loadingListener->increaseProgress(0);
 
         mRendering.addCell(&cell);
 
@@ -612,8 +622,19 @@ namespace MWWorld
             ESM::ExteriorCellLocation(cell.x(), cell.y(), mCurrentCell->getCell()->getWorldSpace()), changeEvent };
     }
 
-    void Scene::changeCellGrid(const osg::Vec3f& pos, ESM::ExteriorCellLocation playerCellIndex, bool changeEvent)
+    void Scene::changeCellGrid(
+        const osg::Vec3f& pos, ESM::ExteriorCellLocation playerCellIndex, bool changeEvent, bool forceSplash)
     {
+        Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
+        if (forceSplash)
+            loadingListener->setLabel("#{OMWEngine:LoadingExterior}");
+        else
+            loadingListener->setLabel({});
+        Loading::ScopedLoad load(loadingListener);
+        if (!forceSplash)
+            loadingListener->setLabel("#{OMWEngine:LoadingExterior}");
+        loadingListener->setProgressRange(1);
+
         const int halfGridSize
             = isEsm4Ext(playerCellIndex.mWorldspace) ? Constants::ESM4CellGridRadius : Constants::CellGridRadius;
         auto navigatorUpdateGuard = mNavigator.makeUpdateGuard();
@@ -632,6 +653,8 @@ namespace MWWorld
             }
             else
                 unloadCell(cell, navigatorUpdateGuard.get());
+
+            loadingListener->increaseProgress(0);
         }
 
         const DetourNavigator::CellGridBounds cellGridBounds{
@@ -640,6 +663,7 @@ namespace MWWorld
         };
 
         mNavigator.updateBounds(playerCellIndex.mWorldspace, cellGridBounds, pos, navigatorUpdateGuard.get());
+        loadingListener->increaseProgress(0);
 
         mHalfGridSize = halfGridSize;
         mCurrentGridCenter = osg::Vec2i(playerCellX, playerCellY);
@@ -654,10 +678,12 @@ namespace MWWorld
             mPreloader->abortTerrainPreloadExcept(nullptr);
         if (!mPreloader->isTerrainLoaded(PositionCellGrid{ pos, newGrid }, mRendering.getReferenceTime()))
             preloadTerrain(pos, playerCellIndex.mWorldspace, true);
+        loadingListener->increaseProgress(0);
         mPagedRefs.clear();
         mRendering.getPagedRefnums(newGrid, mPagedRefs);
 
         addPostponedPhysicsObjects();
+        loadingListener->increaseProgress(0);
 
         std::size_t refsToLoad = 0;
         std::vector<std::pair<int, int>> cellsPositionsToLoad;
@@ -669,9 +695,6 @@ namespace MWWorld
             cellsPositionsToLoad.emplace_back(x, y);
         });
 
-        Loading::Listener* loadingListener = MWBase::Environment::get().getWindowManager()->getLoadingScreen();
-        Loading::ScopedLoad load(loadingListener);
-        loadingListener->setLabel("#{OMWEngine:LoadingExterior}");
         loadingListener->setProgressRange(refsToLoad);
 
         sortCellsToLoad(playerCellX, playerCellY, cellsPositionsToLoad);
@@ -959,6 +982,7 @@ namespace MWWorld
         {
             auto* cellToUnload = *iter++;
             unloadCell(cellToUnload, navigatorUpdateGuard.get());
+            loadingListener->increaseProgress(0);
         }
         assert(mActiveCells.empty());
 
@@ -966,6 +990,7 @@ namespace MWWorld
 
         mNavigator.updateBounds(
             cell.getCell()->getWorldSpace(), std::nullopt, position.asVec3(), navigatorUpdateGuard.get());
+        loadingListener->increaseProgress(0);
 
         // Load cell.
         mPagedRefs.clear();
@@ -1005,7 +1030,8 @@ namespace MWWorld
         const osg::Vec2i cellIndex(current.getCell()->getGridX(), current.getCell()->getGridY());
 
         changeCellGrid(position.asVec3(),
-            ESM::ExteriorCellLocation(cellIndex.x(), cellIndex.y(), current.getCell()->getWorldSpace()), changeEvent);
+            ESM::ExteriorCellLocation(cellIndex.x(), cellIndex.y(), current.getCell()->getWorldSpace()), changeEvent,
+            true);
 
         changePlayerCell(current, position, adjustPlayerPos);
 

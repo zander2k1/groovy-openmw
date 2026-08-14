@@ -92,8 +92,14 @@ namespace MWGui
 
     void LoadingScreen::setLabel(const std::string& label, bool important)
     {
-        if (label == "#{OMWEngine:LoadingInProgress}")
-            mIsSaveGameLoading = true;
+        if (label.empty())
+            mSplashPolicy = SplashPolicy::Default;
+        else if (label == "#{OMWEngine:LoadingInProgress}")
+            mSplashPolicy = SplashPolicy::Immediate;
+        else if (label == "#{OMWEngine:SavingInProgress}")
+            mSplashPolicy = SplashPolicy::Never;
+        else if (label == "#{OMWEngine:LoadingExterior}" || label == "#{OMWEngine:LoadingInterior}")
+            mSplashPolicy = SplashPolicy::AfterDelay;
 
         mImportantLabel = important;
 
@@ -197,8 +203,11 @@ namespace MWGui
         mFakeProgress = 0;
         mFakeLoadingActive = false;
         mLoadingOnTime = mTimer.time_m();
-        mLongerLoadingCandidate = mUseXboxSplashScreens && mUseLongerLoadingScreens && mHasCompletedStartupLoad
-            && !mSplashScreens.empty() && mLoadingOnTime >= mLastSplashScreenEndTime + 100.0;
+        const bool useForcedSplash = mUseXboxSplashScreens && mUseLongerLoadingScreens;
+        const bool extendLoading
+            = mSplashPolicy == SplashPolicy::Immediate || mSplashPolicy == SplashPolicy::AfterDelay;
+        mLongerLoadingCandidate
+            = useForcedSplash && extendLoading && mHasCompletedStartupLoad && !mSplashScreens.empty();
 
         // Assign dummy bounding sphere callback to avoid the bounding sphere of the entire scene being recomputed after
         // each frame of loading We are already using node masks to avoid the scene from being updated/rendered, but
@@ -213,13 +222,14 @@ namespace MWGui
 
         setVisible(true);
 
-        const bool splashCooldownElapsed = mLoadingOnTime >= mLastSplashScreenEndTime + 100.0;
-        mShowWallpaper = splashCooldownElapsed
-            && ((mUseXboxSplashScreens && mIsSaveGameLoading)
-                && ((mUseXboxSplashScreens && mIsSaveGameLoading)
-                    || (!mLongerLoadingCandidate
-                        && MWBase::Environment::get().getStateManager()->getState()
-                            == MWBase::StateManager::State_NoGame)));
+        mShowWallpaper = MWBase::Environment::get().getStateManager()->getState() == MWBase::StateManager::State_NoGame;
+        if (useForcedSplash)
+        {
+            if (mSplashPolicy == SplashPolicy::Immediate)
+                mShowWallpaper = true;
+            else if (mSplashPolicy == SplashPolicy::Never || mSplashPolicy == SplashPolicy::AfterDelay)
+                mShowWallpaper = false;
+        }
 
         if (mShowWallpaper)
             changeWallpaper();
@@ -240,7 +250,10 @@ namespace MWGui
         if (--mNestedLoadingCount > 0)
             return;
 
-        if (mLongerLoadingCandidate && mTimer.time_m() >= mLoadingOnTime + 200.0)
+        // A delayed cell splash is only useful while the cell is still loading. Save loads are forced every time, so
+        // they may still begin their longer splash here when the real load did not provide a late progress callback.
+        if (mLongerLoadingCandidate && mSplashPolicy == SplashPolicy::Immediate
+            && mTimer.time_m() >= mLoadingOnTime + 200.0)
             startLongerLoadingScreen();
 
         while (mFakeLoadingActive && mTimer.time_m() < mFakeLoadingEndTime)
@@ -269,9 +282,7 @@ namespace MWGui
         mViewer->getSceneData()->setComputeBoundingSphereCallback(nullptr);
         mViewer->getSceneData()->dirtyBound();
 
-        if (mShowWallpaper)
-            mLastSplashScreenEndTime = mTimer.time_m();
-        mIsSaveGameLoading = false;
+        mSplashPolicy = SplashPolicy::Default;
         setVisible(false);
 
         if (osgUtil::IncrementalCompileOperation* ico = mViewer->getIncrementalCompileOperation())

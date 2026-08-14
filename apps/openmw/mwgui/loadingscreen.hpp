@@ -52,6 +52,14 @@ namespace MWGui
         double getTargetFrameRate() const;
 
     private:
+        enum class SplashPolicy : unsigned char
+        {
+            Default,
+            Never,
+            Immediate,
+            AfterDelay,
+        };
+
         void findSplashScreens();
         bool needToDrawLoadingScreen();
 
@@ -82,7 +90,7 @@ namespace MWGui
         bool mUseLongerLoadingScreens;
         bool mShowWallpaper;
         bool mHasCompletedStartupLoad = false;
-        bool mIsSaveGameLoading = false;
+        SplashPolicy mSplashPolicy = SplashPolicy::Default;
         bool mLongerLoadingCandidate = false;
         bool mFakeLoadingActive = false;
         double mLastSplashScreenEndTime = -100.0;
