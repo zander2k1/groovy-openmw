@@ -49,6 +49,7 @@ namespace Launcher
     private:
         bool applyRecommendedScalingDefaults(int width, int height);
         void setScalingValues(double interfaceScaling, double dialogueScaling, double settingsScaling);
+        void setCustomScalingControlsEnabled(bool enabled);
         void adjustCustomScaleWithInterfaceDelta(QDoubleSpinBox* spinBox, double delta) const;
         void clampCustomScale(QDoubleSpinBox* spinBox, double value);
         void populateLoadedConfigs();

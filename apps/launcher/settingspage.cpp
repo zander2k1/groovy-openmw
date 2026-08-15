@@ -18,6 +18,7 @@
 
 #include <components/config/gamesettings.hpp>
 #include <components/files/qtconversion.hpp>
+#include <components/misc/guiscaling.hpp>
 #include <components/settings/values.hpp>
 
 #include "utils/openalutil.hpp"
@@ -144,55 +145,6 @@ namespace
             default:
                 return "auto";
         }
-    }
-
-    struct RecommendedScalingDefaults
-    {
-        int width;
-        int height;
-        double interfaceScaling;
-        double dialogueScaling;
-        double settingsScaling;
-    };
-
-    constexpr std::array<RecommendedScalingDefaults, 21> recommendedScalingDefaults = {
-        RecommendedScalingDefaults{ 640, 480, 1.0, 1.0, 0.85 },
-        RecommendedScalingDefaults{ 720, 480, 1.0, 1.0, 0.85 },
-        RecommendedScalingDefaults{ 720, 576, 1.0, 1.2, 1.0 },
-        RecommendedScalingDefaults{ 800, 600, 1.2, 1.4, 1.0 },
-        RecommendedScalingDefaults{ 1024, 768, 1.25, 1.45, 1.05 },
-        RecommendedScalingDefaults{ 1152, 864, 1.45, 1.65, 1.25 },
-        RecommendedScalingDefaults{ 1280, 720, 1.45, 1.65, 1.25 },
-        RecommendedScalingDefaults{ 1280, 800, 1.65, 2.0, 1.4 },
-        RecommendedScalingDefaults{ 1280, 960, 1.65, 2.0, 1.4 },
-        RecommendedScalingDefaults{ 1280, 1024, 1.65, 2.0, 1.4 },
-        RecommendedScalingDefaults{ 1360, 768, 1.55, 1.85, 1.3 },
-        RecommendedScalingDefaults{ 1366, 768, 1.55, 1.85, 1.3 },
-        RecommendedScalingDefaults{ 1440, 1080, 1.85, 2.15, 1.55 },
-        RecommendedScalingDefaults{ 1600, 900, 1.75, 2.05, 1.5 },
-        RecommendedScalingDefaults{ 1600, 1200, 1.95, 2.35, 1.65 },
-        RecommendedScalingDefaults{ 1680, 1050, 1.85, 2.25, 1.55 },
-        RecommendedScalingDefaults{ 1920, 1080, 1.85, 2.25, 1.55 },
-        RecommendedScalingDefaults{ 1920, 1200, 1.95, 2.35, 1.65 },
-        RecommendedScalingDefaults{ 1920, 1440, 2.35, 2.75, 2.0 },
-        RecommendedScalingDefaults{ 2560, 1440, 2.35, 2.75, 2.0 },
-        RecommendedScalingDefaults{ 3840, 2160, 2.65, 3.15, 2.25 },
-    };
-
-    bool tryGetRecommendedScaling(
-        int width, int height, double& interfaceScaling, double& dialogueScaling, double& settingsScaling)
-    {
-        for (const auto& entry : recommendedScalingDefaults)
-        {
-            if (entry.width == width && entry.height == height)
-            {
-                interfaceScaling = entry.interfaceScaling;
-                dialogueScaling = entry.dialogueScaling;
-                settingsScaling = entry.settingsScaling;
-                return true;
-            }
-        }
-        return false;
     }
 
     enum FileTypeRoles
@@ -335,6 +287,7 @@ void Launcher::SettingsPage::slotXboxSplashScreensToggled(bool checked)
 
 void Launcher::SettingsPage::on_recommendedScalingDefaultsCheckBox_stateChanged(int state)
 {
+    setCustomScalingControlsEnabled(state != Qt::Checked);
     if (state == Qt::Checked)
     {
         int width = mLastResolutionWidth;
@@ -599,6 +552,7 @@ bool Launcher::SettingsPage::loadSettings()
             ? settingsScaling
             : (Settings::gui().mSettingsWindowIgnoreScaling ? 1.0 : interfaceScaling);
         setScalingValues(interfaceScaling, effectiveDialogueScaling, effectiveSettingsScaling);
+        setCustomScalingControlsEnabled(!recommendedScalingDefaultsCheckBox->isChecked());
         fontSizeSpinBox->setValue(Settings::gui().mFontSize);
         journalFontSizeSpinBox->setValue(Settings::gui().mJournalFontSize);
         populateFontSelectors();
@@ -686,17 +640,23 @@ void Launcher::SettingsPage::setScalingValues(double interfaceScaling, double di
     mLastInterfaceScaling = interfaceScaling;
 }
 
+void Launcher::SettingsPage::setCustomScalingControlsEnabled(bool enabled)
+{
+    scalingLabel->setEnabled(enabled);
+    scalingSpinBox->setEnabled(enabled);
+    dialogueScalingLabel->setEnabled(enabled);
+    dialogueScalingSpinBox->setEnabled(enabled);
+    settingsInterfaceScalingLabel->setEnabled(enabled);
+    settingsInterfaceScalingSpinBox->setEnabled(enabled);
+}
+
 bool Launcher::SettingsPage::applyRecommendedScalingDefaults(int width, int height)
 {
-    double interfaceScaling = 1.0;
-    double dialogueScaling = 1.0;
-    double settingsScaling = 1.0;
-    if (!tryGetRecommendedScaling(width, height, interfaceScaling, dialogueScaling, settingsScaling))
-    {
+    const auto scaling = Misc::calculateRecommendedGuiScaling(width, height);
+    if (!scaling)
         return false;
-    }
 
-    setScalingValues(interfaceScaling, dialogueScaling, settingsScaling);
+    setScalingValues(scaling->mInterfaceScaling, scaling->mDialogueScaling, scaling->mSettingsScaling);
     return true;
 }
 

@@ -33,6 +33,15 @@ GUI Settings
    A value of 0.0 reuses "scaling factor".
 
 .. omw-setting::
+   :title: use recommended scaling defaults
+   :type: boolean
+   :default: true
+   :location: :bdg-success:`Launcher > Settings > Interface`
+
+   Automatically calculates scaling from the selected resolution. The base scale is the largest 640x480 UI scale
+   that fits the resolution; dialogue uses 115% of that scale and settings/save-load uses 85%.
+
+.. omw-setting::
    :title: font size
    :type: int
    :range: 12 to 18
