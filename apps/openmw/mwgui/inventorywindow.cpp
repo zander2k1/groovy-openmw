@@ -1245,8 +1245,8 @@ namespace MWGui
                 break;
             case MWGui::GM_Barter:
                 mControllerButtons.mA = "#{Interface:Sell}";
-                mControllerButtons.mB = "#{Interface:Cancel}";
-                mControllerButtons.mX = "#{Interface:Offer}";
+                mControllerButtons.mB = "#{Interface:Back}";
+                mControllerButtons.mX.clear();
                 mControllerButtons.mY = "#{Interface:Info}";
                 mControllerButtons.mL2 = "#{Interface:Barter}";
                 break;
@@ -1339,6 +1339,11 @@ namespace MWGui
 
         if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
+            if (mGuiMode == MWGui::GM_Barter)
+            {
+                MWBase::Environment::get().getWindowManager()->getTradeWindow()->onControllerButtonEvent(arg);
+                return true;
+            }
             if (mFilterEdit && !mFilterEdit->getCaption().empty())
             {
                 clearFilter();
@@ -1374,11 +1379,7 @@ namespace MWGui
             }
             else if (mGuiMode == MWGui::GM_Barter)
             {
-                // Offer. Pass the button press to the barter window and let it do the logic
-                // of making an offer.
-                MWGui::TradeWindow* tradeWindow = static_cast<MWGui::TradeWindow*>(
-                    MWBase::Environment::get().getWindowManager()->getGuiModeWindows(mGuiMode).at(1));
-                tradeWindow->onControllerButtonEvent(arg);
+                MWBase::Environment::get().getWindowManager()->getTradeWindow()->onControllerButtonEvent(arg);
             }
         }
         else
