@@ -141,10 +141,10 @@ namespace MWGui
         constexpr int barWidth = 192;
         constexpr int barHeight = 12;
 
-        const int width = mMainWidget->getWidth();
-        const int height = mMainWidget->getHeight();
-        mXboxProgressBar->setCoord(barLeft * width / referenceWidth, barTop * height / referenceHeight,
-            barWidth * width / referenceWidth, barHeight * height / referenceHeight);
+        const MyGUI::IntCoord imageCoord = mSplashImage->getImageCoord();
+        mXboxProgressBar->setCoord(imageCoord.left + barLeft * imageCoord.width / referenceWidth,
+            imageCoord.top + barTop * imageCoord.height / referenceHeight, barWidth * imageCoord.width / referenceWidth,
+            barHeight * imageCoord.height / referenceHeight);
     }
 
     double LoadingScreen::getTargetFrameRate() const

@@ -26,6 +26,9 @@ namespace MWGui
          */
         void setBackgroundImage(const std::string& image, bool fixedRatio = true, bool stretch = true);
 
+        /// Returns the rectangle occupied by the image within this widget, excluding letterbox bars.
+        MyGUI::IntCoord getImageCoord() const;
+
         void setSize(const MyGUI::IntSize& value) override;
         void setCoord(const MyGUI::IntCoord& value) override;
 

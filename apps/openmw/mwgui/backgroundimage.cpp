@@ -34,6 +34,13 @@ namespace MWGui
         }
     }
 
+    MyGUI::IntCoord BackgroundImage::getImageCoord() const
+    {
+        if (mChild)
+            return mChild->getCoord();
+        return MyGUI::IntCoord(0, 0, getWidth(), getHeight());
+    }
+
     void BackgroundImage::adjustSize()
     {
         if (mAspect == 0)
