@@ -1,4 +1,5 @@
 #include "messagebox.hpp"
+#include "barterofferdialog.hpp"
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
@@ -202,7 +203,11 @@ namespace MWGui
     {
         MyGUI::IntSize gameWindowSize = MyGUI::RenderManager::getInstance().getViewSize();
         MyGUI::IntPoint pos;
-        pos.left = (gameWindowSize.width - mMainWidget->getWidth()) / 2;
+        BarterOfferDialog* offerDialog = MWBase::Environment::get().getWindowManager()->getBarterOfferDialog();
+        const bool showInOfferUi = offerDialog && offerDialog->isVisible();
+        pos.left = Settings::gui().mXboxHudMargins && !showInOfferUi
+            ? gameWindowSize.width - mMainWidget->getWidth() - mBottomPadding
+            : (gameWindowSize.width - mMainWidget->getWidth()) / 2;
         const int bottomPadding = mBottomPadding - (Settings::gui().mXboxHudMargins ? 5 : 0);
         pos.top = gameWindowSize.height - mMainWidget->getHeight() - height - bottomPadding;
 
