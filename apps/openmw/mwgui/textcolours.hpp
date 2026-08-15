@@ -9,6 +9,7 @@ namespace MWGui
     {
         MyGUI::Colour header;
         MyGUI::Colour normal;
+        MyGUI::Colour active;
         MyGUI::Colour notify;
 
         MyGUI::Colour bigHeader;

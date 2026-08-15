@@ -6,10 +6,10 @@
         <Property key="Spacing" value="8"/>
         <Property key="AutoResize" value="true"/>
 
-        <Widget type="Widget" skin="MW_Box" position="28 12 313 158">
+        <Widget type="Widget" skin="MW_Box" position="28 12 218 111">
             <UserString key="HStretch" value="false"/>
             <UserString key="VStretch" value="false"/>
-            <Widget type="ImageBox" skin="ImageBox" name="ClassImage" position="2 2 309 154"/>
+            <Widget type="ImageBox" skin="ImageBox" name="ClassImage" position="2 2 214 107"/>
         </Widget>
 
         <Widget type="AutoSizedTextBox" skin="SandText" position="28 218 391 24" name="LevelText">

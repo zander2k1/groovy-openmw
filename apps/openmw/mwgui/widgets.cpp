@@ -14,6 +14,7 @@
 #include <components/esm3/loadspel.hpp>
 #include <components/misc/resourcehelpers.hpp>
 #include <components/resource/resourcesystem.hpp>
+#include <components/settings/values.hpp>
 
 #include "textcolours.hpp"
 
@@ -72,7 +73,8 @@ namespace MWGui::Widgets
     void MWSkill::setStateSelected(bool selected)
     {
         const TextColours& textColours{ MWBase::Environment::get().getWindowManager()->getTextColours() };
-        mSkillNameWidget->setTextColour(selected ? textColours.link : textColours.normal);
+        const MyGUI::Colour& selectedColour = Settings::gui().mXboxFontColors ? textColours.active : textColours.link;
+        mSkillNameWidget->setTextColour(selected ? selectedColour : textColours.normal);
     }
 
     void MWSkill::onClicked(MyGUI::Widget* /*sender*/)
@@ -163,7 +165,8 @@ namespace MWGui::Widgets
     void MWAttribute::setStateSelected(bool selected)
     {
         const TextColours& textColours{ MWBase::Environment::get().getWindowManager()->getTextColours() };
-        mAttributeNameWidget->setTextColour(selected ? textColours.link : textColours.normal);
+        const MyGUI::Colour& selectedColour = Settings::gui().mXboxFontColors ? textColours.active : textColours.link;
+        mAttributeNameWidget->setTextColour(selected ? selectedColour : textColours.normal);
     }
 
     void MWAttribute::initialiseOverride()
@@ -298,9 +301,8 @@ namespace MWGui::Widgets
         }
 
         // ... then adjust the size for all widgets
-        const int centeredBlockLeft = (center && centerAsBlock && creator)
-            ? std::max(0, (creator->getWidth() - maxwidth) / 2)
-            : 0;
+        const int centeredBlockLeft
+            = (center && centerAsBlock && creator) ? std::max(0, (creator->getWidth() - maxwidth) / 2) : 0;
         for (MyGUI::Widget* effectWidget : effects)
         {
             effect = effectWidget->castType<MWSpellEffect>();

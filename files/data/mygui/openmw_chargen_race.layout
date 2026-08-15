@@ -1,20 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 640 325" align="Center" name="_Main">
+    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 389 336" align="Center" name="_Main">
 
         <!-- Appearance -->
-        <Widget type="TextBox" skin="HeaderText" position="8 16 241 18" name="AppearanceT" align="Left Top">
+        <Widget type="TextBox" skin="HeaderText" position="0 0 0 0" name="AppearanceT" align="Left Top">
             <Property key="Caption" value="Appearance"/>
             <Property key="TextAlign" value="Left Top"/>
+            <Property key="Visible" value="false"/>
         </Widget>
-        <Widget type="Widget" skin="MW_Box" position="8 39 241 220">
-            <Widget type="ImageBox" skin="ImageBox" position="2 2 237 216" align="Stretch" name="PreviewImage"/>
+        <Widget type="Widget" skin="MW_Box" position="12 130 144 191">
+            <Widget type="ImageBox" skin="ImageBox" position="2 26 140 140" name="PreviewImage" align="Left Top"/>
         </Widget>
 
         <!-- Sliders -->
         <!-- Rotation of head -->
-        <Widget type="ScrollBar" skin="MW_HScroll" position="8 270 241 14" name="HeadRotate"/>
+        <Widget type="ScrollBar" skin="MW_HScroll" position="0 0 0 0" name="HeadRotate">
+            <Property key="Visible" value="false"/>
+        </Widget>
 
         <!-- Gender choice -->
 
@@ -54,25 +57,26 @@
 
         <!-- Race -->
 
-        <Widget type="TextBox" skin="HeaderText" position="261 16 160 18" name="RaceT" align="Left Top">
+        <Widget type="TextBox" skin="HeaderText" position="0 0 0 0" name="RaceT" align="Left Top">
             <Property key="TextAlign" value="Left Top"/>
+            <Property key="Visible" value="false"/>
         </Widget>
-        <Widget type="ListBox" skin="MW_List" position="264 39 160 220" name="RaceList">
+        <Widget type="ListBox" skin="MW_List" position="12 12 144 112" name="RaceList">
         </Widget>
 
         <!-- Skill bonus -->
-        <Widget type="TextBox" skin="HeaderText" position="432 16 190 18" name="SkillsT" align="Left Top">
+        <Widget type="TextBox" skin="HeaderText" position="165 12 207 14" name="SkillsT" align="Left Top">
             <Property key="TextAlign" value="Left Top"/>
         </Widget>
         <!-- Skill bonus sub-widgets will be placed here, no skin to make it invisible -->
-        <Widget type="Widget" skin="" position="432 36 190 150" name="SkillList"/>
+        <Widget type="Widget" skin="" position="165 27 207 135" name="SkillList"/>
 
         <!-- Spell powers -->
-        <Widget type="TextBox" skin="HeaderText" position="432 190 190 18" name="SpellPowerT" align="Left Top">
+        <Widget type="TextBox" skin="HeaderText" position="165 180 207 14" name="SpellPowerT" align="Left Top">
             <Property key="TextAlign" value="Left Top"/>
         </Widget>
         <!-- Spell power sub-widgets will be placed here, no skin to make it invisible -->
-        <Widget type="Widget" skin="" position="432 210 190 100" name="SpellPowerList"/>
+        <Widget type="Widget" skin="" position="165 195 207 129" name="SpellPowerList"/>
 
         <!-- Dialog buttons -->
         <Widget type="HBox" position="0 0 0 0">
@@ -87,5 +91,3 @@
         </Widget>
     </Widget>
 </MyGUI>
-
-

@@ -798,17 +798,33 @@ namespace MWGui
             {
                 const auto skillId = mMajorSkill[i]->getSkillId();
                 const auto* skill = MWBase::Environment::get().getESMStore()->get<ESM::Skill>().search(skillId);
+                std::string governingAttribute;
                 if (skill)
+                {
                     mMajorSkill[i]->setUserString("CollapsedLabel", skill->mName);
-                mMajorSkill[i]->setUserString("CollapsedValue", {});
+                    const auto* attribute = MWBase::Environment::get().getESMStore()->get<ESM::Attribute>().search(
+                        ESM::Attribute::indexToRefId(skill->mData.mAttribute));
+                    if (attribute)
+                        governingAttribute
+                            = "#{sGoverningAttribute}: " + MyGUI::TextIterator::toTagsString(attribute->mName).asUTF8();
+                }
+                mMajorSkill[i]->setUserString("CollapsedValue", governingAttribute);
             }
             if (mMinorSkill[i] != nullptr)
             {
                 const auto skillId = mMinorSkill[i]->getSkillId();
                 const auto* skill = MWBase::Environment::get().getESMStore()->get<ESM::Skill>().search(skillId);
+                std::string governingAttribute;
                 if (skill)
+                {
                     mMinorSkill[i]->setUserString("CollapsedLabel", skill->mName);
-                mMinorSkill[i]->setUserString("CollapsedValue", {});
+                    const auto* attribute = MWBase::Environment::get().getESMStore()->get<ESM::Attribute>().search(
+                        ESM::Attribute::indexToRefId(skill->mData.mAttribute));
+                    if (attribute)
+                        governingAttribute
+                            = "#{sGoverningAttribute}: " + MyGUI::TextIterator::toTagsString(attribute->mName).asUTF8();
+                }
+                mMinorSkill[i]->setUserString("CollapsedValue", governingAttribute);
             }
         }
 

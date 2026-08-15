@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 527 363" align="Center" name="_Main">
+    <Widget type="Window" skin="MW_Dialog" layer="Modal" position="0 0 470 340" align="HCenter Top" name="_Main">
 
         <!-- Birthsign list -->
-        <Widget type="ListBox" skin="MW_List" position="8 8 232 137" name="BirthsignList"/>
+        <Widget type="ListBox" skin="MW_List" position="12 12 185 127" name="BirthsignList"/>
 
         <!-- Birthsign image -->
-        <Widget type="Widget" skin="MW_Box" position="248 8 263 137" align="Left Top">
-            <Widget type="ImageBox" skin="ImageBox" position="2 2 259 133" name="BirthsignImage" align="Left Top"/>
+        <Widget type="Widget" skin="MW_Box" position="204 12 254 127" align="Left Top">
+            <Widget type="ImageBox" skin="ImageBox" position="4 2 246 123" name="BirthsignImage" align="Left Top"/>
         </Widget>
 
         <!-- Spell list -->
-        <Widget type="ScrollView" skin="MW_ScrollView" position="8 150 507 205" align="Left Top" name="SpellArea">
+        <Widget type="ScrollView" skin="MW_ScrollView" position="12 147 446 181" align="Left Top" name="SpellArea">
             <Property key="CanvasAlign" value="Left"/>
         </Widget>>
 

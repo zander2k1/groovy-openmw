@@ -15,6 +15,7 @@ namespace MWGui
     {
         header = getTextColour("header");
         normal = getTextColour("normal");
+        active = getTextColour("active");
         notify = getTextColour("notify");
 
         bigHeader = getTextColour("big_header");
