@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<MyGUI type="Layout" version="3.2.0">
+    <Widget type="Window" skin="MW_DialogNoTransp" position="0 0 200 112" align="Center" layer="Modal" name="_Main">
+        <Property key="Visible" value="false"/>
+        <Widget type="ImageBox" skin="ImageBox" position="58 4 24 24" name="AIcon"/>
+        <Widget type="TextBox" skin="SandTextController" position="0 4 200 24" name="OfferText">
+            <Property key="Caption" value="#{Interface:Offer}"/>
+            <Property key="TextAlign" value="Center"/>
+        </Widget>
+        <Widget type="ImageBox" skin="ImageBox" position="53 27 24 24" name="BIcon"/>
+        <Widget type="TextBox" skin="SandTextController" position="0 27 200 24" name="CancelText">
+            <Property key="Caption" value="#{Interface:Cancel}"/>
+            <Property key="TextAlign" value="Center"/>
+        </Widget>
+        <Widget type="TextBox" skin="SandTextController" position="45 52 78 23" name="TotalLabel"/>
+        <Widget type="TextBox" skin="SandTextController" position="129 52 30 23" name="TotalValue">
+            <Property key="TextAlign" value="Left Bottom"/>
+        </Widget>
+        <Widget type="ImageBox" skin="ImageBox" position="35 75 24 24" name="LessIcon"/>
+        <Widget type="TextBox" skin="SandTextController" position="61 72 58 24" name="LessText">
+            <Property key="Caption" value="#{Interface:Less}"/>
+        </Widget>
+        <Widget type="ImageBox" skin="ImageBox" position="100 75 24 24" name="MoreIcon"/>
+        <Widget type="TextBox" skin="SandTextController" position="126 72 58 24" name="MoreText">
+            <Property key="Caption" value="#{Interface:More}"/>
+        </Widget>
+    </Widget>
+</MyGUI>

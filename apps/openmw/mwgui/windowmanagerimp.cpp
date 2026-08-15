@@ -83,6 +83,7 @@
 
 #include "alchemywindow.hpp"
 #include "backgroundimage.hpp"
+#include "barterofferdialog.hpp"
 #include "bookpage.hpp"
 #include "bookwindow.hpp"
 #include "class.hpp"
@@ -359,6 +360,7 @@ namespace MWGui
         , mScrollWindow(nullptr)
         , mBookWindow(nullptr)
         , mCountDialog(nullptr)
+        , mBarterOfferDialog(nullptr)
         , mTradeWindow(nullptr)
         , mSettingsWindow(nullptr)
         , mConfirmationDialog(nullptr)
@@ -617,6 +619,10 @@ namespace MWGui
         auto countDialog = std::make_unique<CountDialog>();
         mCountDialog = countDialog.get();
         mWindows.push_back(std::move(countDialog));
+
+        auto barterOfferDialog = std::make_unique<BarterOfferDialog>();
+        mBarterOfferDialog = barterOfferDialog.get();
+        mWindows.push_back(std::move(barterOfferDialog));
 
         auto settingsWindow = std::make_unique<SettingsWindow>(mCfgMgr);
         mSettingsWindow = settingsWindow.get();
@@ -2128,6 +2134,11 @@ namespace MWGui
     MWGui::CountDialog* WindowManager::getCountDialog()
     {
         return mCountDialog;
+    }
+
+    MWGui::BarterOfferDialog* WindowManager::getBarterOfferDialog()
+    {
+        return mBarterOfferDialog;
     }
     MWGui::ConfirmationDialog* WindowManager::getConfirmationDialog()
     {

@@ -224,6 +224,7 @@ set(BUILTIN_DATA_FILES
     textures/tx_goldicon.dds
     textures/weight.dds
     mygui/openmw_count_window.layout
+    mygui/openmw_barter_offer_window.layout
     mygui/openmw_dialogue_window.layout
     mygui/openmw_dialogue_window.skin.xml
     mygui/openmw_edit.skin.xml

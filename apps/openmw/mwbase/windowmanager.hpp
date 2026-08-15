@@ -68,6 +68,7 @@ namespace MWGui
     class SpellBuyingWindow;
     class ConfirmationDialog;
     class CountDialog;
+    class BarterOfferDialog;
     class ScrollWindow;
     class BookWindow;
     class InventoryWindow;
@@ -158,6 +159,7 @@ namespace MWBase
         /// \todo investigate, if we really need to expose every single lousy UI element to the outside world
         virtual MWGui::InventoryWindow* getInventoryWindow() = 0;
         virtual MWGui::CountDialog* getCountDialog() = 0;
+        virtual MWGui::BarterOfferDialog* getBarterOfferDialog() = 0;
         virtual MWGui::ConfirmationDialog* getConfirmationDialog() = 0;
         virtual MWGui::TradeWindow* getTradeWindow() = 0;
         virtual MWGui::HUD* getHud() = 0;

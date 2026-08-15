@@ -120,6 +120,8 @@ namespace MWGui
         void onBalanceValueChanged(int value);
         void onRepeatClick(MyGUI::Widget* widget, MyGUI::ControllerItem* controller);
         void onOfferSubmitted(MyGUI::Widget* sender, size_t offerAmount);
+        void onOfferDialogBack();
+        void openOfferDialog();
 
         void addRepeatController(MyGUI::Widget* widget);
 

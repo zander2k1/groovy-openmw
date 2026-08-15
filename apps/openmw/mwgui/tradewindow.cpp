@@ -27,6 +27,7 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 
+#include "barterofferdialog.hpp"
 #include "containeritemmodel.hpp"
 #include "countdialog.hpp"
 #include "inventorywindow.hpp"
@@ -199,8 +200,8 @@ namespace MWGui
         if (Settings::gui().mControllerMenus)
         {
             mControllerButtons.mA = "#{Interface:Buy}";
-            mControllerButtons.mB = "#{Interface:Cancel}";
-            mControllerButtons.mX = "#{Interface:Offer}";
+            mControllerButtons.mB = "#{Interface:Back}";
+            mControllerButtons.mX.clear();
             mControllerButtons.mY = "#{Interface:Info}";
             mControllerButtons.mL2 = "#{Interface:Inventory}";
             mControllerButtons.mMenu.clear();
@@ -513,6 +514,39 @@ namespace MWGui
         onOfferButtonClicked(mOfferButton);
     }
 
+    void TradeWindow::onOfferDialogBack()
+    {
+        onCancelButtonClicked(mCancelButton);
+    }
+
+    void TradeWindow::openOfferDialog()
+    {
+        if (mCurrentBalance == 0)
+            return;
+
+        BarterOfferDialog* dialog = MWBase::Environment::get().getWindowManager()->getBarterOfferDialog();
+        if (mCurrentBalance < 0)
+        {
+            const int maxOffer = -mCurrentMerchantOffer;
+            if (maxOffer <= 0)
+                return;
+            dialog->open("#{sTotalcost}:", maxOffer);
+            dialog->setCount(-mCurrentBalance);
+        }
+        else
+        {
+            const int maxOffer = getMerchantGold();
+            if (maxOffer <= 0)
+                return;
+            dialog->open("#{sTotalsold}:", maxOffer);
+            dialog->setCount(mCurrentBalance);
+        }
+        dialog->eventOkClicked.clear();
+        dialog->eventOkClicked += MyGUI::newDelegate(this, &TradeWindow::onOfferSubmitted);
+        dialog->eventCancelClicked.clear();
+        dialog->eventCancelClicked += MyGUI::newDelegate(this, &TradeWindow::onOfferDialogBack);
+    }
+
     void TradeWindow::onOfferButtonClicked(MyGUI::Widget* /*sender*/)
     {
         TradeItemModel* playerItemModel
@@ -605,6 +639,7 @@ namespace MWGui
         eventTradeDone();
 
         MWBase::Environment::get().getWindowManager()->playSound(ESM::RefId::stringRefId("Item Gold Up"));
+        MWBase::Environment::get().getWindowManager()->getBarterOfferDialog()->setVisible(false);
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Barter);
     }
 
@@ -884,33 +919,14 @@ namespace MWGui
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_B)
         {
-            if (mFilterEdit && !mFilterEdit->getCaption().empty())
-            {
-                clearFilter();
-                return true;
-            }
-            onCancelButtonClicked(mCancelButton);
+            if (mCurrentBalance == 0)
+                onCancelButtonClicked(mCancelButton);
+            else
+                openOfferDialog();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_X)
         {
-            if (mCurrentBalance == 0)
-                return true;
-            // Show a count dialog to allow for bartering.
-            CountDialog* dialog = MWBase::Environment::get().getWindowManager()->getCountDialog();
-            if (mCurrentBalance < 0)
-            {
-                // Buying from the merchant
-                dialog->openCountDialog("#{sTotalcost}:", "#{sOffer}", -mCurrentMerchantOffer);
-                dialog->setCount(-mCurrentBalance);
-            }
-            else
-            {
-                // Selling to the merchant
-                dialog->openCountDialog("#{sTotalsold}:", "#{sOffer}", getMerchantGold());
-                dialog->setCount(mCurrentBalance);
-            }
-            dialog->eventOkClicked.clear();
-            dialog->eventOkClicked += MyGUI::newDelegate(this, &TradeWindow::onOfferSubmitted);
+            openOfferDialog();
         }
         else if (arg.button == SDL_CONTROLLER_BUTTON_RIGHTSTICK || arg.button == SDL_CONTROLLER_BUTTON_DPAD_UP
             || arg.button == SDL_CONTROLLER_BUTTON_DPAD_DOWN || arg.button == SDL_CONTROLLER_BUTTON_DPAD_LEFT
