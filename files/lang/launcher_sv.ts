@@ -1651,14 +1651,6 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Use Montserrat fonts for Xbox-style UI. Disable to use MysticCards.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>XBOX Styled Fonts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Use the software cursor (drawn by the UI) instead of the hardware cursor when using the controller.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1728,6 +1720,42 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
     </message>
     <message>
         <source>Journal Font Size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the original Xbox font colour palette for standard interface text, controls, and status bars.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Font Colors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use the original Xbox HUD safe-area margins. Also applies to the top-left Xbox-styled minimap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX HUD Margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the original Xbox splash screens with their matching loading bar while loading the game.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Loading Screens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep splash screens visible for a random 10 to 25 seconds with a simulated loading bar that moves in bursts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Longer Loading Screens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Xbox (Classic Icons)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
