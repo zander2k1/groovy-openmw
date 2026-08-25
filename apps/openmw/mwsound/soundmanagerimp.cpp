@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <numeric>
 #include <sstream>
 
@@ -168,9 +169,9 @@ namespace MWSound
     }
 
     // Return a new decoder instance, used as needed by the output implementations
-    DecoderPtr SoundManager::getDecoder()
+    DecoderPtr SoundManager::getDecoder(bool isMusic)
     {
-        return std::make_shared<FFmpegDecoder>(mVFS);
+        return std::make_shared<FFmpegDecoder>(mVFS, isMusic);
     }
 
     DecoderPtr SoundManager::loadVoice(VFS::Path::NormalizedView voicefile)
@@ -264,7 +265,7 @@ namespace MWSound
 
         Log(Debug::Info) << "Playing \"" << filename << "\"";
 
-        DecoderPtr decoder = getDecoder();
+        DecoderPtr decoder = getDecoder(true);
         try
         {
             decoder->open(filename);
@@ -416,6 +417,12 @@ namespace MWSound
     {
         if (!mOutput->isInitialized())
             return nullptr;
+
+        if (type == Type::Music)
+        {
+            if (const auto ffmpegDecoder = std::dynamic_pointer_cast<FFmpegDecoder>(decoder))
+                ffmpegDecoder->setIsMusic(true);
+        }
 
         StreamPtr track = getStreamRef();
         track->init([&] {

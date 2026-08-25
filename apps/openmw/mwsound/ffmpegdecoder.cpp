@@ -6,6 +6,7 @@
 #include <utility>
 
 #include <components/debug/debuglog.hpp>
+#include <components/settings/values.hpp>
 #include <components/vfs/manager.hpp>
 
 #include <osg-ffmpeg-videoplayer/libavformatdefines.hpp>
@@ -129,6 +130,43 @@ namespace MWSound
         return false;
     }
 
+    bool FFmpegDecoder::allocateResampleBuffer(int samples)
+    {
+        if (mDataBuf && mDataBufLen >= samples)
+            return true;
+
+        av_freep(&mDataBuf);
+#if OPENMW_FFMPEG_5_OR_GREATER
+        if (av_samples_alloc(&mDataBuf, nullptr, mOutputChannelLayout.nb_channels, samples, mOutputSampleFormat, 0) < 0)
+#else
+        if (av_samples_alloc(&mDataBuf, nullptr, av_get_channel_layout_nb_channels(mOutputChannelLayout), samples,
+                mOutputSampleFormat, 0)
+            < 0)
+#endif
+            return false;
+
+        mDataBufLen = samples;
+        return true;
+    }
+
+    bool FFmpegDecoder::flushResampler()
+    {
+        if (!mSwr || mResamplerFlushed)
+            return false;
+
+        mResamplerFlushed = true;
+        const int outputSamples = swr_get_out_samples(mSwr, 0);
+        if (outputSamples <= 0 || !allocateResampleBuffer(outputSamples))
+            return false;
+
+        mOutputFrameSamples = swr_convert(mSwr, &mDataBuf, outputSamples, nullptr, 0);
+        if (mOutputFrameSamples <= 0)
+            return false;
+
+        mFrameData = &mDataBuf;
+        return true;
+    }
+
     bool FFmpegDecoder::getAVAudioData()
     {
         bool gotFrame = false;
@@ -143,12 +181,23 @@ namespace MWSound
             if (ret == AVERROR(EAGAIN))
             {
                 if (mPacket.size == 0 && !getNextPacket())
-                    return false;
-                ret = avcodec_send_packet(mCodecCtx.get(), &mPacket);
-                av_packet_unref(&mPacket);
+                {
+                    if (mCodecFlushed)
+                        return flushResampler();
+
+                    mCodecFlushed = true;
+                    ret = avcodec_send_packet(mCodecCtx.get(), nullptr);
+                }
+                else
+                {
+                    ret = avcodec_send_packet(mCodecCtx.get(), &mPacket);
+                    av_packet_unref(&mPacket);
+                }
                 if (ret == 0)
                     continue;
             }
+            if (ret == AVERROR_EOF)
+                return flushResampler();
             if (ret != 0)
                 return false;
 
@@ -157,30 +206,21 @@ namespace MWSound
             if (mFrame->nb_samples == 0)
                 continue;
             gotFrame = true;
+            mOutputFrameSamples = mFrame->nb_samples;
 
             if (mSwr)
             {
-                if (!mDataBuf || mDataBufLen < mFrame->nb_samples)
-                {
-                    av_freep(&mDataBuf);
-#if OPENMW_FFMPEG_5_OR_GREATER
-                    if (av_samples_alloc(&mDataBuf, nullptr, mOutputChannelLayout.nb_channels,
-#else
-                    if (av_samples_alloc(&mDataBuf, nullptr, av_get_channel_layout_nb_channels(mOutputChannelLayout),
-#endif
-                            mFrame->nb_samples, mOutputSampleFormat, 0)
-                        < 0)
-                        return false;
-                    else
-                        mDataBufLen = mFrame->nb_samples;
-                }
-
-                if (swr_convert(mSwr, (uint8_t**)&mDataBuf, mFrame->nb_samples, (const uint8_t**)mFrame->extended_data,
-                        mFrame->nb_samples)
-                    < 0)
-                {
+                const int outputSamples = swr_get_out_samples(mSwr, mFrame->nb_samples);
+                if (outputSamples < 0)
                     return false;
-                }
+
+                if (!allocateResampleBuffer(outputSamples))
+                    return false;
+
+                mOutputFrameSamples = swr_convert(mSwr, (uint8_t**)&mDataBuf, outputSamples,
+                    (const uint8_t**)mFrame->extended_data, mFrame->nb_samples);
+                if (mOutputFrameSamples < 0)
+                    return false;
                 mFrameData = &mDataBuf;
             }
             else
@@ -205,9 +245,9 @@ namespace MWSound
                     break;
                 mFramePos = 0;
 #if OPENMW_FFMPEG_5_OR_GREATER
-                mFrameSize = mFrame->nb_samples * mOutputChannelLayout.nb_channels
+                mFrameSize = mOutputFrameSamples * mOutputChannelLayout.nb_channels
 #else
-                mFrameSize = mFrame->nb_samples * av_get_channel_layout_nb_channels(mOutputChannelLayout)
+                mFrameSize = mOutputFrameSamples * av_get_channel_layout_nb_channels(mOutputChannelLayout)
 #endif
                     * av_get_bytes_per_sample(mOutputSampleFormat);
             }
@@ -288,7 +328,11 @@ namespace MWSound
         if (frame == nullptr)
             throw std::runtime_error("Failed to allocate frame");
 
-        if (codecCtxPtr->sample_fmt == AV_SAMPLE_FMT_U8P)
+        const bool xboxAudioQuality = Settings::sound().mXboxAudioQuality;
+        mOutputSampleRate = codecCtxPtr->sample_rate;
+        if (xboxAudioQuality)
+            mOutputSampleFormat = AV_SAMPLE_FMT_U8;
+        else if (codecCtxPtr->sample_fmt == AV_SAMPLE_FMT_U8P)
             mOutputSampleFormat = AV_SAMPLE_FMT_U8;
         // FIXME: Check for AL_EXT_FLOAT32 support
         // else if (codecCtxPtr->sample_fmt == AV_SAMPLE_FMT_FLT || codecCtxPtr->sample_fmt == AV_SAMPLE_FMT_FLTP)
@@ -330,6 +374,8 @@ namespace MWSound
         mFormatCtx.reset();
         mIoCtx.reset();
         mDataStream.reset();
+        mCodecFlushed = false;
+        mResamplerFlushed = false;
     }
 
     std::string FFmpegDecoder::getName()
@@ -346,6 +392,10 @@ namespace MWSound
     {
         if (!mStream)
             throw std::runtime_error("No audio stream info");
+
+        const bool xboxAudioQuality = Settings::sound().mXboxAudioQuality;
+        mOutputSampleRate
+            = xboxAudioQuality ? std::min(mCodecCtx->sample_rate, mIsMusic ? 16000 : 13000) : mCodecCtx->sample_rate;
 
         if (mOutputSampleFormat == AV_SAMPLE_FMT_U8)
             *type = SampleType_UInt8;
@@ -414,19 +464,21 @@ namespace MWSound
                 break;
         }
 
-        *samplerate = mCodecCtx->sample_rate;
+        *samplerate = mOutputSampleRate;
 #if OPENMW_FFMPEG_5_OR_GREATER
         AVChannelLayout chLayout = mCodecCtx->ch_layout;
         if (chLayout.u.mask == 0)
             av_channel_layout_default(&chLayout, mCodecCtx->ch_layout.nb_channels);
 
-        if (mOutputSampleFormat != mCodecCtx->sample_fmt || mOutputChannelLayout.u.mask != chLayout.u.mask)
+        if (mOutputSampleFormat != mCodecCtx->sample_fmt || mOutputChannelLayout.u.mask != chLayout.u.mask
+            || mOutputSampleRate != mCodecCtx->sample_rate)
 #else
         int64_t ch_layout = mCodecCtx->channel_layout;
         if (ch_layout == 0)
             ch_layout = av_get_default_channel_layout(mCodecCtx->channels);
 
-        if (mOutputSampleFormat != mCodecCtx->sample_fmt || mOutputChannelLayout != ch_layout)
+        if (mOutputSampleFormat != mCodecCtx->sample_fmt || mOutputChannelLayout != ch_layout
+            || mOutputSampleRate != mCodecCtx->sample_rate)
 #endif
 
         {
@@ -434,7 +486,7 @@ namespace MWSound
             swr_alloc_set_opts2(&mSwr, // SwrContext
                 &mOutputChannelLayout, // output ch layout
                 mOutputSampleFormat, // output sample format
-                mCodecCtx->sample_rate, // output sample rate
+                mOutputSampleRate, // output sample rate
                 &chLayout, // input ch layout
                 mCodecCtx->sample_fmt, // input sample format
                 mCodecCtx->sample_rate, // input sample rate
@@ -444,7 +496,7 @@ namespace MWSound
             mSwr = swr_alloc_set_opts(mSwr, // SwrContext
                 mOutputChannelLayout, // output ch layout
                 mOutputSampleFormat, // output sample format
-                mCodecCtx->sample_rate, // output sample rate
+                mOutputSampleRate, // output sample rate
                 ch_layout, // input ch layout
                 mCodecCtx->sample_fmt, // input sample format
                 mCodecCtx->sample_rate, // input sample rate
@@ -480,9 +532,9 @@ namespace MWSound
         while (getAVAudioData())
         {
 #if OPENMW_FFMPEG_5_OR_GREATER
-            size_t got = mFrame->nb_samples * mOutputChannelLayout.nb_channels
+            size_t got = mOutputFrameSamples * mOutputChannelLayout.nb_channels
 #else
-            size_t got = mFrame->nb_samples * av_get_channel_layout_nb_channels(mOutputChannelLayout)
+            size_t got = mOutputFrameSamples * av_get_channel_layout_nb_channels(mOutputChannelLayout)
 #endif
                 * av_get_bytes_per_sample(mOutputSampleFormat);
             const char* inbuf = reinterpret_cast<char*>(mFrameData[0]);
@@ -498,14 +550,19 @@ namespace MWSound
         std::size_t delay = (mFrameSize - mFramePos) / av_get_channel_layout_nb_channels(mOutputChannelLayout)
 #endif
             / av_get_bytes_per_sample(mOutputSampleFormat);
-        return static_cast<std::size_t>(mNextPts * mCodecCtx->sample_rate) - delay;
+        return static_cast<std::size_t>(mNextPts * mOutputSampleRate) - delay;
     }
 
-    FFmpegDecoder::FFmpegDecoder(const VFS::Manager* vfs)
+    FFmpegDecoder::FFmpegDecoder(const VFS::Manager* vfs, bool isMusic)
         : SoundDecoder(vfs)
         , mStream(nullptr)
         , mFrameSize(0)
         , mFramePos(0)
+        , mOutputFrameSamples(0)
+        , mOutputSampleRate(0)
+        , mIsMusic(isMusic)
+        , mCodecFlushed(false)
+        , mResamplerFlushed(false)
         , mNextPts(0.0)
         , mSwr(nullptr)
         , mOutputSampleFormat(AV_SAMPLE_FMT_NONE)

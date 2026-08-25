@@ -520,6 +520,7 @@ bool Launcher::SettingsPage::loadSettings()
             }
         }
         loadSettingBool(Settings::sound().mCameraListener, *cameraListenerCheckBox);
+        loadSettingBool(Settings::sound().mXboxAudioQuality, *xboxAudioQualityCheckBox);
         dopplerSpinBox->setValue(Settings::sound().mDopplerFactor);
     }
 
@@ -983,6 +984,7 @@ void Launcher::SettingsPage::saveSettings()
 
         const bool cCameraListener = cameraListenerCheckBox->checkState() != Qt::Unchecked;
         Settings::sound().mCameraListener.set(cCameraListener);
+        saveSettingBool(*xboxAudioQualityCheckBox, Settings::sound().mXboxAudioQuality);
 
         Settings::sound().mDopplerFactor.set(dopplerSpinBox->value());
     }

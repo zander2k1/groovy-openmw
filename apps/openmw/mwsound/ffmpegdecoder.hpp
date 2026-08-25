@@ -75,6 +75,11 @@ namespace MWSound
 
         std::size_t mFrameSize;
         std::size_t mFramePos;
+        int mOutputFrameSamples;
+        int mOutputSampleRate;
+        bool mIsMusic;
+        bool mCodecFlushed;
+        bool mResamplerFlushed;
 
         double mNextPts;
 
@@ -90,6 +95,8 @@ namespace MWSound
         int mDataBufLen;
 
         bool getNextPacket();
+        bool allocateResampleBuffer(int samples);
+        bool flushResampler();
 
         Files::IStreamPtr mDataStream;
 
@@ -118,7 +125,12 @@ namespace MWSound
         FFmpegDecoder(const FFmpegDecoder& rhs);
 
     public:
-        explicit FFmpegDecoder(const VFS::Manager* vfs);
+        explicit FFmpegDecoder(const VFS::Manager* vfs, bool isMusic = false);
+
+        void setIsMusic(bool isMusic)
+        {
+            mIsMusic = isMusic;
+        }
 
         virtual ~FFmpegDecoder();
 

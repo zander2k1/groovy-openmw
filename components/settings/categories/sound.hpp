@@ -25,6 +25,7 @@ namespace Settings
         SettingValue<std::string> mHrtf{ mIndex, "Sound", "hrtf" };
         SettingValue<bool> mCameraListener{ mIndex, "Sound", "camera listener" };
         SettingValue<float> mDopplerFactor{ mIndex, "Sound", "doppler factor", makeClampSanitizerFloat(0, 1) };
+        SettingValue<bool> mXboxAudioQuality{ mIndex, "Sound", "xbox audio quality", false };
     };
 }
 

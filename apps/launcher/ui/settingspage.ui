@@ -1149,6 +1149,16 @@
            </property>
           </widget>
          </item>
+         <item row="5" column="0">
+          <widget class="QCheckBox" name="xboxAudioQualityCheckBox">
+           <property name="toolTip">
+            <string>Decode effects as 8-bit PCM capped at 13,000 Hz and music at 16,000 Hz without modifying the original audio files.</string>
+           </property>
+           <property name="text">
+            <string>XBOX Audio Quality</string>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="0">
           <widget class="QLabel" name="dopplerLabel">
            <property name="toolTip">

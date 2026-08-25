@@ -152,7 +152,7 @@ namespace MWSound
         SoundManager& operator=(const SoundManager& rhs);
 
     protected:
-        DecoderPtr getDecoder();
+        DecoderPtr getDecoder(bool isMusic = false);
         friend class OpenALOutput;
 
         void stopSound(SoundBuffer* sfx, const MWWorld::ConstPtr& ptr);
