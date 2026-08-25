@@ -62,6 +62,7 @@
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/globals.hpp"
 #include "../mwworld/inventorystore.hpp"
 #include "../mwworld/manualref.hpp"
 #include "../mwworld/player.hpp"
@@ -335,7 +336,11 @@ namespace MWScript
         class OpXBox : public Interpreter::Opcode0
         {
         public:
-            void execute(Interpreter::Runtime& runtime) override { runtime.push(0); }
+            void execute(Interpreter::Runtime& runtime) override
+            {
+                const MWBase::World* world = MWBase::Environment::get().getWorld();
+                runtime.push(world->getGlobalInt(MWWorld::Globals::sCharGenState) != -1);
+            }
         };
 
         template <class R>
