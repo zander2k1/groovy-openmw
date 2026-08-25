@@ -81,6 +81,12 @@ namespace MWGui
             const char* mLabel = nullptr;
         };
 
+        struct ArmorRatingInfo
+        {
+            int mRating = 0;
+            const char* mType = nullptr;
+        };
+
         bool isTooltipDisabled(MyGUI::Widget* widget)
         {
             for (MyGUI::Widget* current = widget; current; current = current->getParent())
@@ -137,6 +143,24 @@ namespace MWGui
                 best = { thrustMin, thrustMax, "Thrust" };
 
             return best;
+        }
+
+        ArmorRatingInfo getArmorRatingInfo(const MWWorld::Ptr& ptr)
+        {
+            if (ptr.getType() != ESM::Armor::sRecordId)
+                return {};
+
+            const ESM::RefId armorSkill = ptr.getClass().getEquipmentSkill(ptr, true);
+            const char* armorType = nullptr;
+            if (armorSkill == ESM::Skill::LightArmor)
+                armorType = "Light";
+            else if (armorSkill == ESM::Skill::MediumArmor)
+                armorType = "Medium";
+            else if (armorSkill == ESM::Skill::HeavyArmor)
+                armorType = "Heavy";
+
+            return { static_cast<int>(ptr.getClass().getSkillAdjustedArmorRating(ptr, MWMechanics::getPlayer(), true)),
+                armorType };
         }
     }
 
@@ -1800,6 +1824,8 @@ namespace MWGui
 
             const WeaponDamageInfo damageInfo = getWeaponDamageInfo(mFocusObject);
             const bool hasDamage = damageInfo.mMin > 0 || damageInfo.mMax > 0;
+            const ArmorRatingInfo armorInfo = getArmorRatingInfo(mFocusObject);
+            const bool hasArmor = mFocusObject.getType() == ESM::Armor::sRecordId;
             if (showChargeBar)
             {
                 const int maxBarWidth = sCollapsedTooltipProgressBarWidth;
@@ -1831,8 +1857,7 @@ namespace MWGui
             else if (hasDamage)
             {
                 std::ostringstream stats;
-                if (hasDamage)
-                    stats << "( " << damageInfo.mLabel << " " << damageInfo.mMin << " - " << damageInfo.mMax << " )";
+                stats << "( " << damageInfo.mLabel << " " << damageInfo.mMin << " - " << damageInfo.mMax << " )";
                 const int statsLeft = padding;
                 const int statsWidth = std::max(0, winRect.width - padding * 2);
                 MyGUI::TextBox* statsText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
@@ -1840,6 +1865,19 @@ namespace MWGui
                     MyGUI::Align::VStretch | MyGUI::Align::Left, "CollapsedStats");
                 statsText->setTextAlign(MyGUI::Align::HCenter | MyGUI::Align::VCenter);
                 statsText->setCaption(stats.str());
+            }
+            else if (hasArmor)
+            {
+                std::string stats = "Armor: " + MyGUI::utility::toString(armorInfo.mRating);
+                if (armorInfo.mType)
+                    stats += std::string(" (") + armorInfo.mType + ')';
+                const int statsLeft = padding;
+                const int statsWidth = std::max(0, winRect.width - padding * 2);
+                MyGUI::TextBox* statsText = mDynamicToolTipBox->createWidget<MyGUI::TextBox>(tooltipTextSkin,
+                    MyGUI::IntCoord(statsLeft, textTop, statsWidth, textHeight),
+                    MyGUI::Align::VStretch | MyGUI::Align::Left, "CollapsedStats");
+                statsText->setTextAlign(MyGUI::Align::HCenter | MyGUI::Align::VCenter);
+                statsText->setCaption(stats);
             }
 
             return true;
