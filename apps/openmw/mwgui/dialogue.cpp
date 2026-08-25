@@ -382,7 +382,7 @@ namespace MWGui
     // --------------------------------------------------------------------------------------------------
 
     // Use tighter padding so dialogue topics are less spaced out in the list.
-    static constexpr int sVerticalPadding = 2;
+    static constexpr int sVerticalPadding = 1;
     static constexpr int sHistoryScrollbarReserve = 3;
     static constexpr float sControllerNavUpDelaySeconds = 0.25f;
     static constexpr float sControllerNavUpHoldThreshold = 0.85f;
