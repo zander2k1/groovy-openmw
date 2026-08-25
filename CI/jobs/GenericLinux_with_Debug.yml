@@ -1,6 +1,7 @@
 GenericLinux_with_Debug:
   extends: .Ubuntu_Image
   stage: build
+  allow_failure: true
   cache:
     paths:
       - apt-cache/

@@ -630,7 +630,8 @@ macOS15_Xcode16_arm64:
   extends: .Ubuntu_Image
   stage: build
   variables:
-    GIT_STRATEGY: none
+    # CI scripts below are taken from the checked-out repository.
+    GIT_STRATEGY: fetch
   script:
     - bash CI/apt_update_retry.sh
     - apt-get install -y curl gcab unzip
@@ -669,7 +670,8 @@ macOS15_Xcode16_arm64:
   extends: .Ubuntu_Image
   stage: build
   variables:
-    GIT_STRATEGY: none
+    # CI scripts below are taken from the checked-out repository.
+    GIT_STRATEGY: fetch
   script:
     - bash CI/apt_update_retry.sh
     - apt-get install -y curl dos2unix unzip zip
