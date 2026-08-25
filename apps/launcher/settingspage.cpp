@@ -113,16 +113,24 @@ namespace
     {
         if (value == "steam")
             return 1;
-        if (value == "xbox")
+        if (value == "steam_monochrome")
             return 2;
-        if (value == "xbox_classic")
+        if (value == "xbox")
             return 3;
-        if (value == "playstation")
+        if (value == "xbox_classic")
             return 4;
-        if (value == "switch")
+        if (value == "xbox_monochrome")
             return 5;
-        if (value == "gamecube")
+        if (value == "playstation")
             return 6;
+        if (value == "playstation_monochrome")
+            return 7;
+        if (value == "switch")
+            return 8;
+        if (value == "switch_monochrome")
+            return 9;
+        if (value == "gamecube")
+            return 10;
         return 0;
     }
 
@@ -133,14 +141,22 @@ namespace
             case 1:
                 return "steam";
             case 2:
-                return "xbox";
+                return "steam_monochrome";
             case 3:
-                return "xbox_classic";
+                return "xbox";
             case 4:
-                return "playstation";
+                return "xbox_classic";
             case 5:
-                return "switch";
+                return "xbox_monochrome";
             case 6:
+                return "playstation";
+            case 7:
+                return "playstation_monochrome";
+            case 8:
+                return "switch";
+            case 9:
+                return "switch_monochrome";
+            case 10:
                 return "gamecube";
             default:
                 return "auto";

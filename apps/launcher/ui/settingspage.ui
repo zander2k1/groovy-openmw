@@ -1850,22 +1850,42 @@
                 </item>
                 <item>
                  <property name="text">
-                  <string>Xbox</string>
+                   <string>Steam (Monochrome)</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Xbox (Classic Icons)</string>
+                   <string>XBOX</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>PlayStation</string>
+                   <string>XBOX (Classic)</string>
                  </property>
                 </item>
                  <item>
                   <property name="text">
+                   <string>XBOX (Monochrome)</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Playstation</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Playstation (Monochrome)</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
                    <string>Nintendo Switch</string>
+                  </property>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>Nintendo Switch (Monochrome)</string>
                   </property>
                  </item>
                  <item>

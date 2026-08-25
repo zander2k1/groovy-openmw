@@ -29,7 +29,8 @@ namespace Settings
             makeMaxStrictSanitizerFloat(0) };
         SettingValue<bool> mEnableSoftwareMouse{ mIndex, "Input", "enable software mouse", true };
         SettingValue<std::string> mControllerIconStyle{ mIndex, "Input", "controller icon style",
-            makeEnumSanitizerString({ "auto", "steam", "xbox", "xbox_classic", "playstation", "switch", "gamecube" }) };
+            makeEnumSanitizerString({ "auto", "steam", "xbox", "xbox_classic", "playstation", "switch", "gamecube",
+                "steam_monochrome", "xbox_monochrome", "playstation_monochrome", "switch_monochrome" }) };
         SettingValue<bool> mControllerWhiteBlackButtonIcons{ mIndex, "Input", "controller white black button icons" };
         SettingValue<float> mJoystickDeadZone{ mIndex, "Input", "joystick dead zone",
             makeClampSanitizerFloat(0, 0.5f) };

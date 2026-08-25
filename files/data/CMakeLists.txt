@@ -50,6 +50,34 @@ set(BUILTIN_DATA_FILES
     textures/omw_xbox_button_rb.dds
     textures/omw_xbox_button_rb_BLACK.dds
     textures/omw_xbox_button_rt.dds
+    textures/omw_psx_button_circle_monochrome.dds
+    textures/omw_psx_button_dpad_monochrome.dds
+    textures/omw_psx_button_square_monochrome.dds
+    textures/omw_psx_button_triangle_monochrome.dds
+    textures/omw_psx_button_x_monochrome.dds
+    textures/omw_steam_button_a_monochrome.dds
+    textures/omw_steam_button_b_monochrome.dds
+    textures/omw_steam_button_dpad_monochrome.dds
+    textures/omw_steam_button_l1_monochrome.dds
+    textures/omw_steam_button_l2_monochrome.dds
+    textures/omw_steam_button_l3_monochrome.dds
+    textures/omw_steam_button_lstick_monochrome.dds
+    textures/omw_steam_button_menu_monochrome.dds
+    textures/omw_steam_button_r1_monochrome.dds
+    textures/omw_steam_button_r2_monochrome.dds
+    textures/omw_steam_button_r3_monochrome.dds
+    textures/omw_steam_button_rstick_monochrome.dds
+    textures/omw_steam_button_view_monochrome.dds
+    textures/omw_steam_button_x_monochrome.dds
+    textures/omw_steam_button_y_monochrome.dds
+    textures/omw_switch_button_l_monochrome.dds
+    textures/omw_switch_button_r_monochrome.dds
+    textures/omw_switch_button_zl_monochrome.dds
+    textures/omw_switch_button_zr_monochrome.dds
+    textures/omw_xbox_button_lb_monochrome.dds
+    textures/omw_xbox_button_lt_monochrome.dds
+    textures/omw_xbox_button_rb_monochrome.dds
+    textures/omw_xbox_button_rt_monochrome.dds
     textures/omw_xbox_classic_button_a.dds
     textures/omw_xbox_classic_button_b.dds
     textures/omw_xbox_classic_button_lb_white.dds
