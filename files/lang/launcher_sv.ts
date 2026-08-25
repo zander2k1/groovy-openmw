@@ -1603,14 +1603,6 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Xbox</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>PlayStation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Use classic water shader files and textures when available.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1755,7 +1747,43 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Xbox (Classic Icons)</source>
+        <source>Decodes audio at lower rates to mimic the original XBOX audio quality.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX Audio Quality</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Repeat controller D-Pad and left-stick navigation while held in controller menus.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable Joystick/D-Pad Turbo Repeat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Steam (Monochrome)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX (Classic)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>XBOX (Monochrome)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playstation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Playstation (Monochrome)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nintendo Switch (Monochrome)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
