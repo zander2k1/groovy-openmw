@@ -1786,16 +1786,6 @@
              </widget>
             </item>
             <item row="5" column="0">
-             <widget class="QCheckBox" name="controllerMenuTurboRepeatCheckBox">
-              <property name="toolTip">
-               <string>Repeat controller D-Pad and left-stick navigation while held in controller menus.</string>
-              </property>
-              <property name="text">
-               <string>Enable Joystick/D-Pad Turbo Repeat</string>
-              </property>
-             </widget>
-            </item>
-            <item row="6" column="0">
              <widget class="QCheckBox" name="enableSoftwareMouseCheckBox">
               <property name="toolTip">
                <string>Use the software cursor (drawn by the UI) instead of the hardware cursor when using the controller.</string>
@@ -1808,7 +1798,7 @@
               </property>
              </widget>
             </item>
-            <item row="7" column="0">
+            <item row="6" column="0">
              <layout class="QHBoxLayout" name="gamepadCursorSpeedLayout">
               <item>
                <widget class="QLabel" name="gamepadCursorSpeedLabel">
@@ -1841,7 +1831,7 @@
               </item>
              </layout>
             </item>
-            <item row="8" column="0">
+            <item row="7" column="0">
              <layout class="QHBoxLayout" name="controllerIconStyleLayout">
               <item>
                <widget class="QLabel" name="controllerIconStyleLabel">
@@ -1917,7 +1907,7 @@
                </item>
               </layout>
              </item>
-            <item row="9" column="0">
+            <item row="8" column="0">
              <widget class="QCheckBox" name="controllerWhiteBlackButtonIconsCheckBox">
               <property name="toolTip">
                <string>Use white/black shoulder icons for LB/RB/L1/R1/L/R prompts.</string>

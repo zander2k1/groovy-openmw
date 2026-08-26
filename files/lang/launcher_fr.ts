@@ -1739,14 +1739,6 @@ Les logs et préférences modifiées y seront sauvegardés.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Repeat controller D-Pad and left-stick navigation while held in controller menus.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Enable Joystick/D-Pad Turbo Repeat</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Steam (Monochrome)</source>
         <translation type="unfinished"></translation>
     </message>

@@ -543,7 +543,6 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::gui().mControllerMenus, *controllerMenusCheckBox);
         loadSettingBool(Settings::gui().mControllerTooltips, *controllerMenuTooltipsCheckBox);
         loadSettingBool(Settings::gui().mControllerJoystickDpad, *controllerMenuJoystickDpadCheckBox);
-        controllerMenuTurboRepeatCheckBox->setChecked(Settings::gui().mControllerMenuTurboRepeat.get() > 0.f);
         loadSettingBool(Settings::gui().mSingularContainerTradeWindow, *singularContainerTradeWindowCheckBox);
         loadSettingBool(Settings::gui().mControllerHighlightSelections, *controllerMenuHighlightCheckBox);
         loadSettingBool(Settings::gui().mXboxStyledDialog, *xboxStyledDialogCheckBox);
@@ -1003,7 +1002,6 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*controllerMenusCheckBox, Settings::gui().mControllerMenus);
         saveSettingBool(*controllerMenuTooltipsCheckBox, Settings::gui().mControllerTooltips);
         saveSettingBool(*controllerMenuJoystickDpadCheckBox, Settings::gui().mControllerJoystickDpad);
-        Settings::gui().mControllerMenuTurboRepeat.set(controllerMenuTurboRepeatCheckBox->isChecked() ? 1.5f : 0.f);
         saveSettingBool(*singularContainerTradeWindowCheckBox, Settings::gui().mSingularContainerTradeWindow);
         saveSettingBool(*controllerMenuHighlightCheckBox, Settings::gui().mControllerHighlightSelections);
         saveSettingBool(*xboxStyledDialogCheckBox, Settings::gui().mXboxStyledDialog);
