@@ -1750,7 +1750,7 @@ Logi i ustawienia zmienione za pomocą programu uruchamiającego i w grze zostan
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Decodes audio at lower rates to mimic the original XBOX audio quality.</source>
+        <source>Decodes audio to sound closer to the original Xbox.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

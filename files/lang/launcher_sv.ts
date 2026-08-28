@@ -1747,7 +1747,7 @@ Loggar och inställningar som ändras genom startaren och inne i spelet kommer s
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Decodes audio at lower rates to mimic the original XBOX audio quality.</source>
+        <source>Decodes audio to sound closer to the original Xbox.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

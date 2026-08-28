@@ -1152,7 +1152,7 @@
          <item row="5" column="0">
           <widget class="QCheckBox" name="xboxAudioQualityCheckBox">
            <property name="toolTip">
-            <string>Decodes audio at lower rates to mimic the original XBOX audio quality.</string>
+            <string>Decodes audio to sound closer to the original Xbox.</string>
            </property>
            <property name="text">
             <string>XBOX Audio Quality</string>

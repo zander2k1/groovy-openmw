@@ -395,7 +395,7 @@ namespace MWSound
 
         const bool xboxAudioQuality = Settings::sound().mXboxAudioQuality;
         mOutputSampleRate
-            = xboxAudioQuality ? std::min(mCodecCtx->sample_rate, mIsMusic ? 16000 : 13000) : mCodecCtx->sample_rate;
+            = xboxAudioQuality ? std::min(mCodecCtx->sample_rate, mIsMusic ? 22050 : 13000) : mCodecCtx->sample_rate;
 
         if (mOutputSampleFormat == AV_SAMPLE_FMT_U8)
             *type = SampleType_UInt8;
