@@ -80,7 +80,9 @@ namespace MWGui
                 && std::find(supportedExtensions.begin(), supportedExtensions.end(), ext) != supportedExtensions.end();
         };
 
-        constexpr VFS::Path::NormalizedView splash("textures/splash/");
+        constexpr VFS::Path::NormalizedView esmSplash("splash/");
+        constexpr VFS::Path::NormalizedView xboxSplash("textures/splash/");
+        const auto& splash = mUseXboxSplashScreens ? xboxSplash : esmSplash;
         for (const auto& name : mResourceSystem->getVFS()->getRecursiveDirectoryIterator(splash))
         {
             if (isSupportedExtension(Misc::getFileExtension(name)))
