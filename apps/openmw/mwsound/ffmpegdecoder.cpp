@@ -331,7 +331,7 @@ namespace MWSound
         const bool xboxAudioQuality = Settings::sound().mXboxAudioQuality;
         mOutputSampleRate = codecCtxPtr->sample_rate;
         if (xboxAudioQuality)
-            mOutputSampleFormat = AV_SAMPLE_FMT_U8;
+            mOutputSampleFormat = AV_SAMPLE_FMT_S16;
         else if (codecCtxPtr->sample_fmt == AV_SAMPLE_FMT_U8P)
             mOutputSampleFormat = AV_SAMPLE_FMT_U8;
         // FIXME: Check for AL_EXT_FLOAT32 support
@@ -394,8 +394,7 @@ namespace MWSound
             throw std::runtime_error("No audio stream info");
 
         const bool xboxAudioQuality = Settings::sound().mXboxAudioQuality;
-        mOutputSampleRate
-            = xboxAudioQuality ? std::min(mCodecCtx->sample_rate, mIsMusic ? 22050 : 13000) : mCodecCtx->sample_rate;
+        mOutputSampleRate = xboxAudioQuality ? std::min(mCodecCtx->sample_rate, 13000) : mCodecCtx->sample_rate;
 
         if (mOutputSampleFormat == AV_SAMPLE_FMT_U8)
             *type = SampleType_UInt8;
