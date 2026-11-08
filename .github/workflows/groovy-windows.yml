@@ -1,8 +1,9 @@
 # Builds Groovy OpenMW for Windows x64.
 #
-# Every successful build of master replaces the "latest" release, so this link always has the
-# newest zip (no GitHub sign-in needed):
-# https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip
+# Every successful build replaces its zip in the "latest" release, so these links always have the
+# newest builds (no GitHub sign-in needed):
+# master (regular OpenMW): https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip
+# xbox (Xbox UI version):  https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip
 #
 # Based on OpenMW's own windows.yml (same prebuilt dependencies), without tests, OpenMW-CS and the
 # debug symbol uploads.
@@ -23,6 +24,7 @@ concurrency:
 
 env:
   MSVC: "2022"
+  ASSET: groovy-openmw-windows-x64.zip
 
 jobs:
   build:
@@ -182,8 +184,8 @@ jobs:
     - name: Zip
       shell: pwsh
       run: |
-        Compress-Archive -Path "install/*" -DestinationPath groovy-openmw-windows-x64.zip -Force
-        Get-Item groovy-openmw-windows-x64.zip | Format-Table Name, Length
+        Compress-Archive -Path "install/*" -DestinationPath $env:ASSET -Force
+        Get-Item $env:ASSET | Format-Table Name, Length
 
     - name: Update the "latest" release
       if: github.ref == 'refs/heads/master'
@@ -191,10 +193,9 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh release delete latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-        gh release create latest groovy-openmw-windows-x64.zip \
-          --repo "$GITHUB_REPOSITORY" \
-          --target "$GITHUB_SHA" \
-          --title "Latest build" \
-          --latest \
-          --notes "Newest Windows build of Groovy OpenMW (commit ${GITHUB_SHA:0:10}). Unzip anywhere, see README-GROOVY.txt."
+        # One release holds both builds: each branch only replaces its own zip.
+        if ! gh release view latest --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+          gh release create latest --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Latest builds" --latest \
+            --notes "Newest Windows builds of Groovy OpenMW. groovy-openmw-windows-x64.zip: regular OpenMW. groovy-openmw-xbox-windows-x64.zip: OpenMW with the Xbox UI. Unzip anywhere, see README-GROOVY.txt."
+        fi
+        gh release upload latest "$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
