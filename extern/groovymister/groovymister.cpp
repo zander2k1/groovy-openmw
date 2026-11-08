@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "groovymister.h"
 
 #include <stdint.h>
@@ -554,6 +555,9 @@ void GroovyMister::CmdBlit(uint32_t frame, uint8_t field, uint16_t vCountSync, u
 	uint32_t cSizeDelta = 0;
 	uint32_t bytesToSend = 0;
 	double ratio_delta = 1.0;
+	// Room for the compressed frame. Frames that barely compress (fine noisy detail) come out slightly larger
+	// than the raw frame, so the output buffer must allow LZ4's worst case, or compression fails.
+	const int lz4Capacity = std::min<int>(LZ4_compressBound((int) m_RGBSize), BUFFER_SIZE);
 	if (m_lz4Frames)
 	{
 		double ratio_match = (double) matchDeltaBytes / m_RGBSize;
@@ -564,10 +568,10 @@ void GroovyMister::CmdBlit(uint32_t frame, uint8_t field, uint16_t vCountSync, u
 				case(6):
 				case(5):
 				case(2):
-				case(1): cSize = LZ4_compress_default((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, m_RGBSize);
+				case(1): cSize = LZ4_compress_default((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, lz4Capacity);
 						 break;
 				case(4):
-				case(3): cSize = LZ4_compress_HC((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, m_RGBSize, LZ4HC_CLEVEL_DEFAULT);
+				case(3): cSize = LZ4_compress_HC((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, lz4Capacity, LZ4HC_CLEVEL_DEFAULT);
 						 break;
 			}
 		}
@@ -584,10 +588,10 @@ void GroovyMister::CmdBlit(uint32_t frame, uint8_t field, uint16_t vCountSync, u
 				case(6):
 				case(5):
 				case(2):
-				case(1): cSizeDelta = LZ4_compress_default((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, m_RGBSize);
+				case(1): cSizeDelta = LZ4_compress_default((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, lz4Capacity);
 						 break;
 				case(4): 
-				case(3): cSizeDelta = LZ4_compress_HC((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, m_RGBSize, LZ4HC_CLEVEL_DEFAULT);
+				case(3): cSizeDelta = LZ4_compress_HC((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, lz4Capacity, LZ4HC_CLEVEL_DEFAULT);
 						 break;
 			}
 			ratio_delta = (double) cSizeDelta / cSize;
@@ -598,16 +602,24 @@ void GroovyMister::CmdBlit(uint32_t frame, uint8_t field, uint16_t vCountSync, u
 		{
 			if (cSize <= cSizeDelta || m_lz4Frames == 5)
 			{
-				cSize = LZ4_compress_HC((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, m_RGBSize, LZ4HC_CLEVEL_DEFAULT);
+				cSize = LZ4_compress_HC((char *)&m_pBufferBlit[field][0], m_pBufferLZ4[0], m_RGBSize, lz4Capacity, LZ4HC_CLEVEL_DEFAULT);
 			}
 			else
 			{
-				cSizeDelta = LZ4_compress_HC((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, m_RGBSize, LZ4HC_CLEVEL_DEFAULT); 
+				cSizeDelta = LZ4_compress_HC((char *)&m_pBufferBlitDelta[0], m_pBufferLZ4[1], m_RGBSize, lz4Capacity, LZ4HC_CLEVEL_DEFAULT); 
 				ratio_delta = (double) cSizeDelta / cSize;
 			}
 			m_lz4Frames = m_lz4Frames - 2;
 			LOG(0,"[MiSTer] LZ4 Adaptative apply LZ4HC on frame %d\n", frame);
 		}
+	}
+
+	// In LZ4 mode the MiSTer only understands compressed frames. If compression still failed, skip this frame
+	// (the MiSTer keeps showing the previous one) instead of sending stale data from the compression buffer.
+	if (m_lz4Frames && cSize == 0)
+	{
+		LOG(0,"[MiSTer] LZ4 compression failed on frame %d, frame skipped\n", frame);
+		return;
 	}
 
 	m_bufferSend[0] = CMD_BLIT_FIELD_VSYNC;
