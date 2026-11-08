@@ -195,7 +195,7 @@ jobs:
       run: |
         # One release holds both builds: each branch only replaces its own zip.
         if ! gh release view latest --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
-          gh release create latest --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --title "Latest builds" --latest \
+          gh release create latest --repo "$GITHUB_REPOSITORY" --target master --title "Latest builds" --latest \
             --notes "Newest Windows builds of Groovy OpenMW. groovy-openmw-windows-x64.zip: regular OpenMW. groovy-openmw-xbox-windows-x64.zip: OpenMW with the Xbox UI. Unzip anywhere, see README-GROOVY.txt."
         fi
         gh release upload latest "$ASSET" --repo "$GITHUB_REPOSITORY" --clobber
