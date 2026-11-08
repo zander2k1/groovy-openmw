@@ -533,7 +533,7 @@ namespace
     // shrinks cleanly and menus come out at the size they'd be on a console.
     void applyGroovyCrtSetup()
     {
-        if (!Settings::groovy().mEnabled || !Settings::groovy().mAutoCrtSetup)
+        if (!Settings::groovy().mEnabled || !Settings::groovy().mAutoCrtSetup.get())
             return;
 
         int factor = 2;
@@ -546,13 +546,13 @@ namespace
 
         const int width = 640 * factor;
         const int height = 480 * factor;
-        if (Settings::video().mWindowMode != Settings::WindowMode::Windowed)
+        if (Settings::video().mWindowMode.get() != Settings::WindowMode::Windowed)
             Settings::video().mWindowMode.set(Settings::WindowMode::Windowed);
-        if (Settings::video().mResolutionX != width)
+        if (Settings::video().mResolutionX.get() != width)
             Settings::video().mResolutionX.set(width);
-        if (Settings::video().mResolutionY != height)
+        if (Settings::video().mResolutionY.get() != height)
             Settings::video().mResolutionY.set(height);
-        if (Settings::gui().mScalingFactor != static_cast<float>(factor))
+        if (Settings::gui().mScalingFactor.get() != static_cast<float>(factor))
             Settings::gui().mScalingFactor.set(static_cast<float>(factor));
 
         Log(Debug::Info) << "Groovy MiSTer: CRT setup, window " << width << "x" << height
@@ -1054,7 +1054,7 @@ void OMW::Engine::go()
     // Groovy MiSTer frame delay: draw each frame right after reading the controller, on one thread. With
     // the default separate draw thread, the next frame's input would be read while this one is still being
     // drawn, adding a frame of lag that frame delay is meant to remove.
-    if (Settings::groovy().mEnabled && Settings::groovy().mFrameDelay)
+    if (Settings::groovy().mEnabled && Settings::groovy().mFrameDelay.get())
         mViewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
     mEnvironment.setFrameRateLimit(Settings::video().mFramerateLimit);
