@@ -6,6 +6,7 @@
 #include "categories/fog.hpp"
 #include "categories/game.hpp"
 #include "categories/general.hpp"
+#include "categories/groovy.hpp"
 #include "categories/groundcover.hpp"
 #include "categories/gui.hpp"
 #include "categories/hud.hpp"
@@ -63,6 +64,7 @@ namespace Settings
         StereoCategory mStereo{ mIndex };
         StereoViewCategory mStereoView{ mIndex };
         PostProcessingCategory mPostProcessing{ mIndex };
+        GroovyCategory mGroovy{ mIndex };
     };
 
     class StaticValues
@@ -162,6 +164,11 @@ namespace Settings
     inline VideoCategory& video()
     {
         return values().mVideo;
+    }
+
+    inline GroovyCategory& groovy()
+    {
+        return values().mGroovy;
     }
 
     inline WaterCategory& water()

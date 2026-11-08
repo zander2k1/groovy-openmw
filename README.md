@@ -1,3 +1,51 @@
+Groovy OpenMW
+=============
+
+Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your PC over a network cable to a MiSTer FPGA running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), which shows it on a real CRT with very low lag (a few milliseconds). It's built the same way as my [Groovy Dolphin](https://github.com/zander2k01/groovy-dolphin) port.
+
+**Status:** early. The picture output is in; game sound still plays on the PC, and controllers connect to the PC.
+
+## Download
+
+Windows build (updated automatically): **[groovy-openmw-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip)**
+
+## What you need
+
+- A copy of Morrowind (OpenMW uses its data files)
+- A MiSTer with the Groovy core installed
+- A wired network connection between the PC and the MiSTer (a gigabit switch or a direct cable)
+- A CRT. CRT TVs use 480i or 240p; PC CRT monitors (VGA) can use 480p
+
+## Setup
+
+1. Unzip the download anywhere. Run `openmw-launcher.exe` once and point it at your Morrowind installation, like normal OpenMW.
+2. Open `Documents\My Games\OpenMW\settings.cfg` in Notepad and add this at the end, with your MiSTer's IP address:
+
+   ```
+   [Groovy]
+   enabled = true
+   mister ip = 192.168.1.105
+   video mode = 480i
+   ```
+
+3. Start the Groovy core on the MiSTer, then start OpenMW. A message in the corner confirms the connection. If the MiSTer isn't ready yet, OpenMW keeps retrying in the background.
+
+**Video modes:** `480i` (default, sharpest, best for reading text), `240p` (no interlace flicker, more of a retro look), `480p` (31 kHz, PC CRT monitors only, never a CRT TV).
+
+**Tips:**
+- A 4:3 window looks best, for example 1280x960 or 1440x1080. Other shapes get black bars.
+- Text is small on a TV at 480i. Raising the interface scaling in OpenMW's settings helps a lot.
+- Vsync is turned off automatically while Groovy is on, since the MiSTer sets the pace.
+
+## Credits
+
+- psakhis (Sergi Clara), who created Groovy_MiSTer and its PC library. He passed away in 2024.
+- The OpenMW team, for OpenMW.
+
+Everything below is OpenMW's original README.
+
+---
+
 OpenMW
 ======
 

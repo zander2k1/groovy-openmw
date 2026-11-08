@@ -1,5 +1,6 @@
 set(OPENMW_SOURCES
     engine.cpp
+    groovyoutput.cpp
     options.cpp
 )
 
@@ -11,6 +12,7 @@ set(OPENMW_RESOURCES
 set(OPENMW_HEADERS
     doc.hpp
     engine.hpp
+    groovyoutput.hpp
     options.hpp
     profile.hpp
 )
@@ -167,6 +169,8 @@ endif()
 include_directories(
     ${FFmpeg_INCLUDE_DIRS}
 )
+
+target_link_libraries(openmw-lib groovymister)
 
 target_link_libraries(openmw-lib
     # CMake's built-in OSG finder does not use pkgconfig, so we have to
