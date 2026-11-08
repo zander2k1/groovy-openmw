@@ -224,6 +224,10 @@ namespace OMW
 
         // LZ4-compressed frames, 48 kHz stereo sound (or none), RGB888, standard 1500-byte packets.
         const bool audio = mSendAudio && MWSound::GroovyAudio::active();
+        // Controllers plugged into the MiSTer (sent when Joysticks is on in the Groovy core's menu). The MiSTer
+        // only learns where to send them from this hello while it handles the init below, so it must come first.
+        gmw_bindInputs(mHost.c_str());
+
         if (gmw_init(mHost.c_str(), 1, audio ? MWSound::GroovyAudio::sSampleRate : 0, audio ? 2 : 0, 0, 1500) < 0)
         {
             // Ask the MiSTer to start the Groovy core (if the groovy_wake helper is installed there). The helper
@@ -254,8 +258,6 @@ namespace OMW
         mLastEcho = 0;
         mLastEchoTime = mLastSendTime = mLastAttempt;
 
-        // Controllers plugged into the MiSTer (sent when Joysticks is on in the Groovy core's menu).
-        gmw_bindInputs(mHost.c_str());
         mInputsReady = true;
     }
 
