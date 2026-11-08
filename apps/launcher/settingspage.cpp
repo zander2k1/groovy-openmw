@@ -370,6 +370,14 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::groovy().mSendAudio, *groovySendAudioCheckBox);
         loadSettingBool(Settings::groovy().mPcAudio, *groovyPcAudioCheckBox);
         loadSettingBool(Settings::groovy().mFlickerFilter, *groovyFlickerFilterCheckBox);
+        loadSettingBool(Settings::groovy().mAutoCrtSetup, *groovyAutoSetupCheckBox);
+        loadSettingBool(Settings::groovy().mFrameDelay, *groovyFrameDelayCheckBox);
+        groovyFrameDelaySpinBox->setValue(Settings::groovy().mFrameDelayAmount);
+        groovyFrameDelaySpinBox->setEnabled(groovyFrameDelayCheckBox->isChecked());
+        connect(groovyFrameDelayCheckBox, &QCheckBox::toggled, groovyFrameDelaySpinBox, &QWidget::setEnabled);
+        groovyPictureSizeSpinBox->setValue(Settings::groovy().mPictureSize);
+        groovyShiftXSpinBox->setValue(Settings::groovy().mPictureShiftX);
+        groovyShiftYSpinBox->setValue(Settings::groovy().mPictureShiftY);
     }
 
     // Testing
@@ -616,6 +624,12 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*groovySendAudioCheckBox, Settings::groovy().mSendAudio);
         saveSettingBool(*groovyPcAudioCheckBox, Settings::groovy().mPcAudio);
         saveSettingBool(*groovyFlickerFilterCheckBox, Settings::groovy().mFlickerFilter);
+        saveSettingBool(*groovyAutoSetupCheckBox, Settings::groovy().mAutoCrtSetup);
+        saveSettingBool(*groovyFrameDelayCheckBox, Settings::groovy().mFrameDelay);
+        Settings::groovy().mFrameDelayAmount.set(groovyFrameDelaySpinBox->value());
+        Settings::groovy().mPictureSize.set(groovyPictureSizeSpinBox->value());
+        Settings::groovy().mPictureShiftX.set(groovyShiftXSpinBox->value());
+        Settings::groovy().mPictureShiftY.set(groovyShiftYSpinBox->value());
     }
 
     // Testing

@@ -1358,6 +1358,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="groovyAutoSetupCheckBox">
+         <property name="toolTip">
+          <string>While MiSTer output is on, use a 4:3 window at 2x the CRT's 640x480 (3x on big monitors) and scale the interface to match, so menus and text come out at console size on the CRT. Overrides the window size and interface scaling settings.</string>
+         </property>
+         <property name="text">
+          <string>Automatic CRT Setup (window size and interface scaling)</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QGridLayout" name="groovyGridLayout">
          <item row="0" column="0">
           <widget class="QLabel" name="groovyIpLabel">
@@ -1419,6 +1429,95 @@
            </property>
            <property name="maximum">
             <number>400</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QCheckBox" name="groovyFrameDelayCheckBox">
+           <property name="toolTip">
+            <string>Lower lag: wait until late in each CRT frame before reading the controller and drawing the next frame, like GroovyMAME's frame delay. The amount is how long to wait, in tenths of a frame. Higher means less lag but needs a faster PC; lower it if the game stutters.</string>
+           </property>
+           <property name="text">
+            <string>Frame Delay (lower lag)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="groovyFrameDelaySpinBox">
+           <property name="toolTip">
+            <string>How long to wait, in tenths of a frame (1 to 9). Start at 5; lower it if the game stutters.</string>
+           </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>9</number>
+           </property>
+           <property name="suffix">
+            <string>/10 frame</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="groovyPictureSizeLabel">
+           <property name="text">
+            <string>Picture Size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSpinBox" name="groovyPictureSizeSpinBox">
+           <property name="toolTip">
+            <string>Size of the picture on the CRT. Lower it if your TV cuts off the edges of the picture. Default: 100%.</string>
+           </property>
+           <property name="minimum">
+            <number>50</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="groovyShiftXLabel">
+           <property name="text">
+            <string>Move Picture Left/Right</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QSpinBox" name="groovyShiftXSpinBox">
+           <property name="toolTip">
+            <string>Moves the picture on the CRT, in pixels. Positive moves it right. Default: 0.</string>
+           </property>
+           <property name="minimum">
+            <number>-64</number>
+           </property>
+           <property name="maximum">
+            <number>64</number>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="groovyShiftYLabel">
+           <property name="text">
+            <string>Move Picture Up/Down</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QSpinBox" name="groovyShiftYSpinBox">
+           <property name="toolTip">
+            <string>Moves the picture on the CRT, in pixels. Positive moves it down. Default: 0.</string>
+           </property>
+           <property name="minimum">
+            <number>-64</number>
+           </property>
+           <property name="maximum">
+            <number>64</number>
            </property>
           </widget>
          </item>

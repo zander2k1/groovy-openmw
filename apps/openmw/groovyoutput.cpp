@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <thread>
 
 #include <SDL.h>
 
@@ -60,6 +61,13 @@ namespace OMW
         , mSyncLine(std::clamp(syncLine, 0, 400))
         , mSendAudio(sendAudio)
         , mFlickerFilter(Settings::groovy().mFlickerFilter)
+        , mFrameDelay(Settings::groovy().mFrameDelay
+                  // Tenths of a frame. 480i and 480p run at 59.94 frames (fields) a second, 240p at 60.
+                  ? std::chrono::microseconds(Settings::groovy().mFrameDelayAmount * 1668)
+                  : std::chrono::microseconds(0))
+        , mPictureScale(Settings::groovy().mPictureSize / 100.0)
+        , mShiftX(Settings::groovy().mPictureShiftX)
+        , mShiftY(Settings::groovy().mPictureShiftY)
     {
         mWidth = hActive;
         mHeight = mode == Mode::Progressive240 ? 240 : 480;
@@ -149,6 +157,19 @@ namespace OMW
             mStats.mMaxSendMs = std::max(mStats.mMaxSendMs,
                 std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - sendStart).count());
             sendAudio(audioFrames);
+
+            // Frame delay: the CRT frame has just started. Waiting here pushes reading the controller and drawing
+            // the next frame later into it, so less time passes between a button press and the picture showing
+            // it. The Groovy library shortens its own wait to match, so the picture still goes out on time.
+            if (mFrameDelay.count() > 0 && mConnected)
+            {
+                const auto until = std::chrono::steady_clock::now() + mFrameDelay;
+                // Sleep most of it, then wait out the last bit precisely (Windows sleeps are coarse).
+                if (mFrameDelay > std::chrono::milliseconds(2))
+                    std::this_thread::sleep_for(mFrameDelay - std::chrono::milliseconds(2));
+                while (std::chrono::steady_clock::now() < until)
+                    std::this_thread::yield();
+            }
         }
     }
 
@@ -331,14 +352,20 @@ namespace OMW
             destHeight = static_cast<int>(std::lround(mHeight * crtAspect / srcAspect));
         else
             destWidth = static_cast<int>(std::lround(mWidth * srcAspect / crtAspect));
+        // Picture size setting: shrink the picture so a TV's overscan doesn't cut off the edges.
+        destWidth = static_cast<int>(std::lround(destWidth * mPictureScale));
+        destHeight = static_cast<int>(std::lround(destHeight * mPictureScale));
         destWidth = std::clamp(destWidth & ~1, 2, mWidth);
         destHeight = std::clamp(destHeight & ~1, 2, mHeight);
-        const int destX = (mWidth - destWidth) / 2;
-        const int destY = (mHeight - destHeight) / 2;
+        // Centered, then moved by the shift setting, but always kept inside the picture.
+        const int destX = std::clamp((mWidth - destWidth) / 2 + mShiftX, 0, mWidth - destWidth);
+        const int destY = std::clamp((mHeight - destHeight) / 2 + mShiftY, 0, mHeight - destHeight);
 
-        // New size: clear the old picture, so the bars are black.
-        if (destWidth != mFinal.mWidth || destHeight != mFinal.mHeight)
+        // New size or position: clear the old picture, so the borders are black.
+        if (destWidth != mFinal.mWidth || destHeight != mFinal.mHeight || destX != mDestX || destY != mDestY)
             std::fill(mFrame.begin(), mFrame.end(), static_cast<std::uint8_t>(0));
+        mDestX = destX;
+        mDestY = destY;
 
         // Blits respect the scissor test, which the GUI may have left on.
         const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
