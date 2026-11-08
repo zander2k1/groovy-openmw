@@ -2107,6 +2107,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="groovyStartCoreCheckBox">
+         <property name="toolTip">
+          <string>If the MiSTer doesn't answer, ask it to start the Groovy core, even if another core is running. Needs the small groovy_wake helper installed on the MiSTer (see Main_MiSTer_Groovy on GitHub); without it nothing happens.</string>
+         </property>
+         <property name="text">
+          <string>Start the Groovy Core on the MiSTer Automatically</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QGridLayout" name="groovyGridLayout">
          <item row="0" column="0">
           <widget class="QLabel" name="groovyIpLabel">

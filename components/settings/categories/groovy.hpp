@@ -23,6 +23,7 @@ namespace Settings
         SettingValue<bool> mPcAudio{ mIndex, "Groovy", "play audio on pc" };
         SettingValue<bool> mFlickerFilter{ mIndex, "Groovy", "flicker filter" };
         SettingValue<bool> mAutoCrtSetup{ mIndex, "Groovy", "automatic crt setup" };
+        SettingValue<bool> mStartCore{ mIndex, "Groovy", "start groovy core" };
         SettingValue<bool> mFrameDelay{ mIndex, "Groovy", "frame delay" };
         SettingValue<int> mFrameDelayAmount{ mIndex, "Groovy", "frame delay amount", makeClampSanitizerInt(1, 9) };
         SettingValue<int> mPictureSize{ mIndex, "Groovy", "picture size", makeClampSanitizerInt(50, 100) };
