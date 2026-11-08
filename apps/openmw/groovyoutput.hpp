@@ -59,6 +59,7 @@ namespace OMW
         void sendAudio(std::size_t frames);
         void checkConnection();
         void message(const std::string& text);
+        void logStats(std::chrono::steady_clock::time_point now);
 
         bool ensureTarget(osg::GraphicsContext& gc, Target& target, int width, int height);
         void disconnect();
@@ -106,6 +107,27 @@ namespace OMW
         std::chrono::steady_clock::time_point mLastAttempt{};
         std::chrono::steady_clock::time_point mLastEchoTime{};
         std::chrono::steady_clock::time_point mLastSendTime{};
+
+        // Numbers written to openmw.log every few seconds, to find out what goes wrong when the picture on the
+        // CRT stops updating.
+        struct Stats
+        {
+            unsigned mSwaps = 0;
+            unsigned mCaptures = 0;
+            unsigned mSends = 0;
+            unsigned mEchoes = 0;
+            double mMaxSwapGapMs = 0;
+            double mMaxSendMs = 0;
+            double mMaxWaitMs = 0;
+            std::size_t mAudioFrames = 0;
+            std::size_t mMaxAudioFrames = 0;
+            int mSourceWidth = 0;
+            int mSourceHeight = 0;
+        };
+        Stats mStats;
+        bool mCaptureSkipLogged = false;
+        std::chrono::steady_clock::time_point mLastStatsTime{};
+        std::chrono::steady_clock::time_point mLastSwapTime{};
     };
 }
 
