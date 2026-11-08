@@ -105,6 +105,13 @@ namespace OMW
     void GroovyOutput::swapBuffersImplementation(osg::GraphicsContext* gc)
     {
         const auto now = std::chrono::steady_clock::now();
+        ++mStats.mSwaps;
+        if (mLastSwapTime != std::chrono::steady_clock::time_point{})
+            mStats.mMaxSwapGapMs = std::max(mStats.mMaxSwapGapMs,
+                std::chrono::duration<double, std::milli>(now - mLastSwapTime).count());
+        mLastSwapTime = now;
+        if (now - mLastStatsTime >= std::chrono::seconds(5))
+            logStats(now);
 
         // The window (and the first frames) come before the sound engine starts. If we connected without sound
         // and the sound is ready now, connect again with sound.
@@ -120,20 +127,55 @@ namespace OMW
 
         // Grab the frame while it's still in the back buffer, show it on the PC, then send it.
         const bool captured = mConnected && capture(*gc);
+        if (captured)
+            ++mStats.mCaptures;
 
         gc->swapBuffersImplementation();
 
         // The sound for this frame (also played on the PC, if enabled). Rendered even while the MiSTer isn't
         // connected, so the game is never silent.
         const std::size_t audioFrames = MWSound::GroovyAudio::render(mAudio);
+        mStats.mAudioFrames += audioFrames;
+        mStats.mMaxAudioFrames = std::max(mStats.mMaxAudioFrames, audioFrames);
 
         if (captured)
         {
             if (!mModeSet)
                 switchres();
+            const auto sendStart = std::chrono::steady_clock::now();
             send();
+            mStats.mMaxSendMs = std::max(mStats.mMaxSendMs,
+                std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - sendStart).count());
             sendAudio(audioFrames);
         }
+    }
+
+    void GroovyOutput::logStats(std::chrono::steady_clock::time_point now)
+    {
+        const double seconds = mLastStatsTime == std::chrono::steady_clock::time_point{}
+            ? 0.0
+            : std::chrono::duration<double>(now - mLastStatsTime).count();
+        mLastStatsTime = now;
+        if (seconds <= 0.0)
+            return;
+
+        gmw_fpgaStatus status{};
+        if (mConnected)
+            gmw_getStatus(&status);
+
+        Log(Debug::Info) << std::dec << "Groovy MiSTer stats: " << seconds << " s, connected " << mConnected
+                         << ", swaps " << mStats.mSwaps << " (longest gap " << mStats.mMaxSwapGapMs << " ms)"
+                         << ", captured " << mStats.mCaptures << ", sent " << mStats.mSends << ", answered "
+                         << mStats.mEchoes << ", longest send " << mStats.mMaxSendMs << " ms (wait for CRT "
+                         << mStats.mMaxWaitMs << " ms), window " << mStats.mSourceWidth << "x"
+                         << mStats.mSourceHeight << ", our frame " << mFrameNumber << ", MiSTer frame "
+                         << status.frame << ", answered frame " << status.frameEcho << ", vcount " << status.vCount
+                         << ", bits ready " << int(status.vramReady) << " endframe " << int(status.vramEndFrame)
+                         << " synced " << int(status.vramSynced) << " queue " << int(status.vramQueue)
+                         << " frameskip " << int(status.vgaFrameskip) << " audio " << int(status.audio)
+                         << ", sound " << mStats.mAudioFrames << " samples (max " << mStats.mMaxAudioFrames
+                         << " per frame)";
+        mStats = Stats{};
     }
 
     void GroovyOutput::message(const std::string& text)
@@ -215,7 +257,7 @@ namespace OMW
 
         gmw_switchres(pixelClock, hActive, hBegin, hEnd, hTotal, vActive, vBegin, vEnd, vTotal, interlace);
         mModeSet = true;
-        Log(Debug::Info) << "Groovy MiSTer: video mode " << mWidth << "x" << mHeight << (mInterlaced ? "i" : "p");
+        Log(Debug::Info) << std::dec << "Groovy MiSTer: video mode " << mWidth << "x" << mHeight << (mInterlaced ? "i" : "p");
     }
 
     bool GroovyOutput::ensureTarget(osg::GraphicsContext& gc, Target& target, int width, int height)
@@ -257,7 +299,12 @@ namespace OMW
         osg::State* state = gc.getState();
         const osg::GraphicsContext::Traits* traits = gc.getTraits();
         if (state == nullptr || traits == nullptr || traits->width <= 0 || traits->height <= 0)
+        {
+            if (!mCaptureSkipLogged)
+                Log(Debug::Warning) << "Groovy MiSTer: frame skipped, the window has no size or state";
+            mCaptureSkipLogged = true;
             return false;
+        }
 
         osg::GLExtensions* ext = state->get<osg::GLExtensions>();
         if (ext == nullptr || !ext->isFrameBufferObjectSupported || ext->glBlitFramebuffer == nullptr)
@@ -269,6 +316,8 @@ namespace OMW
 
         const int srcWidth = traits->width;
         const int srcHeight = traits->height;
+        mStats.mSourceWidth = srcWidth;
+        mStats.mSourceHeight = srcHeight;
 
         // Fit the window into a 4:3 CRT picture, with black bars if the window has a different shape.
         const double crtAspect = 4.0 / 3.0;
@@ -395,7 +444,10 @@ namespace OMW
 
         char* buffer = gmw_get_pBufferBlit(field);
         if (buffer == nullptr)
+        {
+            Log(Debug::Warning) << "Groovy MiSTer: no send buffer";
             return;
+        }
 
         const std::size_t rowBytes = static_cast<std::size_t>(mWidth) * 3;
         if (mInterlaced)
@@ -411,8 +463,12 @@ namespace OMW
         }
 
         gmw_blit(mFrameNumber, field, static_cast<std::uint16_t>(mSyncLine), 15000, 0);
+        ++mStats.mSends;
         // Wait for the CRT's next frame: this paces OpenMW to the CRT's refresh rate.
+        const auto waitStart = std::chrono::steady_clock::now();
         gmw_waitSync();
+        mStats.mMaxWaitMs = std::max(mStats.mMaxWaitMs,
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - waitStart).count());
         checkConnection();
     }
 
@@ -428,17 +484,6 @@ namespace OMW
             return;
         std::memcpy(buffer, mAudio.data(), bytes);
         gmw_audio(static_cast<std::uint16_t>(bytes));
-
-        // About two seconds in, the MiSTer has told us whether the Groovy core's own Audio option is on (it's
-        // off by default, which is easy to miss).
-        if (!mAudioChecked && mFrameNumber > 120)
-        {
-            mAudioChecked = true;
-            gmw_fpgaStatus status;
-            gmw_getStatus(&status);
-            if (!status.audio)
-                message("sound is off in the Groovy core. On the MiSTer, open the core's menu and turn Audio on.");
-        }
     }
 
     void GroovyOutput::checkConnection()
@@ -456,6 +501,16 @@ namespace OMW
         {
             mLastEcho = status.frameEcho;
             mLastEchoTime = now;
+            ++mStats.mEchoes;
+
+            // Once the MiSTer has answered, it has told us whether the Groovy core's own Audio option is on
+            // (it's off by default, which is easy to miss).
+            if (!mAudioChecked && mSendAudio && mInitAudio)
+            {
+                mAudioChecked = true;
+                if (!status.audio)
+                    message("sound is off in the Groovy core. On the MiSTer, open the core's menu and turn Audio on.");
+            }
         }
         else if (now - mLastEchoTime > lostTimeout)
         {

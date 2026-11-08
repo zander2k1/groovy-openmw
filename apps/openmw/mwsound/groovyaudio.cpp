@@ -153,8 +153,16 @@ namespace MWSound::GroovyAudio
         {
             // The PC's sound card runs on its own clock. If the queue has grown past 200 ms, start over from
             // now instead of drifting further behind.
-            if (SDL_GetQueuedAudioSize(sPcDevice) > static_cast<Uint32>(sSampleRate / 5 * 4))
+            const Uint32 queued = SDL_GetQueuedAudioSize(sPcDevice);
+            if (queued > static_cast<Uint32>(sSampleRate / 5 * 4))
                 SDL_ClearQueuedAudio(sPcDevice);
+            else if (queued < frames * 4)
+            {
+                // The queue ran dry (or this is the start): put 50 ms of silence in front, so small hiccups in
+                // the frame rate don't turn into crackles.
+                const std::vector<std::int16_t> silence(sSampleRate / 20 * 2, 0);
+                SDL_QueueAudio(sPcDevice, silence.data(), static_cast<Uint32>(silence.size() * sizeof(std::int16_t)));
+            }
             SDL_QueueAudio(sPcDevice, out.data(), static_cast<Uint32>(frames * 4));
         }
 
