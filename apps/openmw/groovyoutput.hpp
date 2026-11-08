@@ -76,6 +76,8 @@ namespace OMW
         const Mode mMode;
         const int mSyncLine;
         const bool mSendAudio;
+        // 480i: blend each line a little with its neighbours, so thin horizontal lines don't flicker.
+        const bool mFlickerFilter;
 
         // Size of the picture sent to the MiSTer.
         int mWidth = 640;

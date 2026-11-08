@@ -2184,6 +2184,16 @@
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="groovyFlickerFilterCheckBox">
+         <property name="toolTip">
+          <string>480i only. Softens thin horizontal lines, such as menu borders and small text, so they don't flicker on a CRT TV. The original Xbox did the same.</string>
+         </property>
+         <property name="text">
+          <string>Reduce Interlace Flicker</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <spacer>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
