@@ -805,6 +805,10 @@ void GroovyMister::WaitSync(void)
 	{
 		int diffRaster = DiffTimeRaster();
 		sleepTime = (diffRaster < 0 && abs(diffRaster) > sleepTime) ? 0 : sleepTime + diffRaster;
+		// Never wait more than two frames. If the MiSTer's frame counter jumps (the Groovy core was
+		// restarted), the raster correction can come out as minutes, and the program would hang here.
+		if (sleepTime > (int) (m_frameTime * 2))
+			sleepTime = (int) (m_frameTime * 2);
 		setTimeEnd();
 		realTime = DiffTime();
 
