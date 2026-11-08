@@ -4,6 +4,8 @@
 #include <cmath>
 #include <cstring>
 
+#include <SDL.h>
+
 #include <osg/BufferObject>
 #include <osg/FrameBufferObject>
 #include <osg/GLExtensions>
@@ -63,11 +65,32 @@ namespace OMW
         mFrame.assign(static_cast<std::size_t>(mWidth) * mHeight * 3, 0);
     }
 
+    struct GroovyOutput::Pad
+    {
+        SDL_Joystick* mJoystick = nullptr;
+        int mInstance = -1;
+    };
+
     GroovyOutput::~GroovyOutput()
     {
+        mInputsReady = false;
         if (mConnected)
             gmw_close();
+        // The virtual controllers go away when SDL shuts down (which may already have happened here).
+        for (Pad*& pad : mPads)
+        {
+            delete pad;
+            pad = nullptr;
+        }
         // The GL objects go away with the window's GL context.
+    }
+
+    void GroovyOutput::disconnect()
+    {
+        const std::lock_guard<std::mutex> lock(mNetMutex);
+        mInputsReady = false;
+        gmw_reset();
+        mConnected = false;
     }
 
     GroovyOutput::Mode GroovyOutput::parseMode(const std::string& name)
@@ -87,8 +110,7 @@ namespace OMW
         // and the sound is ready now, connect again with sound.
         if (mConnected && mSendAudio && !mInitAudio && MWSound::GroovyAudio::active())
         {
-            gmw_reset();
-            mConnected = false;
+            disconnect();
             mQuiet = true;
             mLastAttempt = now - retryInterval;
         }
@@ -133,6 +155,8 @@ namespace OMW
             return;
         }
 
+        const std::unique_lock<std::mutex> lock(mNetMutex);
+
         // LZ4-compressed frames, 48 kHz stereo sound (or none), RGB888, standard 1500-byte packets.
         const bool audio = mSendAudio && MWSound::GroovyAudio::active();
         if (gmw_init(mHost.c_str(), 1, audio ? MWSound::GroovyAudio::sSampleRate : 0, audio ? 2 : 0, 0, 1500) < 0)
@@ -156,6 +180,10 @@ namespace OMW
         mFrameNumber = 0;
         mLastEcho = 0;
         mLastEchoTime = mLastSendTime = mLastAttempt;
+
+        // Controllers plugged into the MiSTer (sent when Joysticks is on in the Groovy core's menu).
+        gmw_bindInputs(mHost.c_str());
+        mInputsReady = true;
     }
 
     void GroovyOutput::switchres()
@@ -432,11 +460,115 @@ namespace OMW
         else if (now - mLastEchoTime > lostTimeout)
         {
             message("lost connection to the MiSTer, reconnecting...");
-            gmw_reset();
-            mConnected = false;
+            disconnect();
             mLost = true;
             mNoAnswerShown = true; // already told the player
             mLastAttempt = now - retryInterval; // retry right away
         }
+    }
+
+    namespace
+    {
+        // The MiSTer sends each stick axis as a signed 8-bit value.
+        Sint16 toAxis(char value)
+        {
+            const int raw = static_cast<signed char>(value);
+            return static_cast<Sint16>(std::clamp(raw * 258, -32768, 32767));
+        }
+    }
+
+    void GroovyOutput::updateInputs()
+    {
+#if SDL_VERSION_ATLEAST(2, 24, 0)
+        // Never make the game wait: if the draw thread is (re)connecting right now, try again next frame.
+        std::unique_lock<std::mutex> lock(mNetMutex, std::try_to_lock);
+        if (!lock.owns_lock())
+            return;
+
+        gmw_fpgaJoyInputs inputs{};
+        if (mInputsReady)
+        {
+            gmw_pollInputs();
+            gmw_getJoyInputs(&inputs);
+        }
+        lock.unlock();
+
+        // Nothing has ever arrived: Joysticks is probably off in the Groovy core. Don't add empty controllers.
+        if (inputs.joyFrame == 0 && mPads[0] == nullptr)
+            return;
+
+        const std::array<std::uint16_t, 2> maps{ inputs.joy1, inputs.joy2 };
+        const std::array<std::array<char, 4>, 2> sticks{ {
+            { inputs.joy1LXAnalog, inputs.joy1LYAnalog, inputs.joy1RXAnalog, inputs.joy1RYAnalog },
+            { inputs.joy2LXAnalog, inputs.joy2LYAnalog, inputs.joy2RXAnalog, inputs.joy2RYAnalog },
+        } };
+
+        for (std::size_t port = 0; port < mPads.size(); ++port)
+        {
+            const std::uint16_t map = maps[port];
+            const auto& stick = sticks[port];
+            const bool used = map != 0 || stick[0] != 0 || stick[1] != 0 || stick[2] != 0 || stick[3] != 0;
+
+            // Create the controller the first time its port is used (port 1 as soon as inputs arrive).
+            if (mPads[port] == nullptr)
+            {
+                if (port == 1 && !used)
+                    continue;
+
+                SDL_VirtualJoystickDesc desc;
+                SDL_zero(desc);
+                desc.version = SDL_VIRTUAL_JOYSTICK_DESC_VERSION;
+                desc.type = SDL_JOYSTICK_TYPE_GAMECONTROLLER;
+                desc.naxes = SDL_CONTROLLER_AXIS_MAX;
+                desc.nbuttons = SDL_CONTROLLER_BUTTON_MAX;
+                desc.name = port == 0 ? "MiSTer Controller 1" : "MiSTer Controller 2";
+
+                auto* pad = new Pad;
+                mPads[port] = pad;
+                const int index = SDL_JoystickAttachVirtualEx(&desc);
+                if (index < 0)
+                {
+                    Log(Debug::Error) << "Groovy MiSTer: couldn't add a virtual controller: " << SDL_GetError();
+                    continue;
+                }
+                pad->mJoystick = SDL_JoystickOpen(index);
+                pad->mInstance = pad->mJoystick != nullptr ? SDL_JoystickInstanceID(pad->mJoystick) : -1;
+                Log(Debug::Info) << "Groovy MiSTer: added " << desc.name;
+            }
+
+            SDL_Joystick* joystick = mPads[port]->mJoystick;
+            if (joystick == nullptr)
+                continue;
+
+            // The MiSTer's buttons in its standard order (Button 1 = right face button, 2 = bottom, 3 = top,
+            // 4 = left, 5/6 = shoulders, 7 = Select, 8 = Start, 9/10 = extra), on an Xbox-style layout.
+            const auto set = [&](SDL_GameControllerButton button, std::uint16_t bit) {
+                SDL_JoystickSetVirtualButton(joystick, button, (map & bit) != 0 ? 1 : 0);
+            };
+            set(SDL_CONTROLLER_BUTTON_DPAD_UP, GMW_JOY_UP);
+            set(SDL_CONTROLLER_BUTTON_DPAD_DOWN, GMW_JOY_DOWN);
+            set(SDL_CONTROLLER_BUTTON_DPAD_LEFT, GMW_JOY_LEFT);
+            set(SDL_CONTROLLER_BUTTON_DPAD_RIGHT, GMW_JOY_RIGHT);
+            set(SDL_CONTROLLER_BUTTON_B, GMW_JOY_B1);
+            set(SDL_CONTROLLER_BUTTON_A, GMW_JOY_B2);
+            set(SDL_CONTROLLER_BUTTON_Y, GMW_JOY_B3);
+            set(SDL_CONTROLLER_BUTTON_X, GMW_JOY_B4);
+            set(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, GMW_JOY_B5);
+            set(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER, GMW_JOY_B6);
+            set(SDL_CONTROLLER_BUTTON_BACK, GMW_JOY_B7);
+            set(SDL_CONTROLLER_BUTTON_START, GMW_JOY_B8);
+
+            // Buttons 9 and 10 become the triggers (fully pressed or released).
+            SDL_JoystickSetVirtualAxis(
+                joystick, SDL_CONTROLLER_AXIS_TRIGGERLEFT, (map & GMW_JOY_B9) != 0 ? 32767 : 0);
+            SDL_JoystickSetVirtualAxis(
+                joystick, SDL_CONTROLLER_AXIS_TRIGGERRIGHT, (map & GMW_JOY_B10) != 0 ? 32767 : 0);
+
+            SDL_JoystickSetVirtualAxis(joystick, SDL_CONTROLLER_AXIS_LEFTX, toAxis(stick[0]));
+            SDL_JoystickSetVirtualAxis(joystick, SDL_CONTROLLER_AXIS_LEFTY, toAxis(stick[1]));
+            SDL_JoystickSetVirtualAxis(joystick, SDL_CONTROLLER_AXIS_RIGHTX, toAxis(stick[2]));
+            SDL_JoystickSetVirtualAxis(joystick, SDL_CONTROLLER_AXIS_RIGHTY, toAxis(stick[3]));
+        }
+#endif
     }
 }

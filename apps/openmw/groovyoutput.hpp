@@ -4,7 +4,10 @@
 #include <osg/GL>
 #include <osg/GraphicsContext>
 
+#include <array>
+#include <atomic>
 #include <chrono>
+#include <mutex>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -36,6 +39,10 @@ namespace OMW
 
         static Mode parseMode(const std::string& name);
 
+        /// Controllers plugged into the MiSTer: reads their state and passes it on to virtual SDL game
+        /// controllers, so OpenMW sees them like any other controller. Call on the main thread, before input.
+        void updateInputs();
+
     private:
         struct Target
         {
@@ -54,6 +61,15 @@ namespace OMW
         void message(const std::string& text);
 
         bool ensureTarget(osg::GraphicsContext& gc, Target& target, int width, int height);
+        void disconnect();
+
+        // Guards connecting and disconnecting (draw thread) against reading the controllers (main thread).
+        std::mutex mNetMutex;
+        std::atomic<bool> mInputsReady{ false };
+
+        // Virtual SDL controllers for the MiSTer's two controller ports (created when a port is first used).
+        struct Pad;
+        std::array<Pad*, 2> mPads{};
 
         const std::string mHost;
         const Mode mMode;

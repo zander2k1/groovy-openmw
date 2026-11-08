@@ -3,7 +3,7 @@ Groovy OpenMW
 
 Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your PC over a network cable to a MiSTer FPGA running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), which shows it on a real CRT with very low lag (a few milliseconds). It's built the same way as my [Groovy Dolphin](https://github.com/zander2k01/groovy-dolphin) port.
 
-**Status:** early. Picture and sound go to the MiSTer; controllers connect to the PC for now.
+**Status:** early. Picture, sound and controllers plugged into the MiSTer all work over the network.
 
 ## Download
 
@@ -19,19 +19,13 @@ Windows build (updated automatically): **[groovy-openmw-windows-x64.zip](https:/
 ## Setup
 
 1. Unzip the download anywhere. Run `openmw-launcher.exe` once and point it at your Morrowind installation, like normal OpenMW.
-2. Open `Documents\My Games\OpenMW\settings.cfg` in Notepad and add this at the end, with your MiSTer's IP address:
-
-   ```
-   [Groovy]
-   enabled = true
-   mister ip = 192.168.1.105
-   video mode = 480i
-   ```
-
-3. In the Groovy core's menu on the MiSTer, turn **Audio** on (it's off by default).
+2. In the launcher, go to **Settings > Groovy MiSTer**, tick **Enable MiSTer Output**, enter your MiSTer's IP address and pick a video mode.
+3. In the Groovy core's menu on the MiSTer, turn **Audio** on (it's off by default). To use controllers plugged into the MiSTer, also set **Server > Joysticks** to **Analog**.
 4. Start the Groovy core on the MiSTer, then start OpenMW. A message in the corner confirms the connection. If the MiSTer isn't ready yet, OpenMW keeps retrying in the background.
 
-**Sound** goes to the MiSTer together with the picture and also plays on the PC, so screen sharing still has audio. To hear it only from the MiSTer, add `play audio on pc = false`; to keep sound on the PC only, add `send audio = false`.
+**Sound** goes to the MiSTer together with the picture and also plays on the PC, so screen sharing still has audio. Both can be turned off on the Groovy MiSTer settings tab.
+
+**Controllers** plugged into the MiSTer show up in OpenMW as "MiSTer Controller 1" and "MiSTer Controller 2", with an Xbox-style layout: the MiSTer's buttons 1 to 4 are the right, bottom, top and left face buttons, 5 and 6 the shoulder buttons, 7 Select, 8 Start, and 9 and 10 the triggers. Controllers on the PC work too.
 
 **Video modes:** `480i` (default, sharpest, best for reading text), `240p` (no interlace flicker, more of a retro look), `480p` (31 kHz, PC CRT monitors only, never a CRT TV).
 

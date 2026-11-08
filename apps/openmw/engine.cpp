@@ -233,6 +233,9 @@ bool OMW::Engine::frame(unsigned frameNumber, float frametime)
         // update input
         {
             ScopedProfile<UserStatsType::Input> profile(statsEpoch, frameNumber, frameStats);
+            // Groovy MiSTer: controllers plugged into the MiSTer show up as virtual game controllers.
+            if (mGroovyOutput)
+                mGroovyOutput->updateInputs();
             mInputManager->update(frametime, false);
         }
 
