@@ -60,14 +60,14 @@ namespace OMW
         , mMode(mode)
         , mSyncLine(std::clamp(syncLine, 0, 400))
         , mSendAudio(sendAudio)
-        , mFlickerFilter(Settings::groovy().mFlickerFilter)
-        , mFrameDelay(Settings::groovy().mFrameDelay
+        , mFlickerFilter(Settings::groovy().mFlickerFilter.get())
+        , mFrameDelay(Settings::groovy().mFrameDelay.get()
                   // Tenths of a frame. 480i and 480p run at 59.94 frames (fields) a second, 240p at 60.
-                  ? std::chrono::microseconds(Settings::groovy().mFrameDelayAmount * 1668)
+                  ? std::chrono::microseconds(Settings::groovy().mFrameDelayAmount.get() * 1668)
                   : std::chrono::microseconds(0))
-        , mPictureScale(Settings::groovy().mPictureSize / 100.0)
-        , mShiftX(Settings::groovy().mPictureShiftX)
-        , mShiftY(Settings::groovy().mPictureShiftY)
+        , mPictureScale(Settings::groovy().mPictureSize.get() / 100.0)
+        , mShiftX(Settings::groovy().mPictureShiftX.get())
+        , mShiftY(Settings::groovy().mPictureShiftY.get())
     {
         mWidth = hActive;
         mHeight = mode == Mode::Progressive240 ? 240 : 480;
@@ -228,7 +228,7 @@ namespace OMW
         {
             // Ask the MiSTer to start the Groovy core (if the groovy_wake helper is installed there). The helper
             // ignores repeats while the core is loading.
-            const bool startCore = Settings::groovy().mStartCore;
+            const bool startCore = Settings::groovy().mStartCore.get();
             if (startCore)
                 gmw_wakeCore(mHost.c_str());
 
