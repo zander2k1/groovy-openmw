@@ -1,4 +1,5 @@
 #include "engine.hpp"
+#include "groovyoutput.hpp"
 
 #include <cerrno>
 #include <chrono>
@@ -494,7 +495,9 @@ void OMW::Engine::createWindow()
     const int height = Settings::video().mResolutionY;
     const Settings::WindowMode windowMode = Settings::video().mWindowMode;
     const bool windowBorder = Settings::video().mWindowBorder;
-    const SDLUtil::VSyncMode vsync = Settings::video().mVsyncMode;
+    // Groovy MiSTer paces frames to the CRT's refresh rate itself; the PC monitor's vsync would fight it.
+    const SDLUtil::VSyncMode vsync
+        = Settings::groovy().mEnabled ? SDLUtil::VSyncMode::Disabled : Settings::video().mVsyncMode;
     unsigned antialiasing = static_cast<unsigned>(Settings::video().mAntialiasing);
 
     int posX = SDL_WINDOWPOS_CENTERED_DISPLAY(screen);
@@ -611,6 +614,14 @@ void OMW::Engine::createWindow()
             Log(Debug::Warning) << "Warning: Framebuffer only has " << traits->depth << " bits of depth precision.";
 
         traits->alpha = 0; // set to 0 to stop ScreenCaptureHandler reading the alpha channel
+    }
+
+    if (Settings::groovy().mEnabled)
+    {
+        mGroovyOutput = new GroovyOutput(Settings::groovy().mMisterIp,
+            GroovyOutput::parseMode(Settings::groovy().mVideoMode), Settings::groovy().mSyncLine);
+        graphicsWindow->setSwapCallback(mGroovyOutput);
+        Log(Debug::Info) << "Groovy MiSTer output enabled";
     }
 
     osg::ref_ptr<osg::Camera> camera = mViewer->getCamera();

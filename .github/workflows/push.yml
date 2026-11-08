@@ -1,8 +1,9 @@
 name: Build and test
 
+# Groovy OpenMW: OpenMW's full test build (Linux, macOS, Windows) only runs when started by hand.
+# The Windows download is built by groovy-windows.yml.
 on:
-- push
-- pull_request
+- workflow_dispatch
 
 env:
   BUILD_TYPE: RelWithDebInfo

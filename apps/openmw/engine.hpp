@@ -122,6 +122,8 @@ struct SDL_Window;
 
 namespace OMW
 {
+    class GroovyOutput;
+
     /// \brief Main engine class, that brings together all the components of OpenMW
     class Engine
     {
@@ -152,6 +154,7 @@ namespace OMW
         osg::ref_ptr<osgViewer::ScreenCaptureHandler> mScreenCaptureHandler;
         osg::ref_ptr<SceneUtil::AsyncScreenCaptureOperation> mScreenCaptureOperation;
         osg::ref_ptr<SceneUtil::SelectDepthFormatOperation> mSelectDepthFormatOperation;
+        osg::ref_ptr<GroovyOutput> mGroovyOutput;
         osg::ref_ptr<SceneUtil::Color::SelectColorFormatOperation> mSelectColorFormatOperation;
         std::string mCellName;
         std::vector<std::string> mContentFiles;

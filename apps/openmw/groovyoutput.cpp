@@ -1,0 +1,394 @@
+#include "groovyoutput.hpp"
+
+#include <algorithm>
+#include <cmath>
+#include <cstring>
+
+#include <osg/BufferObject>
+#include <osg/FrameBufferObject>
+#include <osg/GLExtensions>
+#include <osg/State>
+
+#include <components/debug/debuglog.hpp>
+
+#include "mwbase/environment.hpp"
+#include "mwbase/windowmanager.hpp"
+
+// Last, since it pulls in <windows.h> on Windows.
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#endif
+#include <groovymister_wrapper.h>
+
+#ifndef GL_BGR
+#define GL_BGR 0x80E0
+#endif
+#ifndef GL_PIXEL_PACK_BUFFER_BINDING
+#define GL_PIXEL_PACK_BUFFER_BINDING 0x88ED
+#endif
+
+namespace OMW
+{
+    namespace
+    {
+        // Try connecting this often while the MiSTer doesn't answer.
+        constexpr std::chrono::seconds retryInterval(2);
+        // The MiSTer answers every frame. No answer for this long means it's gone.
+        constexpr std::chrono::seconds lostTimeout(3);
+
+        // Horizontal timing for the 15 kHz modes: 640 active pixels of 858 at 13.5 MHz, the same picture
+        // width and position as a GameCube or Wii (and close to a PS2) on a CRT TV, so the edges of the
+        // picture stay clear of the TV's overscan.
+        constexpr std::uint16_t hActive = 640;
+        constexpr std::uint16_t hBegin = 696;
+        constexpr std::uint16_t hEnd = 760;
+        constexpr std::uint16_t hTotal = 858;
+    }
+
+    GroovyOutput::GroovyOutput(const std::string& host, Mode mode, int syncLine)
+        : mHost(host)
+        , mMode(mode)
+        , mSyncLine(std::clamp(syncLine, 0, 400))
+    {
+        mWidth = hActive;
+        mHeight = mode == Mode::Progressive240 ? 240 : 480;
+        mInterlaced = mode == Mode::Interlaced480;
+        mFrame.assign(static_cast<std::size_t>(mWidth) * mHeight * 3, 0);
+    }
+
+    GroovyOutput::~GroovyOutput()
+    {
+        if (mConnected)
+            gmw_close();
+        // The GL objects go away with the window's GL context.
+    }
+
+    GroovyOutput::Mode GroovyOutput::parseMode(const std::string& name)
+    {
+        if (name == "240p")
+            return Mode::Progressive240;
+        if (name == "480p")
+            return Mode::Progressive480;
+        return Mode::Interlaced480;
+    }
+
+    void GroovyOutput::swapBuffersImplementation(osg::GraphicsContext* gc)
+    {
+        const auto now = std::chrono::steady_clock::now();
+        if (!mConnected && now - mLastAttempt >= retryInterval)
+            connect();
+
+        // Grab the frame while it's still in the back buffer, show it on the PC, then send it.
+        const bool captured = mConnected && capture(*gc);
+
+        gc->swapBuffersImplementation();
+
+        if (captured)
+        {
+            if (!mModeSet)
+                switchres();
+            send();
+        }
+    }
+
+    void GroovyOutput::message(const std::string& text)
+    {
+        Log(Debug::Info) << "Groovy MiSTer: " << text;
+        if (MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager())
+            windowManager->scheduleMessageBox("Groovy MiSTer: " + text);
+    }
+
+    void GroovyOutput::connect()
+    {
+        mLastAttempt = std::chrono::steady_clock::now();
+
+        if (mHost.empty())
+        {
+            if (!mNoAnswerShown)
+                message("set your MiSTer's IP address ('mister ip' in the [Groovy] section of settings.cfg)");
+            mNoAnswerShown = true;
+            return;
+        }
+
+        // LZ4-compressed frames, no audio (sound plays on the PC), RGB888, standard 1500-byte packets.
+        if (gmw_init(mHost.c_str(), 1, 0, 0, 0, 1500) < 0)
+        {
+            // Shown once; it keeps retrying quietly, so it's fine to start the Groovy core later.
+            if (!mNoAnswerShown)
+                message("no answer from " + mHost + ". Is the Groovy core running on the MiSTer? Retrying...");
+            mNoAnswerShown = true;
+            return;
+        }
+
+        message(std::string(mLost ? "reconnected to " : "connected to ") + mHost);
+        mConnected = true;
+        mLost = false;
+        mNoAnswerShown = false;
+        mModeSet = false;
+        mFrameNumber = 0;
+        mLastEcho = 0;
+        mLastEchoTime = mLastSendTime = mLastAttempt;
+    }
+
+    void GroovyOutput::switchres()
+    {
+        std::uint16_t vActive = 480;
+        std::uint16_t vBegin = 487;
+        std::uint16_t vEnd = 493;
+        std::uint16_t vTotal = 525;
+        std::uint8_t interlace = 1;
+        double pixelClock = 59.94 * hTotal * (vTotal / 2.0) / 1e6; // 13.5 MHz, 59.94 Hz
+
+        if (mMode == Mode::Progressive240)
+        {
+            vActive = 240;
+            vBegin = 244;
+            vEnd = 247;
+            vTotal = 262;
+            interlace = 0;
+            pixelClock = 60.0 * hTotal * vTotal / 1e6;
+        }
+        else if (mMode == Mode::Progressive480)
+        {
+            // Standard 480p: 27 MHz, 31.47 kHz, 59.94 Hz.
+            vBegin = 489;
+            vEnd = 495;
+            interlace = 0;
+            pixelClock = 27.0;
+        }
+
+        gmw_switchres(pixelClock, hActive, hBegin, hEnd, hTotal, vActive, vBegin, vEnd, vTotal, interlace);
+        mModeSet = true;
+        Log(Debug::Info) << "Groovy MiSTer: video mode " << mWidth << "x" << mHeight << (mInterlaced ? "i" : "p");
+    }
+
+    bool GroovyOutput::ensureTarget(osg::GraphicsContext& gc, Target& target, int width, int height)
+    {
+        if (target.mFbo != 0 && target.mWidth == width && target.mHeight == height)
+            return true;
+
+        osg::GLExtensions* ext = gc.getState()->get<osg::GLExtensions>();
+        if (target.mFbo == 0)
+        {
+            ext->glGenFramebuffers(1, &target.mFbo);
+            ext->glGenRenderbuffers(1, &target.mRbo);
+        }
+
+        ext->glBindRenderbuffer(GL_RENDERBUFFER_EXT, target.mRbo);
+        ext->glRenderbufferStorage(GL_RENDERBUFFER_EXT, GL_RGBA8, width, height);
+        ext->glBindRenderbuffer(GL_RENDERBUFFER_EXT, 0);
+
+        ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, target.mFbo);
+        ext->glFramebufferRenderbuffer(GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT, GL_RENDERBUFFER_EXT, target.mRbo);
+        const GLenum status = ext->glCheckFramebufferStatus(GL_FRAMEBUFFER_EXT);
+        ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, gc.getDefaultFboId());
+
+        if (status != GL_FRAMEBUFFER_COMPLETE_EXT)
+        {
+            Log(Debug::Error) << "Groovy MiSTer: framebuffer incomplete (" << status << ")";
+            return false;
+        }
+        target.mWidth = width;
+        target.mHeight = height;
+        return true;
+    }
+
+    bool GroovyOutput::capture(osg::GraphicsContext& gc)
+    {
+        if (mGlFailed)
+            return false;
+
+        osg::State* state = gc.getState();
+        const osg::GraphicsContext::Traits* traits = gc.getTraits();
+        if (state == nullptr || traits == nullptr || traits->width <= 0 || traits->height <= 0)
+            return false;
+
+        osg::GLExtensions* ext = state->get<osg::GLExtensions>();
+        if (ext == nullptr || !ext->isFrameBufferObjectSupported || ext->glBlitFramebuffer == nullptr)
+        {
+            mGlFailed = true;
+            message("your graphics driver can't copy frames (framebuffer blit is missing)");
+            return false;
+        }
+
+        const int srcWidth = traits->width;
+        const int srcHeight = traits->height;
+
+        // Fit the window into a 4:3 CRT picture, with black bars if the window has a different shape.
+        const double crtAspect = 4.0 / 3.0;
+        const double srcAspect = static_cast<double>(srcWidth) / srcHeight;
+        int destWidth = mWidth;
+        int destHeight = mHeight;
+        if (srcAspect > crtAspect)
+            destHeight = static_cast<int>(std::lround(mHeight * crtAspect / srcAspect));
+        else
+            destWidth = static_cast<int>(std::lround(mWidth * srcAspect / crtAspect));
+        destWidth = std::clamp(destWidth & ~1, 2, mWidth);
+        destHeight = std::clamp(destHeight & ~1, 2, mHeight);
+        const int destX = (mWidth - destWidth) / 2;
+        const int destY = (mHeight - destHeight) / 2;
+
+        // New size: clear the old picture, so the bars are black.
+        if (destWidth != mFinal.mWidth || destHeight != mFinal.mHeight)
+            std::fill(mFrame.begin(), mFrame.end(), static_cast<std::uint8_t>(0));
+
+        // Blits respect the scissor test, which the GUI may have left on.
+        const GLboolean scissor = glIsEnabled(GL_SCISSOR_TEST);
+        if (scissor)
+            glDisable(GL_SCISSOR_TEST);
+
+        const GLuint defaultFbo = gc.getDefaultFboId();
+        GLuint readFbo = defaultFbo;
+        int width = srcWidth;
+        int height = srcHeight;
+        bool ok = true;
+
+        // Multisampled windows can't be scaled directly: resolve to a normal image first.
+        if (traits->samples > 1)
+        {
+            ok = ensureTarget(gc, mResolve, width, height);
+            if (ok)
+            {
+                ext->glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, readFbo);
+                ext->glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, mResolve.mFbo);
+                ext->glBlitFramebuffer(
+                    0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+                readFbo = mResolve.mFbo;
+            }
+        }
+
+        // Halve the size while it's more than twice the final size, so every window pixel counts towards
+        // the result (a single linear scale only samples 2x2 pixels, which shimmers).
+        for (std::size_t step = 0; ok && step < 4 && (width > destWidth * 2 || height > destHeight * 2); ++step)
+        {
+            const int nextWidth = std::max(destWidth, width / 2);
+            const int nextHeight = std::max(destHeight, height / 2);
+            if (mSteps.size() <= step)
+                mSteps.emplace_back();
+            ok = ensureTarget(gc, mSteps[step], nextWidth, nextHeight);
+            if (!ok)
+                break;
+            ext->glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, readFbo);
+            ext->glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, mSteps[step].mFbo);
+            ext->glBlitFramebuffer(
+                0, 0, width, height, 0, 0, nextWidth, nextHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+            readFbo = mSteps[step].mFbo;
+            width = nextWidth;
+            height = nextHeight;
+        }
+
+        if (ok)
+            ok = ensureTarget(gc, mFinal, destWidth, destHeight);
+
+        if (ok)
+        {
+            // Final size, flipped vertically so it reads back top row first.
+            ext->glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, readFbo);
+            ext->glBindFramebuffer(GL_DRAW_FRAMEBUFFER_EXT, mFinal.mFbo);
+            ext->glBlitFramebuffer(
+                0, 0, width, height, 0, destHeight, destWidth, 0, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+            // Read it straight into place inside the CRT picture, in the MiSTer's BGR order.
+            ext->glBindFramebuffer(GL_READ_FRAMEBUFFER_EXT, mFinal.mFbo);
+            GLint packBuffer = 0;
+            GLint packAlignment = 4;
+            GLint packRowLength = 0;
+            glGetIntegerv(GL_PIXEL_PACK_BUFFER_BINDING, &packBuffer);
+            glGetIntegerv(GL_PACK_ALIGNMENT, &packAlignment);
+            glGetIntegerv(GL_PACK_ROW_LENGTH, &packRowLength);
+            if (packBuffer != 0)
+                ext->glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, 0);
+            glPixelStorei(GL_PACK_ALIGNMENT, 1);
+            glPixelStorei(GL_PACK_ROW_LENGTH, mWidth);
+
+            std::uint8_t* dest = mFrame.data() + (static_cast<std::size_t>(destY) * mWidth + destX) * 3;
+            glReadPixels(0, 0, destWidth, destHeight, GL_BGR, GL_UNSIGNED_BYTE, dest);
+
+            glPixelStorei(GL_PACK_ROW_LENGTH, packRowLength);
+            glPixelStorei(GL_PACK_ALIGNMENT, packAlignment);
+            if (packBuffer != 0)
+                ext->glBindBuffer(GL_PIXEL_PACK_BUFFER_ARB, static_cast<GLuint>(packBuffer));
+        }
+
+        ext->glBindFramebuffer(GL_FRAMEBUFFER_EXT, defaultFbo);
+        if (scissor)
+            glEnable(GL_SCISSOR_TEST);
+
+        if (!ok)
+        {
+            mGlFailed = true;
+            message("couldn't set up frame capture on this graphics card; see openmw.log");
+        }
+        return ok;
+    }
+
+    void GroovyOutput::send()
+    {
+        gmw_fpgaStatus status;
+        gmw_getStatus(&status);
+
+        // Which field (even or odd lines) the CRT shows next, for interlaced modes (Calamity's formula, as in
+        // GroovyMAME and Groovy Dolphin).
+        std::uint8_t field = 0;
+        if (mInterlaced)
+            field = static_cast<std::uint8_t>((status.vgaF1 ? 0u : 1u) ^ ((mFrameNumber - status.frame) % 2u));
+
+        ++mFrameNumber;
+        if (status.frame >= mFrameNumber)
+            mFrameNumber = status.frame + 1;
+
+        char* buffer = gmw_get_pBufferBlit(field);
+        if (buffer == nullptr)
+            return;
+
+        const std::size_t rowBytes = static_cast<std::size_t>(mWidth) * 3;
+        if (mInterlaced)
+        {
+            // One field: every other line, starting with the field's first line.
+            std::size_t out = 0;
+            for (int y = field; y < mHeight; y += 2, ++out)
+                std::memcpy(buffer + out * rowBytes, mFrame.data() + static_cast<std::size_t>(y) * rowBytes, rowBytes);
+        }
+        else
+        {
+            std::memcpy(buffer, mFrame.data(), mFrame.size());
+        }
+
+        gmw_blit(mFrameNumber, field, static_cast<std::uint16_t>(mSyncLine), 15000, 0);
+        // Wait for the CRT's next frame: this paces OpenMW to the CRT's refresh rate.
+        gmw_waitSync();
+        checkConnection();
+    }
+
+    void GroovyOutput::checkConnection()
+    {
+        const auto now = std::chrono::steady_clock::now();
+        gmw_fpgaStatus status;
+        gmw_getStatus(&status);
+
+        // A long gap between frames (loading, window minimized) isn't the MiSTer going silent.
+        if (now - mLastSendTime > std::chrono::seconds(1))
+            mLastEchoTime = now;
+        mLastSendTime = now;
+
+        if (status.frameEcho != mLastEcho)
+        {
+            mLastEcho = status.frameEcho;
+            mLastEchoTime = now;
+        }
+        else if (now - mLastEchoTime > lostTimeout)
+        {
+            message("lost connection to the MiSTer, reconnecting...");
+            gmw_reset();
+            mConnected = false;
+            mLost = true;
+            mNoAnswerShown = true; // already told the player
+            mLastAttempt = now - retryInterval; // retry right away
+        }
+    }
+}
