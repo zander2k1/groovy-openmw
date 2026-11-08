@@ -605,6 +605,17 @@ bool Launcher::SettingsPage::loadSettings()
         populateLoadedConfigs();
     }
 
+    // Groovy MiSTer
+    {
+        loadSettingBool(Settings::groovy().mEnabled, *groovyEnabledCheckBox);
+        groovyIpLineEdit->setText(QString::fromStdString(Settings::groovy().mMisterIp));
+        const std::string& mode = Settings::groovy().mVideoMode;
+        groovyVideoModeComboBox->setCurrentIndex(mode == "240p" ? 1 : mode == "480p" ? 2 : 0);
+        groovySyncLineSpinBox->setValue(Settings::groovy().mSyncLine);
+        loadSettingBool(Settings::groovy().mSendAudio, *groovySendAudioCheckBox);
+        loadSettingBool(Settings::groovy().mPcAudio, *groovyPcAudioCheckBox);
+    }
+
     // Testing
     {
         loadSettingBool(Settings::input().mGrabCursor, *grabCursorCheckBox);
@@ -1044,6 +1055,17 @@ void Launcher::SettingsPage::saveSettings()
         // Other Settings
         Settings::general().mScreenshotFormat.set(screenshotFormatComboBox->currentText().toLower().toStdString());
         saveSettingBool(*notifyOnSavedScreenshotCheckBox, Settings::general().mNotifyOnSavedScreenshot);
+    }
+
+    // Groovy MiSTer
+    {
+        saveSettingBool(*groovyEnabledCheckBox, Settings::groovy().mEnabled);
+        Settings::groovy().mMisterIp.set(groovyIpLineEdit->text().trimmed().toStdString());
+        static const char* const modes[] = { "480i", "240p", "480p" };
+        Settings::groovy().mVideoMode.set(modes[std::clamp(groovyVideoModeComboBox->currentIndex(), 0, 2)]);
+        Settings::groovy().mSyncLine.set(groovySyncLineSpinBox->value());
+        saveSettingBool(*groovySendAudioCheckBox, Settings::groovy().mSendAudio);
+        saveSettingBool(*groovyPcAudioCheckBox, Settings::groovy().mPcAudio);
     }
 
     // Testing

@@ -2064,6 +2064,140 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="Groovy">
+      <attribute name="title">
+       <string>Groovy MiSTer</string>
+      </attribute>
+      <layout class="QVBoxLayout">
+       <item>
+        <widget class="QLabel" name="groovyLabel">
+         <property name="text">
+          <string>Plays OpenMW on a CRT through a MiSTer FPGA running the Groovy core. The picture and sound go over the network cable, and controllers plugged into the MiSTer work like controllers on the PC. Use a wired connection.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="Line" name="groovyLine">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="groovyEnabledCheckBox">
+         <property name="toolTip">
+          <string>Send the game to the MiSTer. Start the Groovy core on the MiSTer first; OpenMW keeps retrying until it answers.</string>
+         </property>
+         <property name="text">
+          <string>Enable MiSTer Output</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="groovyGridLayout">
+         <item row="0" column="0">
+          <widget class="QLabel" name="groovyIpLabel">
+           <property name="text">
+            <string>MiSTer IP Address</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="groovyIpLineEdit">
+           <property name="toolTip">
+            <string>The MiSTer's IP address, shown in the MiSTer's main menu.</string>
+           </property>
+           <property name="placeholderText">
+            <string>e.g. 192.168.1.105</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="groovyVideoModeLabel">
+           <property name="text">
+            <string>Video Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="groovyVideoModeComboBox">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;480i&lt;/b&gt;: 640x480 interlaced, 15 kHz. Sharpest and best for reading text. For CRT TVs.&lt;/p&gt;&lt;p&gt;&lt;b&gt;240p&lt;/b&gt;: 640x240, 15 kHz. No interlace flicker and a more retro look, but small text is harder to read.&lt;/p&gt;&lt;p&gt;&lt;b&gt;480p&lt;/b&gt;: 31 kHz, only for PC CRT monitors (VGA). Never use it with a CRT TV.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>480i (CRT TV, default)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>240p (CRT TV, no flicker)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>480p (31 kHz, PC CRT monitors only)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="groovySyncLineLabel">
+           <property name="text">
+            <string>Sync Line (advanced)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="groovySyncLineSpinBox">
+           <property name="toolTip">
+            <string>The line of the MiSTer's picture where a new frame is sent. Lower values mean less lag but can cause tearing if the PC is slow. 0 lets the MiSTer decide. Default: 100.</string>
+           </property>
+           <property name="maximum">
+            <number>400</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="groovySendAudioCheckBox">
+         <property name="toolTip">
+          <string>Send the game's sound to the MiSTer, in sync with the picture. Also turn Audio on in the Groovy core's menu on the MiSTer (it's off by default).</string>
+         </property>
+         <property name="text">
+          <string>Send Sound to the MiSTer</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="groovyPcAudioCheckBox">
+         <property name="toolTip">
+          <string>Also play the sound on the PC, for example for Discord. Turn this off to hear it only from the MiSTer.</string>
+         </property>
+         <property name="text">
+          <string>Also Play Sound on the PC</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
      <widget class="QWidget" name="Testing">
       <attribute name="title">
        <string>Testing</string>

@@ -161,19 +161,14 @@ jobs:
         the Groovy core, with very low lag.
 
         1. Run openmw-launcher.exe once and point it at your Morrowind installation, like normal OpenMW.
-        2. Open your settings.cfg (Documents\My Games\OpenMW\settings.cfg) and add:
-
-           [Groovy]
-           enabled = true
-           mister ip = 192.168.1.105
-           video mode = 480i
-
-           (use your MiSTer's IP address; video mode can be 480i, 240p, or 480p for VGA monitors only)
-        3. In the Groovy core's menu on the MiSTer, turn Audio on (it's off by default).
+        2. In the launcher, go to Settings > Groovy MiSTer: tick Enable MiSTer Output, enter your
+           MiSTer's IP address and pick a video mode (480i for CRT TVs).
+        3. In the Groovy core's menu on the MiSTer, turn Audio on (it's off by default). For
+           controllers plugged into the MiSTer, also set Server > Joysticks to Analog.
         4. Start the Groovy core on the MiSTer, then start OpenMW.
 
-        Sound goes to the MiSTer and also plays on the PC (set "play audio on pc = false" to turn
-        the PC sound off). See https://github.com/zander2k01/groovy-openmw for more.
+        Sound goes to the MiSTer and also plays on the PC. Controllers plugged into the MiSTer show
+        up as "MiSTer Controller 1/2". See https://github.com/zander2k01/groovy-openmw for more.
         EOF
 
     - name: Store the build
