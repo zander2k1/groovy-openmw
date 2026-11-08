@@ -11,8 +11,10 @@
 #include <osgViewer/ViewerEventHandlers>
 
 #include <SDL.h>
+#include <algorithm>
 
 #include <components/debug/debuglog.hpp>
+#include <components/misc/guiscaling.hpp>
 #include <components/debug/gldebug.hpp>
 
 #include <components/misc/rng.hpp>
@@ -491,8 +493,52 @@ void OMW::Engine::setSkipMenu(bool skipMenu, bool newGame)
     mNewGame = newGame;
 }
 
+namespace
+{
+    // Groovy MiSTer "automatic crt setup": a 4:3 window at a whole multiple of the CRT's 640x480 (the
+    // largest that fits on the monitor) and an interface scaled by the same factor, so the picture
+    // shrinks cleanly and menus come out at the size they'd be on a console.
+    void applyGroovyCrtSetup()
+    {
+        if (!Settings::groovy().mEnabled || !Settings::groovy().mAutoCrtSetup)
+            return;
+
+        int factor = 2;
+        SDL_Rect usable;
+        if (SDL_GetDisplayUsableBounds(Settings::video().mScreen, &usable) == 0)
+        {
+            // Leave room for the window's title bar.
+            factor = std::max(1, std::min(usable.w / 640, (usable.h - 64) / 480));
+        }
+
+        const int width = 640 * factor;
+        const int height = 480 * factor;
+        if (Settings::video().mWindowMode != Settings::WindowMode::Windowed)
+            Settings::video().mWindowMode.set(Settings::WindowMode::Windowed);
+        if (Settings::video().mResolutionX != width)
+            Settings::video().mResolutionX.set(width);
+        if (Settings::video().mResolutionY != height)
+            Settings::video().mResolutionY.set(height);
+        if (Settings::gui().mScalingFactor != static_cast<float>(factor))
+            Settings::gui().mScalingFactor.set(static_cast<float>(factor));
+        // The Xbox UI also scales dialogue and the settings menu separately: use its recommended ratios.
+        if (const auto scaling = Misc::calculateRecommendedGuiScaling(width, height))
+        {
+            if (Settings::gui().mDialogueInterfaceScaling != scaling->mDialogueScaling)
+                Settings::gui().mDialogueInterfaceScaling.set(scaling->mDialogueScaling);
+            if (Settings::gui().mSettingsInterfaceScaling != scaling->mSettingsScaling)
+                Settings::gui().mSettingsInterfaceScaling.set(scaling->mSettingsScaling);
+        }
+
+        Log(Debug::Info) << "Groovy MiSTer: CRT setup, window " << width << "x" << height
+                         << ", interface scaling " << factor;
+    }
+}
+
 void OMW::Engine::createWindow()
 {
+    applyGroovyCrtSetup();
+
     const int screen = Settings::video().mScreen;
     const int width = Settings::video().mResolutionX;
     const int height = Settings::video().mResolutionY;
@@ -976,6 +1022,12 @@ void OMW::Engine::go()
 
     // Do not try to outsmart the OS thread scheduler (see bug #4785).
     mViewer->setUseConfigureAffinity(false);
+
+    // Groovy MiSTer frame delay: draw each frame right after reading the controller, on one thread. With
+    // the default separate draw thread, the next frame's input would be read while this one is still being
+    // drawn, adding a frame of lag that frame delay is meant to remove.
+    if (Settings::groovy().mEnabled && Settings::groovy().mFrameDelay)
+        mViewer->setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
     mEnvironment.setFrameRateLimit(Settings::video().mFramerateLimit);
 

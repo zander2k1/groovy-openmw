@@ -78,6 +78,14 @@ namespace OMW
         const bool mSendAudio;
         // 480i: blend each line a little with its neighbours, so thin horizontal lines don't flicker.
         const bool mFlickerFilter;
+        // Frame delay: wait this long after each CRT frame before letting the next frame start (0 = off).
+        const std::chrono::microseconds mFrameDelay;
+        // Picture size on the CRT (fraction of the full picture) and shift in pixels.
+        const double mPictureScale;
+        const int mShiftX;
+        const int mShiftY;
+        int mDestX = -1;
+        int mDestY = -1;
 
         // Size of the picture sent to the MiSTer.
         int mWidth = 640;

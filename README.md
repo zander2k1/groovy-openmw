@@ -34,9 +34,11 @@ The regular build comes from the `master` branch, the Xbox UI build from the `xb
 
 **Video modes:** `480i` (default, sharpest, best for reading text), `240p` (no interlace flicker, more of a retro look), `480p` (31 kHz, PC CRT monitors only, never a CRT TV).
 
-**Tips:**
-- A 4:3 window looks best, for example 1280x960 or 1440x1080. Other shapes get black bars.
-- Text is small on a TV at 480i. Raising the interface scaling in OpenMW's settings helps a lot.
+**CRT options** on the Groovy MiSTer tab:
+- **Automatic CRT Setup** (on by default) picks a 4:3 window at 2x the CRT's 640x480 (3x on big monitors) and scales the interface to match, so menus and text are console-sized on the CRT.
+- **Reduce Interlace Flicker** (on by default, 480i) softens thin horizontal lines so they don't flicker, like the flicker filter on interlaced consoles.
+- **Frame Delay** (off by default) lowers lag the way GroovyMAME does: it waits until late in each CRT frame before reading the controller and drawing the next frame. Start at 5 and lower it if the game stutters.
+- **Picture Size** and **Move Picture** shrink or move the picture if your TV cuts off the edges.
 - Vsync is turned off automatically while Groovy is on, since the MiSTer sets the pace.
 
 ## Credits
