@@ -19,6 +19,7 @@
 #include <components/vfs/manager.hpp>
 
 #include "efxpresets.h"
+#include "groovyaudio.hpp"
 #include "loudness.hpp"
 #include "openaloutput.hpp"
 #include "sound.hpp"
@@ -710,7 +711,18 @@ namespace MWSound
         Log(Debug::Info) << "Initializing OpenAL...";
 
         mDeviceName = devname;
-        mDevice = alcOpenDevice(devname.c_str());
+        mDevice = nullptr;
+
+        // Groovy MiSTer: render into a loopback device, so the sound can be sent to the MiSTer with the picture.
+        mLoopback = false;
+        if (Settings::groovy().mEnabled && Settings::groovy().mSendAudio)
+        {
+            mDevice = GroovyAudio::openLoopbackDevice();
+            mLoopback = mDevice != nullptr;
+        }
+
+        if (!mDevice)
+            mDevice = alcOpenDevice(devname.c_str());
         if (!mDevice && !devname.empty())
         {
             Log(Debug::Warning) << "Failed to open \"" << devname << "\", trying default";
@@ -772,6 +784,8 @@ namespace MWSound
                 }
             }
         }
+        if (mLoopback)
+            GroovyAudio::addContextAttributes(mContextAttributes);
         mContextAttributes.push_back(0);
 
         mContext = alcCreateContext(mDevice, mContextAttributes.data());
@@ -796,8 +810,14 @@ namespace MWSound
             getALFunc(alEventControlSOFT, "alEventControlSOFT");
             getALFunc(alEventCallbackSOFT, "alEventCallbackSOFT");
         }
-        if (alcIsExtensionPresent(mDevice, "ALC_SOFT_reopen_device"))
+        // A loopback device has no sound card to lose or switch.
+        if (!mLoopback && alcIsExtensionPresent(mDevice, "ALC_SOFT_reopen_device"))
             getALFunc(alcReopenDeviceSOFT, "alcReopenDeviceSOFT");
+        if (mLoopback)
+        {
+            alcReopenDeviceSOFT = nullptr;
+            GroovyAudio::setDevice(mDevice, Settings::groovy().mPcAudio);
+        }
         if (alEventControlSOFT)
         {
             static const std::array<ALenum, 1> events{ { AL_EVENT_TYPE_DISCONNECTED_SOFT } };
@@ -1000,6 +1020,9 @@ namespace MWSound
         if (mContext)
             alcDestroyContext(mContext);
         mContext = nullptr;
+        if (mLoopback)
+            GroovyAudio::setDevice(nullptr, false);
+        mLoopback = false;
         if (mDevice)
             alcCloseDevice(mDevice);
         mDevice = nullptr;

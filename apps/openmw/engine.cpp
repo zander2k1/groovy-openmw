@@ -653,7 +653,8 @@ void OMW::Engine::createWindow()
     if (Settings::groovy().mEnabled)
     {
         mGroovyOutput = new GroovyOutput(Settings::groovy().mMisterIp,
-            GroovyOutput::parseMode(Settings::groovy().mVideoMode), Settings::groovy().mSyncLine);
+            GroovyOutput::parseMode(Settings::groovy().mVideoMode), Settings::groovy().mSyncLine,
+            Settings::groovy().mSendAudio);
         graphicsWindow->setSwapCallback(mGroovyOutput);
         Log(Debug::Info) << "Groovy MiSTer output enabled";
     }

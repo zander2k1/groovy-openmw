@@ -5,6 +5,7 @@
 #include <osg/GraphicsContext>
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -28,7 +29,7 @@ namespace OMW
             Progressive480, // 480p, 31 kHz (VGA monitors only)
         };
 
-        GroovyOutput(const std::string& host, Mode mode, int syncLine);
+        GroovyOutput(const std::string& host, Mode mode, int syncLine, bool sendAudio);
         ~GroovyOutput() override;
 
         void swapBuffersImplementation(osg::GraphicsContext* gc) override;
@@ -48,6 +49,7 @@ namespace OMW
         void switchres();
         bool capture(osg::GraphicsContext& gc);
         void send();
+        void sendAudio(std::size_t frames);
         void checkConnection();
         void message(const std::string& text);
 
@@ -56,6 +58,7 @@ namespace OMW
         const std::string mHost;
         const Mode mMode;
         const int mSyncLine;
+        const bool mSendAudio;
 
         // Size of the picture sent to the MiSTer.
         int mWidth = 640;
@@ -75,6 +78,12 @@ namespace OMW
         bool mConnected = false;
         bool mLost = false;
         bool mNoAnswerShown = false;
+        bool mAudioChecked = false;
+        bool mInitAudio = false; // connected with sound
+        bool mQuiet = false; // reconnecting only to add sound: no message
+
+        // Sound for the current frame, from MWSound::GroovyAudio (interleaved stereo 16-bit).
+        std::vector<std::int16_t> mAudio;
         bool mModeSet = false;
         std::uint32_t mFrameNumber = 0;
         std::uint32_t mLastEcho = 0;

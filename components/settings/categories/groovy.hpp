@@ -19,6 +19,8 @@ namespace Settings
         SettingValue<std::string> mVideoMode{ mIndex, "Groovy", "video mode",
             makeEnumSanitizerString({ "480i", "240p", "480p" }) };
         SettingValue<int> mSyncLine{ mIndex, "Groovy", "sync line", makeClampSanitizerInt(0, 400) };
+        SettingValue<bool> mSendAudio{ mIndex, "Groovy", "send audio" };
+        SettingValue<bool> mPcAudio{ mIndex, "Groovy", "play audio on pc" };
     };
 }
 

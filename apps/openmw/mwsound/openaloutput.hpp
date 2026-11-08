@@ -26,6 +26,7 @@ namespace MWSound
     {
         ALCdevice* mDevice;
         ALCcontext* mContext;
+        bool mLoopback = false; // Groovy MiSTer: rendering into a loopback device
 
         struct
         {

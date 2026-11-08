@@ -13,6 +13,7 @@
 
 #include "mwbase/environment.hpp"
 #include "mwbase/windowmanager.hpp"
+#include "mwsound/groovyaudio.hpp"
 
 // Last, since it pulls in <windows.h> on Windows.
 #ifdef _WIN32
@@ -50,10 +51,11 @@ namespace OMW
         constexpr std::uint16_t hTotal = 858;
     }
 
-    GroovyOutput::GroovyOutput(const std::string& host, Mode mode, int syncLine)
+    GroovyOutput::GroovyOutput(const std::string& host, Mode mode, int syncLine, bool sendAudio)
         : mHost(host)
         , mMode(mode)
         , mSyncLine(std::clamp(syncLine, 0, 400))
+        , mSendAudio(sendAudio)
     {
         mWidth = hActive;
         mHeight = mode == Mode::Progressive240 ? 240 : 480;
@@ -80,6 +82,17 @@ namespace OMW
     void GroovyOutput::swapBuffersImplementation(osg::GraphicsContext* gc)
     {
         const auto now = std::chrono::steady_clock::now();
+
+        // The window (and the first frames) come before the sound engine starts. If we connected without sound
+        // and the sound is ready now, connect again with sound.
+        if (mConnected && mSendAudio && !mInitAudio && MWSound::GroovyAudio::active())
+        {
+            gmw_reset();
+            mConnected = false;
+            mQuiet = true;
+            mLastAttempt = now - retryInterval;
+        }
+
         if (!mConnected && now - mLastAttempt >= retryInterval)
             connect();
 
@@ -88,11 +101,16 @@ namespace OMW
 
         gc->swapBuffersImplementation();
 
+        // The sound for this frame (also played on the PC, if enabled). Rendered even while the MiSTer isn't
+        // connected, so the game is never silent.
+        const std::size_t audioFrames = MWSound::GroovyAudio::render(mAudio);
+
         if (captured)
         {
             if (!mModeSet)
                 switchres();
             send();
+            sendAudio(audioFrames);
         }
     }
 
@@ -115,8 +133,9 @@ namespace OMW
             return;
         }
 
-        // LZ4-compressed frames, no audio (sound plays on the PC), RGB888, standard 1500-byte packets.
-        if (gmw_init(mHost.c_str(), 1, 0, 0, 0, 1500) < 0)
+        // LZ4-compressed frames, 48 kHz stereo sound (or none), RGB888, standard 1500-byte packets.
+        const bool audio = mSendAudio && MWSound::GroovyAudio::active();
+        if (gmw_init(mHost.c_str(), 1, audio ? MWSound::GroovyAudio::sSampleRate : 0, audio ? 2 : 0, 0, 1500) < 0)
         {
             // Shown once; it keeps retrying quietly, so it's fine to start the Groovy core later.
             if (!mNoAnswerShown)
@@ -125,11 +144,15 @@ namespace OMW
             return;
         }
 
-        message(std::string(mLost ? "reconnected to " : "connected to ") + mHost);
+        if (!mQuiet)
+            message(std::string(mLost ? "reconnected to " : "connected to ") + mHost);
+        mQuiet = false;
+        mInitAudio = audio;
         mConnected = true;
         mLost = false;
         mNoAnswerShown = false;
         mModeSet = false;
+        mAudioChecked = false;
         mFrameNumber = 0;
         mLastEcho = 0;
         mLastEchoTime = mLastSendTime = mLastAttempt;
@@ -363,6 +386,31 @@ namespace OMW
         // Wait for the CRT's next frame: this paces OpenMW to the CRT's refresh rate.
         gmw_waitSync();
         checkConnection();
+    }
+
+    void GroovyOutput::sendAudio(std::size_t frames)
+    {
+        if (!mConnected || !mSendAudio || frames == 0)
+            return;
+
+        // Right after the picture, like Groovy Dolphin. At most 100 ms (19200 bytes) per frame.
+        const std::size_t bytes = frames * 2 * sizeof(std::int16_t);
+        char* buffer = gmw_get_pBufferAudio();
+        if (buffer == nullptr)
+            return;
+        std::memcpy(buffer, mAudio.data(), bytes);
+        gmw_audio(static_cast<std::uint16_t>(bytes));
+
+        // About two seconds in, the MiSTer has told us whether the Groovy core's own Audio option is on (it's
+        // off by default, which is easy to miss).
+        if (!mAudioChecked && mFrameNumber > 120)
+        {
+            mAudioChecked = true;
+            gmw_fpgaStatus status;
+            gmw_getStatus(&status);
+            if (!status.audio)
+                message("sound is off in the Groovy core. On the MiSTer, open the core's menu and turn Audio on.");
+        }
     }
 
     void GroovyOutput::checkConnection()
