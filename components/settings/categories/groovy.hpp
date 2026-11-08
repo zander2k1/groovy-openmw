@@ -21,6 +21,7 @@ namespace Settings
         SettingValue<int> mSyncLine{ mIndex, "Groovy", "sync line", makeClampSanitizerInt(0, 400) };
         SettingValue<bool> mSendAudio{ mIndex, "Groovy", "send audio" };
         SettingValue<bool> mPcAudio{ mIndex, "Groovy", "play audio on pc" };
+        SettingValue<bool> mFlickerFilter{ mIndex, "Groovy", "flicker filter" };
     };
 }
 

@@ -12,6 +12,7 @@
 #include <osg/State>
 
 #include <components/debug/debuglog.hpp>
+#include <components/settings/values.hpp>
 
 #include "mwbase/environment.hpp"
 #include "mwbase/windowmanager.hpp"
@@ -58,6 +59,7 @@ namespace OMW
         , mMode(mode)
         , mSyncLine(std::clamp(syncLine, 0, 400))
         , mSendAudio(sendAudio)
+        , mFlickerFilter(Settings::groovy().mFlickerFilter)
     {
         mWidth = hActive;
         mHeight = mode == Mode::Progressive240 ? 240 : 480;
@@ -451,7 +453,24 @@ namespace OMW
         }
 
         const std::size_t rowBytes = static_cast<std::size_t>(mWidth) * 3;
-        if (mInterlaced)
+        if (mInterlaced && mFlickerFilter)
+        {
+            // One field: every other line, each blended 1:2:1 with the lines above and below it (the lines of
+            // the other field). A detail one line tall then shows in both fields instead of blinking on and
+            // off 30 times a second. This is the flicker filter interlaced consoles used.
+            std::size_t out = 0;
+            for (int y = field; y < mHeight; y += 2, ++out)
+            {
+                const std::uint8_t* above = mFrame.data() + static_cast<std::size_t>(std::max(y - 1, 0)) * rowBytes;
+                const std::uint8_t* line = mFrame.data() + static_cast<std::size_t>(y) * rowBytes;
+                const std::uint8_t* below
+                    = mFrame.data() + static_cast<std::size_t>(std::min(y + 1, mHeight - 1)) * rowBytes;
+                auto* dest = reinterpret_cast<std::uint8_t*>(buffer + out * rowBytes);
+                for (std::size_t i = 0; i < rowBytes; ++i)
+                    dest[i] = static_cast<std::uint8_t>((above[i] + 2 * line[i] + below[i] + 2) / 4);
+            }
+        }
+        else if (mInterlaced)
         {
             // One field: every other line, starting with the field's first line.
             std::size_t out = 0;
