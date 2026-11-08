@@ -256,6 +256,7 @@ namespace OMW
         mAudioOffAnswers = 0;
         mFrameNumber = 0;
         mLastEcho = 0;
+        mLastMisterFrame = 0;
         mLastEchoTime = mLastSendTime = mLastAttempt;
 
         mInputsReady = true;
@@ -552,6 +553,19 @@ namespace OMW
         if (now - mLastSendTime > std::chrono::seconds(1))
             mLastEchoTime = now;
         mLastSendTime = now;
+
+        // The MiSTer's frame counter went backwards: the Groovy core was restarted. It needs a fresh connection
+        // (video mode and all) before it shows anything again.
+        if (status.frame + 60 < mLastMisterFrame)
+        {
+            message("the Groovy core restarted, reconnecting...");
+            disconnect();
+            mLost = true;
+            mNoAnswerShown = true;
+            mLastAttempt = now - retryInterval; // retry right away
+            return;
+        }
+        mLastMisterFrame = status.frame;
 
         if (status.frameEcho != mLastEcho)
         {

@@ -115,6 +115,7 @@ namespace OMW
         bool mModeSet = false;
         std::uint32_t mFrameNumber = 0;
         std::uint32_t mLastEcho = 0;
+        std::uint32_t mLastMisterFrame = 0;
         std::chrono::steady_clock::time_point mLastAttempt{};
         std::chrono::steady_clock::time_point mLastEchoTime{};
         std::chrono::steady_clock::time_point mLastSendTime{};
