@@ -32,7 +32,12 @@ MODULE_API_GMW int gmw_init(const char* misterHost, uint8_t lz4Frames, uint32_t 
 		gmw = new GroovyMister;
 		gmw_inputsBinded = 0;
 	}
-	return gmw->CmdInit(misterHost, 32100, lz4Frames, soundRate, soundChan, rgbMode, mtu);	
+	int result = gmw->CmdInit(misterHost, 32100, lz4Frames, soundRate, soundChan, rgbMode, mtu);
+	// A failed init closes every socket, the inputs socket too. Forget it, so the next gmw_bindInputs
+	// opens a new one and says hello to the MiSTer again.
+	if (result < 0)
+		gmw_inputsBinded = 0;
+	return result;
 }
 
 MODULE_API_GMW void gmw_close(void)
