@@ -96,6 +96,7 @@ namespace OMW
         bool mLost = false;
         bool mNoAnswerShown = false;
         bool mAudioChecked = false;
+        unsigned mAudioOffAnswers = 0;
         bool mInitAudio = false; // connected with sound
         bool mQuiet = false; // reconnecting only to add sound: no message
 

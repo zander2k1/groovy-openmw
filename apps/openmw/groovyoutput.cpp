@@ -219,6 +219,7 @@ namespace OMW
         mNoAnswerShown = false;
         mModeSet = false;
         mAudioChecked = false;
+        mAudioOffAnswers = 0;
         mFrameNumber = 0;
         mLastEcho = 0;
         mLastEchoTime = mLastSendTime = mLastAttempt;
@@ -503,13 +504,15 @@ namespace OMW
             mLastEchoTime = now;
             ++mStats.mEchoes;
 
-            // Once the MiSTer has answered, it has told us whether the Groovy core's own Audio option is on
-            // (it's off by default, which is easy to miss).
-            if (!mAudioChecked && mSendAudio && mInitAudio)
+            // The MiSTer's answers say whether the Groovy core's own Audio option is on (it's off by default,
+            // which is easy to miss). Give it a few seconds of answers before warning: the first ones can come
+            // before the core has set up its sound.
+            if (status.audio)
+                mAudioChecked = true;
+            else if (!mAudioChecked && mSendAudio && mInitAudio && ++mAudioOffAnswers > 300)
             {
                 mAudioChecked = true;
-                if (!status.audio)
-                    message("sound is off in the Groovy core. On the MiSTer, open the core's menu and turn Audio on.");
+                message("sound is off in the Groovy core. On the MiSTer, open the core's menu and turn Audio on.");
             }
         }
         else if (now - mLastEchoTime > lostTimeout)
