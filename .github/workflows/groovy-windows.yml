@@ -169,9 +169,11 @@ jobs:
            video mode = 480i
 
            (use your MiSTer's IP address; video mode can be 480i, 240p, or 480p for VGA monitors only)
-        3. Start the Groovy core on the MiSTer, then start OpenMW.
+        3. In the Groovy core's menu on the MiSTer, turn Audio on (it's off by default).
+        4. Start the Groovy core on the MiSTer, then start OpenMW.
 
-        Game sound plays on the PC. See https://github.com/zander2k01/groovy-openmw for more.
+        Sound goes to the MiSTer and also plays on the PC (set "play audio on pc = false" to turn
+        the PC sound off). See https://github.com/zander2k01/groovy-openmw for more.
         EOF
 
     - name: Store the build
