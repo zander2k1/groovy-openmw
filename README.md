@@ -7,7 +7,12 @@ Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your P
 
 ## Download
 
-Windows build (updated automatically): **[groovy-openmw-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip)**
+Two Windows builds, both updated automatically:
+
+- **[groovy-openmw-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip)**: current OpenMW with Groovy output.
+- **[groovy-openmw-xbox-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip)**: [OpenMW XBOX UI Overhaul](https://ilikegothmommys.gitlab.io/openmw-xbox/) by iLikeGothMommys with Groovy output. It recreates the original Xbox interface for controllers, including an on-screen keyboard, which suits playing on a TV. It is based on an older OpenMW (0.51).
+
+The regular build comes from the `master` branch, the Xbox UI build from the `xbox` branch.
 
 ## What you need
 
@@ -38,8 +43,9 @@ Windows build (updated automatically): **[groovy-openmw-windows-x64.zip](https:/
 
 - psakhis (Sergi Clara), who created Groovy_MiSTer and its PC library. He passed away in 2024.
 - The OpenMW team, for OpenMW.
+- iLikeGothMommys, for the OpenMW XBOX UI Overhaul used by the Xbox UI build.
 
-Everything below is OpenMW's original README.
+This branch is the Xbox UI build. Everything below is the README of the OpenMW version it is based on.
 
 ---
 
