@@ -11,6 +11,12 @@
 #define MODULE_API_EXPORTS_GMW
 #include "groovymister.h"
 #include "groovymister_wrapper.h"
+
+#include <string.h>
+#ifndef _WIN32
+#include <arpa/inet.h>
+#include <unistd.h>
+#endif
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,6 +59,34 @@ MODULE_API_GMW void gmw_reset(void)
 		gmw->CmdClose();
 		gmw_inputsBinded = 0;
 	}
+}
+
+MODULE_API_GMW void gmw_wakeCore(const char* misterHost)
+{
+	// One small UDP message to the groovy_wake helper on the MiSTer (port 32110).
+	static const char message[] = "GROOVY_START";
+	struct sockaddr_in addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(32110);
+#ifdef _WIN32
+	WSADATA wsd;
+	if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
+		return;
+	addr.sin_addr.s_addr = inet_addr(misterHost);
+	SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock == INVALID_SOCKET)
+		return;
+	sendto(sock, message, (int) sizeof(message) - 1, 0, (struct sockaddr *)&addr, sizeof(addr));
+	closesocket(sock);
+#else
+	addr.sin_addr.s_addr = inet_addr(misterHost);
+	int sock = socket(AF_INET, SOCK_DGRAM, 0);
+	if (sock < 0)
+		return;
+	sendto(sock, message, sizeof(message) - 1, 0, (struct sockaddr *)&addr, sizeof(addr));
+	close(sock);
+#endif
 }
 
 MODULE_API_GMW void gmw_switchres(double pClock, uint16_t hActive, uint16_t hBegin, uint16_t hEnd, uint16_t hTotal, uint16_t vActive, uint16_t vBegin, uint16_t vEnd, uint16_t vTotal, uint8_t interlace)

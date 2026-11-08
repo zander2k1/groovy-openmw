@@ -371,6 +371,7 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::groovy().mPcAudio, *groovyPcAudioCheckBox);
         loadSettingBool(Settings::groovy().mFlickerFilter, *groovyFlickerFilterCheckBox);
         loadSettingBool(Settings::groovy().mAutoCrtSetup, *groovyAutoSetupCheckBox);
+        loadSettingBool(Settings::groovy().mStartCore, *groovyStartCoreCheckBox);
         loadSettingBool(Settings::groovy().mFrameDelay, *groovyFrameDelayCheckBox);
         groovyFrameDelaySpinBox->setValue(Settings::groovy().mFrameDelayAmount);
         groovyFrameDelaySpinBox->setEnabled(groovyFrameDelayCheckBox->isChecked());
@@ -625,6 +626,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*groovyPcAudioCheckBox, Settings::groovy().mPcAudio);
         saveSettingBool(*groovyFlickerFilterCheckBox, Settings::groovy().mFlickerFilter);
         saveSettingBool(*groovyAutoSetupCheckBox, Settings::groovy().mAutoCrtSetup);
+        saveSettingBool(*groovyStartCoreCheckBox, Settings::groovy().mStartCore);
         saveSettingBool(*groovyFrameDelayCheckBox, Settings::groovy().mFrameDelay);
         Settings::groovy().mFrameDelayAmount.set(groovyFrameDelaySpinBox->value());
         Settings::groovy().mPictureSize.set(groovyPictureSizeSpinBox->value());

@@ -226,9 +226,16 @@ namespace OMW
         const bool audio = mSendAudio && MWSound::GroovyAudio::active();
         if (gmw_init(mHost.c_str(), 1, audio ? MWSound::GroovyAudio::sSampleRate : 0, audio ? 2 : 0, 0, 1500) < 0)
         {
+            // Ask the MiSTer to start the Groovy core (if the groovy_wake helper is installed there). The helper
+            // ignores repeats while the core is loading.
+            const bool startCore = Settings::groovy().mStartCore;
+            if (startCore)
+                gmw_wakeCore(mHost.c_str());
+
             // Shown once; it keeps retrying quietly, so it's fine to start the Groovy core later.
             if (!mNoAnswerShown)
-                message("no answer from " + mHost + ". Is the Groovy core running on the MiSTer? Retrying...");
+                message(startCore ? "no answer from " + mHost + ", starting the Groovy core on the MiSTer..."
+                                  : "no answer from " + mHost + ". Is the Groovy core running on the MiSTer? Retrying...");
             mNoAnswerShown = true;
             return;
         }
