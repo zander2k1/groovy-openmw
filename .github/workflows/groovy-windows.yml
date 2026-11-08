@@ -2,8 +2,8 @@
 #
 # Every successful build replaces its zip in the "latest" release, so these links always have the
 # newest builds (no GitHub sign-in needed):
-# master (regular OpenMW): https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip
-# xbox (Xbox UI version):  https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip
+# master (regular OpenMW): https://github.com/zander2k1/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip
+# xbox (Xbox UI version):  https://github.com/zander2k1/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip
 #
 # Based on OpenMW's own windows.yml (same prebuilt dependencies), without tests, OpenMW-CS and the
 # debug symbol uploads.
@@ -170,7 +170,7 @@ jobs:
         4. Start the Groovy core on the MiSTer, then start OpenMW.
 
         Sound goes to the MiSTer and also plays on the PC. Controllers plugged into the MiSTer show
-        up as "MiSTer Controller 1/2". See https://github.com/zander2k01/groovy-openmw for more.
+        up as "MiSTer Controller 1/2". See https://github.com/zander2k1/groovy-openmw for more.
         EOF
 
     - name: Store the build

@@ -1,7 +1,7 @@
 Groovy OpenMW
 =============
 
-Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your PC over a network cable to a MiSTer FPGA running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), which shows it on a real CRT with very low lag (a few milliseconds). It's built the same way as my [Groovy Dolphin](https://github.com/zander2k01/groovy-dolphin) port.
+Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your PC over a network cable to a MiSTer FPGA running the [Groovy core](https://github.com/psakhis/Groovy_MiSTer), which shows it on a real CRT with very low lag (a few milliseconds). It's built the same way as my [Groovy Dolphin](https://github.com/zander2k1/groovy-dolphin) port.
 
 **Status:** early. Picture, sound and controllers plugged into the MiSTer all work over the network.
 
@@ -9,8 +9,8 @@ Groovy OpenMW is OpenMW with Groovy MiSTer output. It sends the game from your P
 
 Two Windows builds, both updated automatically:
 
-- **[groovy-openmw-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip)**: current OpenMW with Groovy output.
-- **[groovy-openmw-xbox-windows-x64.zip](https://github.com/zander2k01/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip)**: [OpenMW XBOX UI Overhaul](https://ilikegothmommys.gitlab.io/openmw-xbox/) by iLikeGothMommys with Groovy output. It recreates the original Xbox interface for controllers, including an on-screen keyboard, which suits playing on a TV. It is based on an older OpenMW (0.51).
+- **[groovy-openmw-windows-x64.zip](https://github.com/zander2k1/groovy-openmw/releases/download/latest/groovy-openmw-windows-x64.zip)**: current OpenMW with Groovy output.
+- **[groovy-openmw-xbox-windows-x64.zip](https://github.com/zander2k1/groovy-openmw/releases/download/latest/groovy-openmw-xbox-windows-x64.zip)**: [OpenMW XBOX UI Overhaul](https://ilikegothmommys.gitlab.io/openmw-xbox/) by iLikeGothMommys with Groovy output. It recreates the original Xbox interface for controllers, including an on-screen keyboard, which suits playing on a TV. It is based on an older OpenMW (0.51).
 
 The regular build comes from the `master` branch, the Xbox UI build from the `xbox` branch.
 
