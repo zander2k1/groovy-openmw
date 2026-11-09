@@ -574,7 +574,9 @@ void OMW::Engine::createWindow()
     if (!windowBorder)
         flags |= SDL_WINDOW_BORDERLESS;
 
-    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Settings::video().mMinimizeOnFocusLoss ? "1" : "0");
+    // Groovy MiSTer: the game is on the CRT, so clicking something else on the PC mustn't minimize (and pause) it.
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS,
+        Settings::video().mMinimizeOnFocusLoss.get() && !Settings::groovy().mEnabled.get() ? "1" : "0");
 
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8));
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8));

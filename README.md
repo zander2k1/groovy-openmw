@@ -37,8 +37,11 @@ The regular build comes from the `master` branch, the Xbox UI build from the `xb
 **CRT options** on the Groovy MiSTer tab:
 - **Automatic CRT Setup** (on by default) picks a 4:3 window at 2x the CRT's 640x480 (3x on big monitors) and scales the interface to match, so menus and text are console-sized on the CRT.
 - **Reduce Interlace Flicker** (on by default, 480i) softens thin horizontal lines so they don't flicker, like the flicker filter on interlaced consoles.
-- **Frame Delay** (off by default) lowers lag the way GroovyMAME does: it waits until late in each CRT frame before reading the controller and drawing the next frame. Start at 5 and lower it if the game stutters.
-- **Picture Size** and **Move Picture** shrink or move the picture if your TV cuts off the edges.
+- **Frame Delay** (on by default, amount 3) lowers lag the way GroovyMAME does: it waits until late in each CRT frame before reading the controller and drawing the next frame. Raise the amount on a fast PC; lower it or turn it off if the game stutters.
+- **Interface Size** (110% by default) makes the HUD, menus and text bigger than the original Xbox for easier reading on a TV.
+- **Flicker Filter Strength**: Normal (default) or Light, which keeps small text crisper.
+- **Picture Size** (Auto by default: 95% on CRT TVs, 100% on PC monitors) and **Move Picture** keep the edges of the picture inside what your TV shows.
+- Clicking another window on the PC no longer minimizes the game.
 - Vsync is turned off automatically while Groovy is on, since the MiSTer sets the pace.
 
 ## Credits

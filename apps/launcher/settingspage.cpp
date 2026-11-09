@@ -626,7 +626,9 @@ bool Launcher::SettingsPage::loadSettings()
         groovyFrameDelaySpinBox->setValue(Settings::groovy().mFrameDelayAmount);
         groovyFrameDelaySpinBox->setEnabled(groovyFrameDelayCheckBox->isChecked());
         connect(groovyFrameDelayCheckBox, &QCheckBox::toggled, groovyFrameDelaySpinBox, &QWidget::setEnabled);
-        groovyPictureSizeSpinBox->setValue(Settings::groovy().mPictureSize);
+        // 0 (automatic) shows as "Auto", the spin box's lowest value.
+        groovyPictureSizeSpinBox->setValue(
+            Settings::groovy().mPictureSize.get() <= 0 ? 49 : Settings::groovy().mPictureSize.get());
         groovyShiftXSpinBox->setValue(Settings::groovy().mPictureShiftX);
         groovyShiftYSpinBox->setValue(Settings::groovy().mPictureShiftY);
     }
@@ -1089,7 +1091,7 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*groovyStartCoreCheckBox, Settings::groovy().mStartCore);
         saveSettingBool(*groovyFrameDelayCheckBox, Settings::groovy().mFrameDelay);
         Settings::groovy().mFrameDelayAmount.set(groovyFrameDelaySpinBox->value());
-        Settings::groovy().mPictureSize.set(groovyPictureSizeSpinBox->value());
+        Settings::groovy().mPictureSize.set(groovyPictureSizeSpinBox->value() < 50 ? 0 : groovyPictureSizeSpinBox->value());
         Settings::groovy().mPictureShiftX.set(groovyShiftXSpinBox->value());
         Settings::groovy().mPictureShiftY.set(groovyShiftYSpinBox->value());
     }

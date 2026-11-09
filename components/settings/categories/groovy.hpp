@@ -29,7 +29,7 @@ namespace Settings
         SettingValue<bool> mStartCore{ mIndex, "Groovy", "start groovy core" };
         SettingValue<bool> mFrameDelay{ mIndex, "Groovy", "frame delay" };
         SettingValue<int> mFrameDelayAmount{ mIndex, "Groovy", "frame delay amount", makeClampSanitizerInt(1, 9) };
-        SettingValue<int> mPictureSize{ mIndex, "Groovy", "picture size", makeClampSanitizerInt(50, 100) };
+        SettingValue<int> mPictureSize{ mIndex, "Groovy", "picture size", makeClampSanitizerInt(0, 100) };
         SettingValue<int> mPictureShiftX{ mIndex, "Groovy", "picture shift x", makeClampSanitizerInt(-64, 64) };
         SettingValue<int> mPictureShiftY{ mIndex, "Groovy", "picture shift y", makeClampSanitizerInt(-64, 64) };
     };

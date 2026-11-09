@@ -2194,7 +2194,7 @@
          <item row="3" column="1">
           <widget class="QSpinBox" name="groovyFrameDelaySpinBox">
            <property name="toolTip">
-            <string>How long to wait, in tenths of a frame (1 to 9). Start at 5; lower it if the game stutters.</string>
+            <string>How long to wait, in tenths of a frame (1 to 9). Default: 3. Raise it for even less lag on a fast PC; lower it if the game stutters.</string>
            </property>
            <property name="minimum">
             <number>1</number>
@@ -2217,10 +2217,13 @@
          <item row="4" column="1">
           <widget class="QSpinBox" name="groovyPictureSizeSpinBox">
            <property name="toolTip">
-            <string>Size of the picture on the CRT. Lower it if your TV cuts off the edges of the picture. Default: 100%.</string>
+            <string>Size of the picture on the CRT. Lower it if your TV cuts off the edges of the picture. Auto (default) uses 95% for CRT TVs (480i, 240p) and 100% for 480p on PC monitors.</string>
+           </property>
+           <property name="specialValueText">
+            <string>Auto</string>
            </property>
            <property name="minimum">
-            <number>50</number>
+            <number>49</number>
            </property>
            <property name="maximum">
             <number>100</number>
@@ -2280,7 +2283,7 @@
          <item row="7" column="1">
           <widget class="QSpinBox" name="groovyInterfaceSizeSpinBox">
            <property name="toolTip">
-            <string>With Automatic CRT Setup: makes the HUD, menus and text bigger on the CRT. Bigger text is easier to read on a CRT TV; the HUD then covers a little more of the picture. Default: 100%.</string>
+            <string>With Automatic CRT Setup: makes the HUD, menus and text bigger on the CRT. Bigger text is easier to read on a CRT TV; the HUD then covers a little more of the picture. Default: 110%.</string>
            </property>
            <property name="minimum">
             <number>100</number>
