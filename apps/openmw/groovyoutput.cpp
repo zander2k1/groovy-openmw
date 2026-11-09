@@ -55,6 +55,18 @@ namespace OMW
         constexpr std::uint16_t hTotal = 858;
     }
 
+    namespace
+    {
+        // Picture size setting: 0 means automatic, 95% on CRT TVs (they hide a few percent of each edge, so
+        // the picture stays inside the "safe area" like console games did) and 100% on 480p PC monitors.
+        double pictureScale(int size, GroovyOutput::Mode mode)
+        {
+            if (size <= 0)
+                size = mode == GroovyOutput::Mode::Progressive480 ? 100 : 95;
+            return std::clamp(size, 50, 100) / 100.0;
+        }
+    }
+
     GroovyOutput::GroovyOutput(const std::string& host, Mode mode, int syncLine, bool sendAudio)
         : mHost(host)
         , mMode(mode)
@@ -66,7 +78,7 @@ namespace OMW
                   // Tenths of a frame. 480i and 480p run at 59.94 frames (fields) a second, 240p at 60.
                   ? std::chrono::microseconds(Settings::groovy().mFrameDelayAmount.get() * 1668)
                   : std::chrono::microseconds(0))
-        , mPictureScale(Settings::groovy().mPictureSize.get() / 100.0)
+        , mPictureScale(pictureScale(Settings::groovy().mPictureSize.get(), mode))
         , mShiftX(Settings::groovy().mPictureShiftX.get())
         , mShiftY(Settings::groovy().mPictureShiftY.get())
     {

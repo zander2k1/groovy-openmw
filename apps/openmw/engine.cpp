@@ -552,6 +552,10 @@ namespace
             Settings::video().mResolutionX.set(width);
         if (Settings::video().mResolutionY.get() != height)
             Settings::video().mResolutionY.set(height);
+        // Played on a TV, usually from the couch: use the menus made for controllers.
+        if (!Settings::gui().mControllerMenus.get())
+            Settings::gui().mControllerMenus.set(true);
+
         // Interface size setting: bigger text and HUD on top of the CRT's own scale.
         const float interfaceScale = factor * Settings::groovy().mInterfaceSize.get() / 100.f;
         if (Settings::gui().mScalingFactor.get() != interfaceScale)
@@ -598,7 +602,9 @@ void OMW::Engine::createWindow()
     if (!windowBorder)
         flags |= SDL_WINDOW_BORDERLESS;
 
-    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS, Settings::video().mMinimizeOnFocusLoss ? "1" : "0");
+    // Groovy MiSTer: the game is on the CRT, so clicking something else on the PC mustn't minimize (and pause) it.
+    SDL_SetHint(SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS,
+        Settings::video().mMinimizeOnFocusLoss.get() && !Settings::groovy().mEnabled.get() ? "1" : "0");
 
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8));
     checkSDLError(SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8));
