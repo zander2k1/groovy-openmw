@@ -552,11 +552,13 @@ namespace
             Settings::video().mResolutionX.set(width);
         if (Settings::video().mResolutionY.get() != height)
             Settings::video().mResolutionY.set(height);
-        if (Settings::gui().mScalingFactor.get() != static_cast<float>(factor))
-            Settings::gui().mScalingFactor.set(static_cast<float>(factor));
+        // Interface size setting: bigger text and HUD on top of the CRT's own scale.
+        const float interfaceScale = factor * Settings::groovy().mInterfaceSize.get() / 100.f;
+        if (Settings::gui().mScalingFactor.get() != interfaceScale)
+            Settings::gui().mScalingFactor.set(interfaceScale);
 
         Log(Debug::Info) << "Groovy MiSTer: CRT setup, window " << width << "x" << height
-                         << ", interface scaling " << factor;
+                         << ", interface scaling " << interfaceScale;
     }
 }
 

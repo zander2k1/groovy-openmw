@@ -22,6 +22,9 @@ namespace Settings
         SettingValue<bool> mSendAudio{ mIndex, "Groovy", "send audio" };
         SettingValue<bool> mPcAudio{ mIndex, "Groovy", "play audio on pc" };
         SettingValue<bool> mFlickerFilter{ mIndex, "Groovy", "flicker filter" };
+        SettingValue<std::string> mFlickerFilterStrength{ mIndex, "Groovy", "flicker filter strength",
+            makeEnumSanitizerString({ "light", "normal" }) };
+        SettingValue<int> mInterfaceSize{ mIndex, "Groovy", "interface size", makeClampSanitizerInt(100, 160) };
         SettingValue<bool> mAutoCrtSetup{ mIndex, "Groovy", "automatic crt setup" };
         SettingValue<bool> mStartCore{ mIndex, "Groovy", "start groovy core" };
         SettingValue<bool> mFrameDelay{ mIndex, "Groovy", "frame delay" };

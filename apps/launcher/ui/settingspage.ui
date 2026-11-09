@@ -1531,6 +1531,56 @@
            </property>
           </widget>
          </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="groovyInterfaceSizeLabel">
+           <property name="text">
+            <string>Interface Size</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QSpinBox" name="groovyInterfaceSizeSpinBox">
+           <property name="toolTip">
+            <string>With Automatic CRT Setup: makes the HUD, menus and text bigger on the CRT. Bigger text is easier to read on a CRT TV; the HUD then covers a little more of the picture. Default: 100%.</string>
+           </property>
+           <property name="minimum">
+            <number>100</number>
+           </property>
+           <property name="maximum">
+            <number>160</number>
+           </property>
+           <property name="singleStep">
+            <number>5</number>
+           </property>
+           <property name="suffix">
+            <string>%</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="groovyFlickerStrengthLabel">
+           <property name="text">
+            <string>Flicker Filter Strength</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QComboBox" name="groovyFlickerStrengthComboBox">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;b&gt;Normal&lt;/b&gt;: stops nearly all interlace flicker.&lt;/p&gt;&lt;p&gt;&lt;b&gt;Light&lt;/b&gt;: keeps small text a little crisper and stops most of the flicker.&lt;/p&gt;&lt;p&gt;Turn the filter off with Reduce Interlace Flicker.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Light</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Normal (default)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
