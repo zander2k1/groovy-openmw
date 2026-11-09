@@ -519,19 +519,22 @@ namespace
             Settings::video().mResolutionX.set(width);
         if (Settings::video().mResolutionY.get() != height)
             Settings::video().mResolutionY.set(height);
-        if (Settings::gui().mScalingFactor.get() != static_cast<float>(factor))
-            Settings::gui().mScalingFactor.set(static_cast<float>(factor));
+        // Interface size setting: bigger text and HUD on top of the CRT's own scale.
+        const float interfaceScale = factor * Settings::groovy().mInterfaceSize.get() / 100.f;
+        if (Settings::gui().mScalingFactor.get() != interfaceScale)
+            Settings::gui().mScalingFactor.set(interfaceScale);
         // The Xbox UI also scales dialogue and the settings menu separately: use its recommended ratios.
         if (const auto scaling = Misc::calculateRecommendedGuiScaling(width, height))
         {
-            if (Settings::gui().mDialogueInterfaceScaling.get() != scaling->mDialogueScaling)
-                Settings::gui().mDialogueInterfaceScaling.set(scaling->mDialogueScaling);
-            if (Settings::gui().mSettingsInterfaceScaling.get() != scaling->mSettingsScaling)
-                Settings::gui().mSettingsInterfaceScaling.set(scaling->mSettingsScaling);
+            const float size = Settings::groovy().mInterfaceSize.get() / 100.f;
+            if (Settings::gui().mDialogueInterfaceScaling.get() != scaling->mDialogueScaling * size)
+                Settings::gui().mDialogueInterfaceScaling.set(scaling->mDialogueScaling * size);
+            if (Settings::gui().mSettingsInterfaceScaling.get() != scaling->mSettingsScaling * size)
+                Settings::gui().mSettingsInterfaceScaling.set(scaling->mSettingsScaling * size);
         }
 
         Log(Debug::Info) << "Groovy MiSTer: CRT setup, window " << width << "x" << height
-                         << ", interface scaling " << factor;
+                         << ", interface scaling " << interfaceScale;
     }
 }
 

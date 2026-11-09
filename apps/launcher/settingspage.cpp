@@ -615,6 +615,11 @@ bool Launcher::SettingsPage::loadSettings()
         loadSettingBool(Settings::groovy().mSendAudio, *groovySendAudioCheckBox);
         loadSettingBool(Settings::groovy().mPcAudio, *groovyPcAudioCheckBox);
         loadSettingBool(Settings::groovy().mFlickerFilter, *groovyFlickerFilterCheckBox);
+        groovyFlickerStrengthComboBox->setCurrentIndex(
+            Settings::groovy().mFlickerFilterStrength.get() == "light" ? 0 : 1);
+        groovyInterfaceSizeSpinBox->setValue(Settings::groovy().mInterfaceSize.get());
+        groovyFlickerStrengthComboBox->setEnabled(groovyFlickerFilterCheckBox->isChecked());
+        connect(groovyFlickerFilterCheckBox, &QCheckBox::toggled, groovyFlickerStrengthComboBox, &QWidget::setEnabled);
         loadSettingBool(Settings::groovy().mAutoCrtSetup, *groovyAutoSetupCheckBox);
         loadSettingBool(Settings::groovy().mStartCore, *groovyStartCoreCheckBox);
         loadSettingBool(Settings::groovy().mFrameDelay, *groovyFrameDelayCheckBox);
@@ -1077,6 +1082,9 @@ void Launcher::SettingsPage::saveSettings()
         saveSettingBool(*groovySendAudioCheckBox, Settings::groovy().mSendAudio);
         saveSettingBool(*groovyPcAudioCheckBox, Settings::groovy().mPcAudio);
         saveSettingBool(*groovyFlickerFilterCheckBox, Settings::groovy().mFlickerFilter);
+        Settings::groovy().mFlickerFilterStrength.set(
+            groovyFlickerStrengthComboBox->currentIndex() == 0 ? "light" : "normal");
+        Settings::groovy().mInterfaceSize.set(groovyInterfaceSizeSpinBox->value());
         saveSettingBool(*groovyAutoSetupCheckBox, Settings::groovy().mAutoCrtSetup);
         saveSettingBool(*groovyStartCoreCheckBox, Settings::groovy().mStartCore);
         saveSettingBool(*groovyFrameDelayCheckBox, Settings::groovy().mFrameDelay);

@@ -61,6 +61,7 @@ namespace OMW
         , mSyncLine(std::clamp(syncLine, 0, 400))
         , mSendAudio(sendAudio)
         , mFlickerFilter(Settings::groovy().mFlickerFilter.get())
+        , mLightFlickerFilter(Settings::groovy().mFlickerFilterStrength.get() == "light")
         , mFrameDelay(Settings::groovy().mFrameDelay.get()
                   // Tenths of a frame. 480i and 480p run at 59.94 frames (fields) a second, 240p at 60.
                   ? std::chrono::microseconds(Settings::groovy().mFrameDelayAmount.get() * 1668)
@@ -503,8 +504,17 @@ namespace OMW
                 const std::uint8_t* below
                     = mFrame.data() + static_cast<std::size_t>(std::min(y + 1, mHeight - 1)) * rowBytes;
                 auto* dest = reinterpret_cast<std::uint8_t*>(buffer + out * rowBytes);
-                for (std::size_t i = 0; i < rowBytes; ++i)
-                    dest[i] = static_cast<std::uint8_t>((above[i] + 2 * line[i] + below[i] + 2) / 4);
+                if (mLightFlickerFilter)
+                {
+                    // Light: 1:4:1, the line itself keeps two thirds of its weight.
+                    for (std::size_t i = 0; i < rowBytes; ++i)
+                        dest[i] = static_cast<std::uint8_t>((above[i] + 4 * line[i] + below[i] + 3) / 6);
+                }
+                else
+                {
+                    for (std::size_t i = 0; i < rowBytes; ++i)
+                        dest[i] = static_cast<std::uint8_t>((above[i] + 2 * line[i] + below[i] + 2) / 4);
+                }
             }
         }
         else if (mInterlaced)
