@@ -208,6 +208,16 @@ const char* GroovyMister::getVersion()
 int GroovyMister::CmdInit(const char* misterHost, uint16_t misterPort, int lz4Frames, uint32_t soundRate, uint8_t soundChan, uint8_t rgbMode, uint16_t mtu)
 {
 	m_isConnected = 0;
+
+	// Start the MiSTer's counters over. Answers are only accepted for frames newer than the last one
+	// seen, so after the Groovy core restarts (its counters begin at 0 again) old values would make
+	// every answer look stale, and controller input with them.
+	m_frame = 0;
+	memset(&fpga, 0, sizeof(fpga));
+	joyInputs.joyFrame = 0;
+	joyInputs.joyOrder = 0;
+	ps2Inputs.ps2Frame = 0;
+	ps2Inputs.ps2Order = 0;
 	m_mtu = (!mtu) ? BUFFER_MTU : mtu - MTU_HEADER;
 
 	// Set server
